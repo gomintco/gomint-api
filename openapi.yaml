@@ -1,0 +1,55 @@
+openapi: 3.1.0
+info:
+  title: GoMint Hedera Hashgraph API
+  description: API for interacting with the Hedera Hashgraph network, including custodial key control, token creation, and transaction handling.
+  version: 1.0.0
+servers:
+  - url: 'https://api.gomint.com/v1'
+    description: Main production server
+
+paths:
+  /tokens:
+    post:
+      summary: Create a new token
+      operationId: createToken
+      tags:
+        - Tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '201':
+          description: Token created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        # Add other response codes here
+
+  # Add other endpoints like transactions, key management, etc.
+
+components:
+  schemas:
+    TokenRequest:
+      type: object
+      # Define properties for token creation request here
+
+    TokenResponse:
+      type: object
+      # Define properties for token creation response here
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+    BasicAuth:
+      type: http
+      scheme: basic
+
+security:
+  - ApiKeyAuth: []
+  - BasicAuth: []
