@@ -11,6 +11,12 @@ export class CreateUserDto {
   @IsEnum(Network)
   network: Network = Network.MAINNET;
 
+  @IsString()
+  username: string;
+
+  @IsString()
+  hashedPassword: string;
+
   @IsBoolean()
   withKey: boolean = false;
 
@@ -19,13 +25,9 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
-  password: string = null;
+  encryptionKey: string = null;
 
   @IsOptional()
   @IsEmail()
   email: string = null;
-
-  @IsOptional()
-  @IsString()
-  username: string = null;
 }

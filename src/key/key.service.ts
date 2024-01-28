@@ -46,10 +46,6 @@ export class KeyService {
       default:
         throw new Error('Key type not supported');
     }
-    console.log(
-      'Encrypted key pair length: ',
-      encryptedKeyPair.encryptedPrivateKey.length,
-    );
     const key = this.keysRepository.create({ ...encryptedKeyPair });
     return new KeyBuilder(this, key);
   }
@@ -153,22 +149,31 @@ export class KeyService {
    * @returns The decrypted string.
    */
   decryptString(encryptedValue: string, encryptionKey: string): string {
-    const components = encryptedValue.split(':');
-    const iv = Buffer.from(components.shift(), 'hex');
-    const encryptedText = Buffer.from(components.join(':'), 'hex');
-    const keyHash = crypto
-      .createHash('sha256')
-      .update(encryptionKey)
-      .digest('base64')
-      .substr(0, 32);
-    const decipher = crypto.createDecipheriv(
-      'aes-256-cbc',
-      Buffer.from(keyHash),
-      iv,
-    );
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
+    if (!encryptionKey) throw new Error('No encryption key provided');
+    try {
+      const components = encryptedValue.split(':');
+      const iv = Buffer.from(components.shift(), 'hex');
+      const encryptedText = Buffer.from(components.join(':'), 'hex');
+      const keyHash = crypto
+        .createHash('sha256')
+        .update(encryptionKey)
+        .digest('base64')
+        .substr(0, 32);
+      const decipher = crypto.createDecipheriv(
+        'aes-256-cbc',
+        Buffer.from(keyHash),
+        iv,
+      );
+      let decrypted = decipher.update(encryptedText);
+      decrypted = Buffer.concat([decrypted, decipher.final()]);
+      return decrypted.toString();
+    } catch (err) {
+      console.log('Error decrypting string', err);
+      throw new InternalServerErrorException('Unable to decrypt private key', {
+        cause: err,
+        description: err.code || err.message,
+      });
+    }
   }
 }
 

@@ -6,6 +6,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import * as crypto from 'crypto';
 import { KeyService } from 'src/key/key.service';
 import { AccountService } from '../account/account.service';
+import { CreateKeyDto } from './dto/create-key.dto';
+import { CreateAccountDto } from './dto/create-account.dto';
+import { CleanedAccount, CleanedKey, CleanedUser } from './user.interface';
+import { Key } from '../key/key.entity';
+import { Account } from '../account/account.entity';
 
 @Injectable()
 export class UserService {
@@ -25,12 +30,96 @@ export class UserService {
     return this.usersRepository.find();
   }
 
-  findOneByOrFail(id: string): Promise<User> {
-    return this.usersRepository.findOneByOrFail({ id });
+  // findOne(id: string): Promise<User> {
+  //   return this.usersRepository.findOneByOrFail({ id });
+  // }
+
+  async getUser(userId: string): Promise<CleanedUser> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['accounts.keys', 'keys'],
+    });
+    // clean data before returning
+    const { id, username, network, accounts, keys } = user;
+    const cleanedKeys = this.cleanKeys(keys);
+    const cleanedAccounts = this.cleanAccounts(accounts);
+    console.log('user', user);
+    return {
+      id,
+      username,
+      network,
+      keys: cleanedKeys,
+      accounts: cleanedAccounts,
+    };
   }
 
-  async findOne(id: string): Promise<User> {
-    return await this.usersRepository.findOneByOrFail({ id });
+  async getUserAccounts(
+    id: string,
+  ): Promise<{ id: string; accounts: CleanedAccount[] }> {
+    const accounts = await this.accountService.findAccountsByUserId(id);
+    console.log('accounts', accounts);
+    return { id, accounts: this.cleanAccounts(accounts) };
+  }
+
+  async getUserKeys(id: string): Promise<{ id: string; keys: CleanedKey[] }> {
+    const keys = await this.keyService.findKeysByUserId(id);
+
+    return { id, keys: this.cleanKeys(keys) };
+  }
+
+  private cleanKeys(keys: Key[]) {
+    return keys.map(({ type, publicKey }) => ({ type, publicKey }));
+  }
+
+  private cleanAccounts(accounts: Account[]) {
+    return accounts.map(({ id, keys }) => ({
+      id,
+      keys: this.cleanKeys(keys),
+    }));
+  }
+
+  findOneByUsername(username: string): Promise<User> {
+    return this.usersRepository.findOneByOrFail({ username });
+  }
+
+  private handleDecryptEscrowKey(user: User, encryptionKey: string) {
+    let escrowKey = user.escrowKey;
+    if (user.hasEncryptionKey)
+      escrowKey = this.keyService.decryptString(user.escrowKey, encryptionKey);
+    return escrowKey;
+  }
+
+  async createAndSaveKey(user: User, createKeyDto: CreateKeyDto) {
+    const escrowKey = this.handleDecryptEscrowKey(
+      user,
+      createKeyDto.encryptionKey,
+    );
+    const key = await this.keyService
+      .create(escrowKey, createKeyDto.type)
+      .addUser(user)
+      .save();
+    return key;
+  }
+
+  async createAndSaveAccount(user: User, createAccountDto: CreateAccountDto) {
+    const escrowKey = this.handleDecryptEscrowKey(
+      user,
+      createAccountDto.encryptionKey,
+    );
+    // create key and add to user
+    const key = await this.keyService
+      .create(escrowKey, createAccountDto.type)
+      .addUser(user)
+      .save();
+    // create account and add to user
+    const accountTransaction =
+      await this.accountService.createTransactionAndExecute(
+        { key },
+        user.network,
+      );
+    const addUserToAccount = await accountTransaction.addUser(user);
+    const account = await addUserToAccount.save();
+    return account;
   }
 
   /**
@@ -44,8 +133,10 @@ export class UserService {
   create(createUserDto: CreateUserDto): User {
     return this.usersRepository.create({
       network: createUserDto.network,
+      username: createUserDto.username,
+      hashedPassword: createUserDto.hashedPassword,
       escrowKey: crypto.randomBytes(16).toString('hex'),
-      hasPassword: Boolean(createUserDto.password),
+      hasEncryptionKey: Boolean(createUserDto.encryptionKey),
       email: createUserDto.email,
     });
   }
@@ -66,16 +157,18 @@ export class UserService {
     }
 
     const key = await this.keyService.create(user.escrowKey).save();
-    user.keys = Promise.resolve([key]);
+    user.keys = [key];
+    // user.keys = Promise.resolve([key]);
 
     if (createUserDto.withAccount) {
       const accountTransaction =
         await this.accountService.createTransactionAndExecute(
-          { key },
+          { key, initialBalance: 100 },
           createUserDto.network,
         );
       const account = await accountTransaction.save();
-      user.accounts = Promise.resolve([account]);
+      user.accounts = [account];
+      // user.accounts = Promise.resolve([account]);
     }
   }
 
@@ -88,10 +181,10 @@ export class UserService {
    * @param createUserDto - The data transfer object containing the user's details.
    */
   encryptEscrowKey(user: User, createUserDto: CreateUserDto) {
-    if (createUserDto.password) {
+    if (createUserDto.encryptionKey) {
       user.escrowKey = this.keyService.encryptString(
         user.escrowKey,
-        createUserDto.password,
+        createUserDto.encryptionKey,
       );
     }
   }

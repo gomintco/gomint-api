@@ -1,16 +1,14 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-
-import { FtCreateInput } from './ft.interface';
-import { Key, TokenCreateTransaction, Client } from '@hashgraph/sdk';
+import { NftCreateInput } from './nft.interface';
+import { Key, TokenCreateTransaction, Client, TokenType } from '@hashgraph/sdk';
+import { User } from 'src/user/user.entity';
+import { CreateNftDto } from './dto/create-nft.dto';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
-import { User } from 'src/user/user.entity';
-import { CreateFtDto } from 'src/token/ft/dto/create-ft.dto';
 import { AccountService } from 'src/account/account.service';
-import { TokenService } from 'src/token/token.service';
-
+import { TokenService } from '../token.service';
 @Injectable()
-export class FtService extends TokenService {
+export class NftService extends TokenService {
   constructor(
     private keyService: KeyService,
     private clientService: ClientService,
@@ -19,7 +17,7 @@ export class FtService extends TokenService {
     super();
   }
 
-  async createToken(user: User, createFtDto: CreateFtDto) {
+  async createToken(user: User, createNftDto: CreateNftDto) {
     // get account and keys from user
     const accounts = await this.accountService.findAccountsByUserId(user.id);
     // only support one account for now
@@ -28,28 +26,25 @@ export class FtService extends TokenService {
     if (user.hasEncryptionKey)
       escrowKey = this.keyService.decryptString(
         user.escrowKey,
-        createFtDto.encryptionKey,
+        createNftDto.encryptionKey,
       );
     // decrypt keys
     const decryptedKeys = account.keys.map((key) =>
       this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
     );
     const tokenPublicKeys = this.parsePublicKeys(
-      createFtDto,
+      createNftDto,
       account.keys[0].publicKey,
     );
-    // create token
-    const ftCreateInput: FtCreateInput = {
-      tokenName: createFtDto.tokenName,
-      tokenSymbol: createFtDto.tokenSymbol,
-      treasuryAccountId: createFtDto.treasuryAccountId ?? account.id,
-      decimals: createFtDto.decimals ?? 0,
-      initialSupply: createFtDto.initialSupply ?? 0,
+    //create token
+    const nftCreateInput: NftCreateInput = {
+      tokenName: createNftDto.tokenName,
+      tokenSymbol: createNftDto.tokenSymbol,
+      treasuryAccountId: createNftDto.treasuryAccountId ?? account.id,
       ...tokenPublicKeys,
     };
-
     return this.createTransactionAndExecute(
-      ftCreateInput,
+      nftCreateInput,
       this.clientService.buildClient(
         user.network,
         account.id,
@@ -60,11 +55,12 @@ export class FtService extends TokenService {
   }
 
   async createTransactionAndExecute(
-    ftCreateInput: FtCreateInput,
+    nftCreateInput: NftCreateInput,
     client: Client,
   ) {
-    const transaction = this.createTransaction(ftCreateInput);
+    const transaction = this.createTransaction(nftCreateInput);
     transaction.freezeWith(client);
+
     //   const keysToSignWith = this.uniqueKeys(ftCreateInput);
     // here we need all private keys for the respective public keys
     // await Promise.all([...keysToSignWith].map(key => transaction.sign(key)));
@@ -74,12 +70,12 @@ export class FtService extends TokenService {
     return receipt.tokenId.toString();
   }
 
-  private createTransaction(ftCreateInput: FtCreateInput) {
+  private createTransaction(ftCreateInput: NftCreateInput) {
     const transaction = new TokenCreateTransaction()
       .setTokenName(ftCreateInput.tokenName)
+      .setTokenType(TokenType.NonFungibleUnique)
       .setTokenSymbol(ftCreateInput.tokenSymbol)
-      .setDecimals(ftCreateInput.decimals)
-      .setInitialSupply(ftCreateInput.initialSupply)
+      .setInitialSupply(0)
       .setTreasuryAccountId(ftCreateInput.treasuryAccountId)
       .setAdminKey(ftCreateInput.adminKey)
       .setKycKey(ftCreateInput.kycKey)

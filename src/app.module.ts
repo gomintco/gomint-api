@@ -12,6 +12,8 @@ import { AccountModule } from './account/account.module';
 import { ClientService } from './client/client.service';
 import { ClientModule } from './client/client.module';
 import { Account } from './account/account.entity';
+import { AuthModule } from './auth/auth.module';
+import { ApiKey } from './auth/api-key.entity';
 
 @Module({
   imports: [
@@ -23,16 +25,17 @@ import { Account } from './account/account.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Key, Account],
+      entities: [User, Key, Account, ApiKey],
       synchronize: true,
     }),
-    KeyModule,
+    // KeyModule,
     TokenModule,
     UserModule,
-    AccountModule,
-    ClientModule,
+    // AccountModule,
+    // ClientModule,
+    // AuthModule,
   ],
   controllers: [],
-  providers: [ClientService],
+  providers: [],
 })
 export class AppModule {}
