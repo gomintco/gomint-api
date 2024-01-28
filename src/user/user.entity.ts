@@ -17,11 +17,14 @@ export class User extends Version {
   @Column({ unique: true, nullable: true })
   email: string;
 
-  @Column({ unique: true, nullable: true })
+  @Column()
+  hashedPassword: string;
+
+  @Column({ unique: true })
   username: string;
 
   @Column({ type: 'bool', default: false })
-  hasPassword: boolean;
+  hasEncryptionKey: boolean;
 
   @Column({
     type: 'enum',
@@ -31,8 +34,10 @@ export class User extends Version {
   network: Network;
 
   @OneToMany(() => Account, (account) => account.user)
-  accounts: Promise<Account[]>;
+  accounts: Account[];
+  // accounts: Promise<Account[]>;
 
   @OneToMany(() => Key, (key) => key.user)
-  keys: Promise<Key[]>;
+  keys: Key[];
+  // keys: Promise<Key[]>;
 }
