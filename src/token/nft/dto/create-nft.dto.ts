@@ -1,6 +1,6 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CreateFtDto {
+export class CreateNftDto {
   @IsString()
   tokenName: string;
 
@@ -11,17 +11,8 @@ export class CreateFtDto {
   @IsString()
   treasuryAccountId: string;
 
-  @IsOptional()
-  @IsNumber()
-  decimals: number = 0;
-
-  @IsOptional()
-  @IsNumber()
-  initialSupply: number;
-
-  @IsOptional()
   @IsString()
-  supplyKey: string;
+  supplyKey: string = 'default';
 
   @IsOptional()
   @IsString()
