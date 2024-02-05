@@ -1,4 +1,10 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateFtDto {
   @IsString()
@@ -18,6 +24,13 @@ export class CreateFtDto {
   @IsOptional()
   @IsNumber()
   initialSupply: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxSupply: number;
+
+  @IsBoolean()
+  finite: boolean = false;
 
   @IsOptional()
   @IsString()

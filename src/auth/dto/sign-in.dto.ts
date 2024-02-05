@@ -5,5 +5,5 @@ export class SignInDto {
   username: string;
 
   @IsString()
-  password: string;
+  hashedPassword: string;
 }
