@@ -22,3 +22,8 @@ export interface FtCreateInput {
   autoRenewAccountId?: string;
   autoRenewPeriod?: number;
 }
+
+export interface FtMintInput {
+  tokenId: string;
+  amount: number;
+}

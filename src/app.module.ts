@@ -8,12 +8,10 @@ import { KeyModule } from './key/key.module';
 // entities
 import { User } from './user/user.entity';
 import { Key } from './key/key.entity';
-import { AccountModule } from './account/account.module';
-import { ClientService } from './client/client.service';
-import { ClientModule } from './client/client.module';
 import { Account } from './account/account.entity';
-import { AuthModule } from './auth/auth.module';
 import { ApiKey } from './auth/api-key.entity';
+import { DealModule } from './deal/deal.module';
+import { Deal } from './deal/deal.entity';
 
 @Module({
   imports: [
@@ -25,12 +23,13 @@ import { ApiKey } from './auth/api-key.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Key, Account, ApiKey],
+      entities: [User, Key, Account, ApiKey, Deal],
       synchronize: true,
     }),
     // KeyModule,
     TokenModule,
     UserModule,
+    DealModule,
     // AccountModule,
     // ClientModule,
     // AuthModule,

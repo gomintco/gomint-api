@@ -9,7 +9,7 @@ import { Network } from '../app.interface';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 
 @Injectable()
@@ -24,6 +24,15 @@ export class AccountService {
     return this.accountRepository.find({
       where: { user: { id } },
       relations: ['keys'],
+    });
+  }
+
+  async findAccountsByIds(accountIds: string[]): Promise<Account[]> {
+    return this.accountRepository.find({
+      where: {
+        id: In(accountIds),
+      },
+      relations: ['keys', 'user'],
     });
   }
 
