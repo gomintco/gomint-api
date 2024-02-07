@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { FtCreateInput, FtMintInput } from './ft.interface';
 import {
@@ -7,11 +7,16 @@ import {
   Client,
   TokenSupplyType,
   TokenMintTransaction,
+  CustomFee,
+  CustomFixedFee,
+  Hbar,
+  CustomFractionalFee,
+  FeeAssessmentMethod,
 } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { User } from 'src/user/user.entity';
-import { CreateFtDto } from 'src/token/ft/dto/create-ft.dto';
+import { CreateFtDto, FractionalFee } from 'src/token/ft/dto/create-ft.dto';
 import { AccountService } from 'src/account/account.service';
 import { TokenService } from 'src/token/token.service';
 import { MintFtDto } from './dto/mint-ft.dto';
@@ -37,6 +42,7 @@ export class FtService extends TokenService {
       createFtDto,
       account.keys[0].publicKey,
     );
+    const customFees = this.parseCustomFees(createFtDto, account.id);
     // create token
     const ftCreateInput: FtCreateInput = {
       tokenName: createFtDto.tokenName,
@@ -48,6 +54,7 @@ export class FtService extends TokenService {
       supplyType: createFtDto.finite
         ? TokenSupplyType.Finite
         : TokenSupplyType.Infinite,
+      customFees,
       ...tokenPublicKeys,
     };
 
@@ -60,6 +67,40 @@ export class FtService extends TokenService {
         // cant have a multikey client... each user will need to have a client account with only one key...
       ),
     );
+  }
+
+  private parseCustomFees(
+    createFtDto: CreateFtDto,
+    defaultId: string,
+  ): CustomFee[] {
+    const { fixedFees, fractionalFees } = createFtDto;
+    if (!fixedFees && !fractionalFees) return [];
+    const customFees: CustomFee[] = [];
+    // set fixed fees
+    if (fixedFees)
+      fixedFees.forEach((fee) => {
+        // uses the protected method from the parent class as NFT service also uses it
+        customFees.push(this.parseFixedFee(fee, defaultId));
+      });
+    // set fractional fees
+    if (fractionalFees)
+      fractionalFees.forEach((fee) => {
+        customFees.push(this.parseFractionalFee(fee, defaultId));
+      });
+    return customFees;
+  }
+
+  private parseFractionalFee(fee: FractionalFee, defaultId: string) {
+    return new CustomFractionalFee()
+      .setFeeCollectorAccountId(
+        this.getFeeCollectorAccountId(fee.feeCollectorAccountId, defaultId),
+      )
+      .setNumerator(fee.numerator)
+      .setDenominator(fee.denominator)
+      .setMax(fee.max)
+      .setMin(fee.min)
+      .setAssessmentMethod(new FeeAssessmentMethod(fee.senderPaysFees)) // prob need to fall back on false here
+      .setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
   }
 
   async mintToken(user: User, mintFtDto: MintFtDto) {

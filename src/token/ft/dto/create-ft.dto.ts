@@ -1,9 +1,12 @@
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsNumber,
   IsOptional,
   IsString,
   IsBoolean,
+  ValidateNested,
+  Min,
 } from 'class-validator';
 
 export class CreateFtDto {
@@ -61,6 +64,66 @@ export class CreateFtDto {
   feeScheduleKey: string;
 
   @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => FixedFee)
+  fixedFees: FixedFee[];
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => FractionalFee)
+  fractionalFees: FractionalFee[];
+
+  @IsOptional()
   @IsString()
   encryptionKey: string;
+}
+
+class FixedFee {
+  @IsString()
+  feeCollectorAccountId: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  hbarAmount: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  ftAmount: number;
+
+  @IsOptional()
+  @IsString()
+  ftId: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allCollectorsAreExempt: boolean;
+}
+
+export class FractionalFee {
+  @IsString()
+  feeCollectorAccountId: string;
+
+  @IsNumber()
+  numerator: number;
+
+  @IsNumber()
+  denominator: number;
+
+  @IsOptional()
+  @IsNumber()
+  max: number;
+
+  @IsOptional()
+  @IsNumber()
+  min: number;
+
+  @IsOptional()
+  @IsBoolean()
+  senderPaysFees: boolean; // this maps to .setAssessmentMethod() in the sdk
+
+  @IsOptional()
+  @IsBoolean()
+  allCollectorsAreExempt: boolean;
 }

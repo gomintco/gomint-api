@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   Post,
   Query,
@@ -15,6 +16,7 @@ import { DealService } from './deal.service';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { User } from 'src/user/user.entity';
 import { GetBytesDto } from './dto/get-bytes.dt';
+import { Network } from 'src/app.interface';
 
 @Controller('deal')
 export class DealController {
@@ -40,24 +42,36 @@ export class DealController {
   @Get('bytes/:dealid')
   async getDealBytes(
     @Param('dealid') dealId: string,
+    @Query('network') network: Network,
     @Query('buyerId') buyerId: string,
     @Query('clientId') clientId: string,
+    @Query('serial') serial: string,
   ) {
     if (!buyerId) throw new BadRequestException('buyerId is required');
-    return this.dealService.getDealBytes(dealId, buyerId, clientId);
+    return this.dealService.getDealBytes(
+      network,
+      dealId,
+      buyerId,
+      clientId,
+      serial,
+    );
   }
 
   // get deal bytes -> POST when account has an encryption key
   // reequire API key guard? -> maybe good for tracking?
   @UseGuards(ApiKeyGuard)
-  @Post('bytes/:dealid') // prob doesnt need dealid in the path
+  @Post('bytes')
+  @HttpCode(200)
   async getDealBytesPost(@Body() getBytesDto: GetBytesDto) {
-    const { dealId, buyerId, clientId, encryptionKey } = getBytesDto;
+    const { network, dealId, buyerId, clientId, encryptionKey, serial } =
+      getBytesDto;
     return this.dealService.getDealBytes(
+      network,
       dealId,
       buyerId,
       clientId,
       encryptionKey,
+      serial,
     );
   }
 }

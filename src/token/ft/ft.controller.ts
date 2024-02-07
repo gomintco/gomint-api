@@ -34,7 +34,6 @@ export class FtController {
 
   @Post('mint')
   async mint(@Req() request, @Body() mintFtDto: MintFtDto) {
-    console.log('mintFtDto', mintFtDto);
     // return { status: 'ok' };
     const user = request.user as User;
     try {

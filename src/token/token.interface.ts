@@ -9,3 +9,11 @@ export interface TokenPublicKeys {
   wipeKey?: PublicKey;
   feeScheduleKey?: PublicKey;
 }
+
+export interface FixedFee {
+  feeCollectorAccountId: string;
+  hbarAmount: number;
+  ftAmount: number;
+  ftId: string;
+  allCollectorsAreExempt: boolean;
+}

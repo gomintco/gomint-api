@@ -1,4 +1,10 @@
-import { IsNumber, IsString, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateDealDto {
@@ -39,8 +45,11 @@ class NftTransfer {
   tokenId: string;
   @IsString()
   senderId: string;
+
   @IsString()
   receiverId: string;
-  @IsString()
-  serialNumber: string;
+
+  @IsNumber()
+  @IsOptional()
+  serialNumber: number;
 }
