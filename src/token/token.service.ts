@@ -2,11 +2,44 @@ import { CreateFtDto } from './ft/dto/create-ft.dto';
 import { FtCreateInput } from './ft/ft.interface';
 import { CreateNftDto } from './nft/dto/create-nft.dto';
 import { NftCreateInput } from './nft/nft.interface';
-import { Key, PublicKey } from '@hashgraph/sdk';
-import { TokenPublicKeys } from './token.interface';
+import {
+  CustomFee,
+  CustomFixedFee,
+  Hbar,
+  Key,
+  PublicKey,
+} from '@hashgraph/sdk';
+import { FixedFee, TokenPublicKeys } from './token.interface';
+import { BadRequestException } from '@nestjs/common';
 
 export class TokenService {
   constructor() {}
+
+  // used in ft and nft services for creating custom fees
+  protected parseFixedFee = (
+    fee: FixedFee,
+    defaultId: string,
+  ): CustomFixedFee => {
+    const customFee = new CustomFixedFee().setFeeCollectorAccountId(
+      this.getFeeCollectorAccountId(fee.feeCollectorAccountId, defaultId),
+    );
+    if (fee.hbarAmount) customFee.setHbarAmount(new Hbar(fee.hbarAmount));
+    if (fee.ftId) {
+      if (!fee.ftAmount)
+        throw new BadRequestException(
+          'ftAmount is required when ftId is provided',
+        );
+      customFee.setAmount(fee.ftAmount).setDenominatingTokenId(fee.ftId);
+    }
+    customFee.setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
+    return customFee;
+  };
+
+  // used in ft and nft services for creating custom fees
+  protected getFeeCollectorAccountId = (
+    accountId: string,
+    defaultId: string,
+  ) => (accountId === 'default' ? defaultId : accountId);
 
   protected parsePublicKeys = (
     createTokenDto: CreateFtDto | CreateNftDto,

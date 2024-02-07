@@ -20,3 +20,8 @@ export interface NftCreateInput {
   autoRenewAccountId?: string;
   autoRenewPeriod?: number;
 }
+
+export interface NftMintInput {
+  tokenId: string;
+  metadatas: Uint8Array[];
+}

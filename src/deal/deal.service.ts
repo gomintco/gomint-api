@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { createHash, sign } from 'crypto';
 import { User } from 'src/user/user.entity';
@@ -13,6 +17,8 @@ import {
   TransferTransaction,
 } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
+import { Network } from 'src/app.interface';
+import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
 
 @Injectable()
 export class DealService {
@@ -55,10 +61,12 @@ export class DealService {
   }
 
   async getDealBytes(
+    network: Network,
     dealId: string,
     buyerId: string,
     clientId: string | undefined,
     encryptionKey: string | undefined = undefined,
+    serialNumber: number | undefined = undefined,
   ) {
     const deal = await this.dealRepository.findOne({
       where: { dealId },
@@ -66,6 +74,12 @@ export class DealService {
     let dealData = JSON.parse(deal.dealJson) as CreateDealDto;
     // swap the buyer's account id
     dealData = this.swapAccountId(dealData, 'buyer', buyerId);
+    // inject the serial number
+    dealData = await this.injectNftSerialNumber(
+      network,
+      dealData,
+      serialNumber,
+    );
     // create transfer transaction
     const transaction = this.transferTransaction(dealData, clientId || buyerId);
     // get required signers
@@ -128,7 +142,12 @@ export class DealService {
     const transactionId = TransactionId.generate(feePayerId);
     const transaction = new TransferTransaction()
       .setTransactionId(transactionId)
-      .setNodeAccountIds([new AccountId(3)]);
+      .setNodeAccountIds([
+        new AccountId(3),
+        // new AccountId(4),
+        // new AccountId(8),
+      ]);
+
     // add hbar transfers
     dealData.hbarTransfers.forEach((transfer) => {
       transaction.addHbarTransfer(transfer.accountId, transfer.amount);
@@ -174,9 +193,74 @@ export class DealService {
       if (transfer.senderId === alias) {
         transfer.senderId = newAccountId;
       }
+      if (transfer.receiverId === alias) {
+        transfer.receiverId = newAccountId;
+      }
     });
 
     return dto;
+  }
+
+  private async injectNftSerialNumber(
+    network: Network,
+    dto: CreateDealDto,
+    serialNumber: number | undefined = undefined,
+  ) {
+    if (!dto.nftTransfers.length) return dto;
+
+    // ONLY HANDLE ONE NFT TRANSFER FOR NOW
+    if (!dto.nftTransfers[0].serialNumber && !serialNumber) {
+      dto.nftTransfers[0].serialNumber = await this.getRandomSerialNumber(
+        network,
+        dto.nftTransfers[0].tokenId,
+        dto.nftTransfers[0].senderId,
+      );
+    }
+    if (!dto.nftTransfers[0].serialNumber) {
+      console.log('ting has run yeahh');
+      dto.nftTransfers[0].serialNumber = serialNumber;
+    }
+
+    return dto;
+  }
+
+  private async getRandomSerialNumber(
+    network: Network,
+    tokenId: string,
+    sellerId: string,
+  ) {
+    let mirrornodeUrl = '';
+    switch (network) {
+      case Network.MAINNET:
+        mirrornodeUrl = MAINNET_MIRRONODE_URL;
+        break;
+      case Network.TESTNET:
+        mirrornodeUrl = TESTNET_MIRRONODE_URL;
+        break;
+      default:
+        throw new BadRequestException('Invalid network');
+    }
+    try {
+      // fetch the nft
+      const res = await fetch(
+        `${mirrornodeUrl}/accounts/${sellerId}/nfts?token.id=${tokenId}`,
+      );
+      const { nfts } = await res.json();
+      // randomly pick a serial number
+      if (nfts.length === 0) {
+        throw new BadRequestException(
+          'The seller does not have own the NFT: ' + tokenId,
+        );
+      }
+      const randomIndex = Math.floor(Math.random() * nfts.length);
+      const randomSerialNumber = nfts[randomIndex].serial_number;
+      return randomSerialNumber;
+    } catch (err) {
+      throw new ServiceUnavailableException('Error setting NFT serial', {
+        description: err.message,
+        cause: err,
+      });
+    }
   }
 
   private validateAmounts(
