@@ -28,12 +28,16 @@ export class AuthController {
   }
 
   @UseGuards(JwtGuard)
-  @Post(':userId/api-keys')
-  async createApiKey(@Param('userId') userId: string, @Request() req) {
+  // @Post(':userId/api-keys')
+  // async createApiKey(@Param('userId') userId: string, @Request() req) {
+  @Post('/api-key')
+  async createApiKey(@Request() req) {
     // Ensure the authenticated user is the same as userId
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
+
+    // is this needed? - the jwt is unique anyway...
+    // if (req.user.sub !== userId) {
+    //   throw new ForbiddenException();
+    // }
 
     return this.authService.generateApiKey(req.user.sub);
   }
