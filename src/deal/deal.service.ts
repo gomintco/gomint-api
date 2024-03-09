@@ -91,8 +91,15 @@ export class DealService {
     const decryptedKeys = signerAccounts.flatMap((account) => {
       let escrowKey = account.user.escrowKey;
       if (account.user.hasEncryptionKey)
-        // user will need to use proxy server if they want to use their escrow key
-        escrowKey = this.keyService.decryptString(escrowKey, encryptionKey);
+        if (!encryptionKey)
+          // user will need to use proxy server if they want to use their escrow key
+          throw new BadRequestException(
+            'You must provide your encryption key using the POST method',
+            {
+              description: 'No encryption key provided',
+            },
+          );
+      escrowKey = this.keyService.decryptString(escrowKey, encryptionKey);
       return account.keys.map((key) => {
         return {
           type: key.type,
