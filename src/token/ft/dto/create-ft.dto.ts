@@ -32,6 +32,7 @@ export class CreateFtDto {
   @IsNumber()
   maxSupply: number;
 
+  @IsOptional()
   @IsBoolean()
   finite: boolean = false;
 
