@@ -67,8 +67,11 @@ export class UserController {
   async createKey(@Req() request, @Body() createKey: CreateKeyDto) {
     const user = request.user as User;
     try {
-      const key = await this.userService.createAndSaveKey(user, createKey);
-      return key;
+      const { type, publicKey } = await this.userService.createAndSaveKey(
+        user,
+        createKey,
+      );
+      return { type, publicKey };
     } catch (err) {
       console.error(err);
       throw new InternalServerErrorException('Error creating key', {
@@ -90,7 +93,7 @@ export class UserController {
         user,
         createAccountDto,
       );
-      const { id, ...rest } = account;
+      const { id } = account;
       return { id };
     } catch (err) {
       console.error(err);
@@ -101,8 +104,8 @@ export class UserController {
     }
   }
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.userService.findAll();
+  // }
 }
