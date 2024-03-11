@@ -11,6 +11,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { CleanedAccount, CleanedKey, CleanedUser } from './user.interface';
 import { Key } from '../key/key.entity';
 import { Account } from '../account/account.entity';
+import { Network } from 'src/app.interface';
 
 @Injectable()
 export class UserService {
@@ -161,7 +162,10 @@ export class UserService {
     if (createUserDto.withAccount) {
       const accountTransaction =
         await this.accountService.createTransactionAndExecute(
-          { key, initialBalance: 0 },
+          {
+            key,
+            initialBalance: createUserDto.network === Network.MAINNET ? 0 : 100,
+          },
           createUserDto.network,
         );
       const account = await accountTransaction.save();
