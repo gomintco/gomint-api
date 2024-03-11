@@ -59,6 +59,8 @@ export class DealController {
   }
 
   // get deal bytes -> POST when account has an encryption key
+  // require API key guard? -> maybe good for tracking?
+  // IF USING API KEY GUARD... ENSURE IT MATCHES WITH THE DEAL CREATOR
   @UseGuards(ApiKeyGuard)
   @Post('bytes')
   @HttpCode(200)

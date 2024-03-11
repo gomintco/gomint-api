@@ -43,7 +43,6 @@ export class UserService {
     const { id, username, network, accounts, keys } = user;
     const cleanedKeys = this.cleanKeys(keys);
     const cleanedAccounts = this.cleanAccounts(accounts);
-    console.log('user', user);
     return {
       id,
       username,
@@ -57,7 +56,6 @@ export class UserService {
     id: string,
   ): Promise<{ id: string; accounts: CleanedAccount[] }> {
     const accounts = await this.accountService.findAccountsByUserId(id);
-    console.log('accounts', accounts);
     return { id, accounts: this.cleanAccounts(accounts) };
   }
 
@@ -163,7 +161,7 @@ export class UserService {
     if (createUserDto.withAccount) {
       const accountTransaction =
         await this.accountService.createTransactionAndExecute(
-          { key, initialBalance: 100 },
+          { key, initialBalance: 0 },
           createUserDto.network,
         );
       const account = await accountTransaction.save();
