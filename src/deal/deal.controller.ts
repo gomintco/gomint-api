@@ -44,10 +44,11 @@ export class DealController {
     @Param('dealid') dealId: string,
     @Query('network') network: Network,
     @Query('buyerId') buyerId: string,
-    @Query('clientId') clientId: string,
-    @Query('serial') serial: string,
+    @Query('clientId') clientId: string | undefined,
+    @Query('serial') serial: string | undefined,
   ) {
     if (!buyerId) throw new BadRequestException('buyerId is required');
+    if (!network) throw new BadRequestException('network is required');
     return this.dealService.getDealBytes(
       network,
       dealId,
@@ -58,7 +59,6 @@ export class DealController {
   }
 
   // get deal bytes -> POST when account has an encryption key
-  // reequire API key guard? -> maybe good for tracking?
   @UseGuards(ApiKeyGuard)
   @Post('bytes')
   @HttpCode(200)
