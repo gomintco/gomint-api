@@ -43,8 +43,8 @@ export class DealController {
   async getDealBytes(
     @Param('dealid') dealId: string,
     @Query('network') network: Network,
-    @Query('buyerId') buyerId: string,
-    @Query('clientId') clientId: string | undefined,
+    @Query('receiverId') receiverId: string,
+    @Query('buyerId') buyerId: string | undefined,
     @Query('serial') serial: string | undefined,
   ) {
     if (!buyerId) throw new BadRequestException('buyerId is required');
@@ -52,8 +52,8 @@ export class DealController {
     return this.dealService.getDealBytes(
       network,
       dealId,
+      receiverId,
       buyerId,
-      clientId,
       serial,
     );
   }
@@ -65,13 +65,13 @@ export class DealController {
   @Post('bytes')
   @HttpCode(200)
   async getDealBytesPost(@Body() getBytesDto: GetBytesDto) {
-    const { network, dealId, buyerId, clientId, encryptionKey, serial } =
+    const { network, dealId, receiverId, buyerId, encryptionKey, serial } =
       getBytesDto;
     return this.dealService.getDealBytes(
       network,
       dealId,
+      receiverId,
       buyerId,
-      clientId,
       encryptionKey,
       serial,
     );

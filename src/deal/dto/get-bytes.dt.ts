@@ -16,11 +16,11 @@ export class GetBytesDto {
   dealId: string;
 
   @IsString()
-  buyerId: string;
+  receiverId: string;
 
   @IsString()
   @IsOptional()
-  clientId: string;
+  buyerId: string;
 
   @IsNumber()
   @IsOptional()
