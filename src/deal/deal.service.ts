@@ -63,8 +63,8 @@ export class DealService {
   async getDealBytes(
     network: Network,
     dealId: string,
-    buyerId: string,
-    clientId: string | undefined,
+    receiverId: string,
+    buyerId: string | undefined,
     encryptionKey: string | undefined = undefined,
     serialNumber: number | undefined = undefined,
   ) {
@@ -72,8 +72,9 @@ export class DealService {
       where: { dealId },
     });
     let dealData = JSON.parse(deal.dealJson) as CreateDealDto;
-    // swap the buyer's account id
-    dealData = this.swapAccountId(dealData, 'buyer', buyerId);
+    // swap the receiver's account id
+    dealData = this.swapAccountId(dealData, 'buyer', buyerId || receiverId);
+    dealData = this.swapAccountId(dealData, 'receiver', receiverId);
     // inject the serial number
     dealData = await this.injectNftSerialNumber(
       network,
@@ -81,7 +82,10 @@ export class DealService {
       serialNumber,
     );
     // create transfer transaction
-    const transaction = this.transferTransaction(dealData, clientId || buyerId);
+    const transaction = this.transferTransaction(
+      dealData,
+      buyerId || receiverId,
+    );
     // get required signers
     const requiredSigners = this.findRequiredSigners(dealData);
     // fetch the signers which we have in db
@@ -181,7 +185,7 @@ export class DealService {
 
   private swapAccountId(
     dto: CreateDealDto,
-    alias: 'default' | 'buyer',
+    alias: 'default' | 'buyer' | 'receiver',
     newAccountId: string,
   ): CreateDealDto {
     dto.hbarTransfers.forEach((transfer) => {
