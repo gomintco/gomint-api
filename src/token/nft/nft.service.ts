@@ -50,6 +50,7 @@ export class NftService extends TokenService {
     const nftCreateInput: NftCreateInput = {
       tokenName: createNftDto.tokenName,
       tokenSymbol: createNftDto.tokenSymbol,
+      maxSupply: createNftDto.maxSupply,
       treasuryAccountId: createNftDto.treasuryAccountId ?? account.id,
       customFees,
       ...tokenPublicKeys,

@@ -47,6 +47,10 @@ export class CreateNftDto {
   feeScheduleKey: string;
 
   @IsOptional()
+  @IsNumber()
+  maxSupply: number;
+
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => FixedFee)
   fixedFees: FixedFee[];
