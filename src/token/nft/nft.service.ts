@@ -45,13 +45,19 @@ export class NftService extends TokenService {
       createNftDto,
       account.keys[0].publicKey,
     );
-    const customFees = this.parseCustomFees(createNftDto, account.id);
+    const customFees = await this.parseCustomFees(user.id, createNftDto);
     //create token
     const nftCreateInput: NftCreateInput = {
       tokenName: createNftDto.tokenName,
       tokenSymbol: createNftDto.tokenSymbol,
       maxSupply: createNftDto.maxSupply,
-      treasuryAccountId: createNftDto.treasuryAccountId ?? account.id,
+      treasuryAccountId:
+        (
+          await this.accountService.getUserAccountByAlias(
+            user.id,
+            createNftDto.treasuryAccountId,
+          )
+        ).id ?? account.id,
       customFees,
       ...tokenPublicKeys,
     };
@@ -66,39 +72,55 @@ export class NftService extends TokenService {
     );
   }
 
-  private parseCustomFees(
+  private async parseCustomFees(
+    userId: string,
     createNftDto: CreateNftDto,
-    defaultId: string,
-  ): CustomFee[] {
+  ): Promise<CustomFee[]> {
     const { fixedFees, royaltyFees } = createNftDto;
     if (!fixedFees && !royaltyFees) return [];
     const customFees: CustomFee[] = [];
     // set fixed fees
     if (fixedFees) {
-      fixedFees.forEach((fee) => {
-        customFees.push(this.parseFixedFee(fee, defaultId));
-      });
+      customFees.push(
+        ...(await Promise.all(
+          fixedFees.map((fee) =>
+            this.accountService
+              .getUserAccountByAlias(userId, fee.feeCollectorAccountId)
+              .then((feeCollectorAccount) =>
+                this.parseFixedFee(fee, feeCollectorAccount.id),
+              ),
+          ),
+        )),
+      );
     }
     // set royalty fees
     if (royaltyFees) {
-      royaltyFees.forEach((fee) => {
-        customFees.push(this.parseRoyaltyFee(fee, defaultId));
-      });
+      customFees.push(
+        ...(await Promise.all(
+          royaltyFees.map((fee) =>
+            this.accountService
+              .getUserAccountByAlias(userId, fee.feeCollectorAccountId)
+              .then((feeCollectorAccount) =>
+                this.parseRoyaltyFee(fee, feeCollectorAccount.id),
+              ),
+          ),
+        )),
+      );
     }
 
     return customFees;
   }
 
-  private parseRoyaltyFee(fee: RoyaltyFee, defaultId: string) {
+  private parseRoyaltyFee(fee: RoyaltyFee, feeCollectorAccountId: string) {
     const royaltyFee = new CustomRoyaltyFee()
-      .setFeeCollectorAccountId(
-        this.getFeeCollectorAccountId(fee.feeCollectorAccountId, defaultId),
-      )
+      .setFeeCollectorAccountId(feeCollectorAccountId)
       .setNumerator(fee.numerator)
       .setDenominator(fee.denominator)
       .setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
     if (fee.fallbackFee)
-      royaltyFee.setFallbackFee(this.parseFixedFee(fee.fallbackFee, defaultId));
+      royaltyFee.setFallbackFee(
+        this.parseFixedFee(fee.fallbackFee, feeCollectorAccountId),
+      );
     return royaltyFee;
   }
 

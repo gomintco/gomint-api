@@ -42,12 +42,18 @@ export class FtService extends TokenService {
       createFtDto,
       account.keys[0].publicKey,
     );
-    const customFees = this.parseCustomFees(createFtDto, account.id);
+    const customFees = await this.parseCustomFees(user.id, createFtDto);
     // create token
     const ftCreateInput: FtCreateInput = {
       tokenName: createFtDto.tokenName,
       tokenSymbol: createFtDto.tokenSymbol,
-      treasuryAccountId: createFtDto.treasuryAccountId ?? account.id,
+      treasuryAccountId:
+        (
+          await this.accountService.getUserAccountByAlias(
+            user.id,
+            createFtDto.treasuryAccountId,
+          )
+        ).id ?? account.id,
       decimals: createFtDto.decimals ?? 0,
       initialSupply: createFtDto.initialSupply ?? 0,
       maxSupply: createFtDto.maxSupply,
@@ -69,32 +75,49 @@ export class FtService extends TokenService {
     );
   }
 
-  private parseCustomFees(
+  private async parseCustomFees(
+    userId: string,
     createFtDto: CreateFtDto,
-    defaultId: string,
-  ): CustomFee[] {
+  ): Promise<CustomFee[]> {
     const { fixedFees, fractionalFees } = createFtDto;
     if (!fixedFees && !fractionalFees) return [];
     const customFees: CustomFee[] = [];
     // set fixed fees
     if (fixedFees)
-      fixedFees.forEach((fee) => {
-        // uses the protected method from the parent class as NFT service also uses it
-        customFees.push(this.parseFixedFee(fee, defaultId));
-      });
+      customFees.push(
+        ...(await Promise.all(
+          fixedFees.map((fee) =>
+            this.accountService
+              .getUserAccountByAlias(userId, fee.feeCollectorAccountId)
+              .then((feeCollectorAccount) =>
+                this.parseFixedFee(fee, feeCollectorAccount.id),
+              ),
+          ),
+        )),
+      );
+
     // set fractional fees
     if (fractionalFees)
-      fractionalFees.forEach((fee) => {
-        customFees.push(this.parseFractionalFee(fee, defaultId));
-      });
+      customFees.push(
+        ...(await Promise.all(
+          fractionalFees.map((fee) =>
+            this.accountService
+              .getUserAccountByAlias(userId, fee.feeCollectorAccountId)
+              .then((feeCollectorAccount) =>
+                this.parseFractionalFee(fee, feeCollectorAccount.id),
+              ),
+          ),
+        )),
+      );
     return customFees;
   }
 
-  private parseFractionalFee(fee: FractionalFee, defaultId: string) {
+  private parseFractionalFee(
+    fee: FractionalFee,
+    feeCollectorAccountId: string,
+  ) {
     return new CustomFractionalFee()
-      .setFeeCollectorAccountId(
-        this.getFeeCollectorAccountId(fee.feeCollectorAccountId, defaultId),
-      )
+      .setFeeCollectorAccountId(feeCollectorAccountId)
       .setNumerator(fee.numerator)
       .setDenominator(fee.denominator)
       .setMax(fee.max)

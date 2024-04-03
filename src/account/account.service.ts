@@ -20,6 +20,19 @@ export class AccountService {
     private clientService: ClientService,
   ) {}
 
+  async getUserAccountByAlias(id: string, alias: string): Promise<Account> {
+    if (alias.startsWith('0.0.'))
+      return this.accountRepository.findOne({
+        where: { user: { id }, id: alias },
+        relations: ['keys'],
+      });
+
+    return this.accountRepository.findOne({
+      where: { user: { id }, alias },
+      relations: ['keys'],
+    });
+  }
+
   async findAccountsByUserId(id: string): Promise<Account[]> {
     return this.accountRepository.find({
       where: { user: { id } },
@@ -68,6 +81,7 @@ export class AccountService {
       const account = this.accountRepository.create({
         id: accountId,
         keys: [accountCreateInput.key],
+        alias: accountCreateInput.alias,
       });
       return new AccountBuilder(this, account);
     } catch (err) {
@@ -91,7 +105,7 @@ export class AccountService {
     return (
       new AccountCreateTransaction()
         .setKey(PublicKey.fromString(accountCreateInput.key.publicKey))
-        .setAlias(accountCreateInput.alias)
+        // .setAlias(accountCreateInput.alias) // removed because this clashes with the account alias
         .setInitialBalance(accountCreateInput.initialBalance)
         .setReceiverSignatureRequired(
           accountCreateInput.receiverSignatureRequired,

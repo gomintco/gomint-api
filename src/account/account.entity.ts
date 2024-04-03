@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
 import { User } from '../user/user.entity';
 import { Key } from '../key/key.entity';
 
@@ -6,6 +6,9 @@ import { Key } from '../key/key.entity';
 export class Account {
   @PrimaryColumn('varchar', { length: 20 })
   id: string;
+
+  @Column({ unique: true })
+  alias: string;
 
   @ManyToOne(() => User, (user) => user.accounts)
   user: User;

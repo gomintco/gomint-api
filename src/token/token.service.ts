@@ -18,10 +18,10 @@ export class TokenService {
   // used in ft and nft services for creating custom fees
   protected parseFixedFee = (
     fee: FixedFee,
-    defaultId: string,
+    feeCollectorAccountId: string,
   ): CustomFixedFee => {
     const customFee = new CustomFixedFee().setFeeCollectorAccountId(
-      this.getFeeCollectorAccountId(fee.feeCollectorAccountId, defaultId),
+      feeCollectorAccountId,
     );
     if (fee.hbarAmount) customFee.setHbarAmount(new Hbar(fee.hbarAmount));
     if (fee.ftId) {
@@ -35,11 +35,14 @@ export class TokenService {
     return customFee;
   };
 
-  // used in ft and nft services for creating custom fees
-  protected getFeeCollectorAccountId = (
-    accountId: string,
-    defaultId: string,
-  ) => (accountId === 'default' ? defaultId : accountId);
+  // removed because account id is fetched using alias implementation now
+  // // used in ft and nft services for creating custom fees
+  // protected getFeeCollectorAccountId = (
+  //   accountId: string,
+  //   defaultId: string,
+  // ) => {
+  //   accountId === 'default' ? defaultId : accountId;
+  // };
 
   protected parsePublicKeys = (
     createTokenDto: CreateFtDto | CreateNftDto,

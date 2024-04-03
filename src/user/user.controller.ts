@@ -21,7 +21,6 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Post('create')
-  // account creation should probably be removed here --- it should be required after signing up with api key
   async create(@Body() createUserDto: CreateUserDto) {
     try {
       // create user model
