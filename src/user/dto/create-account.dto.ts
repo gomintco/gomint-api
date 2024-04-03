@@ -7,5 +7,9 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsString()
+  alias: string;
+
+  @IsOptional()
+  @IsString()
   encryptionKey: string;
 }

@@ -113,7 +113,7 @@ export class UserService {
     // create account and add to user
     const accountTransaction =
       await this.accountService.createTransactionAndExecute(
-        { key },
+        { key, alias: createAccountDto.alias },
         user.network,
       );
     const addUserToAccount = await accountTransaction.addUser(user);
