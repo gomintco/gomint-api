@@ -27,7 +27,8 @@ export class UserController {
       // create user model
       const user = this.userService.create(createUserDto);
       // handle key/account creation if required
-      await this.userService.handleKeyOrAccountCreation(user, createUserDto);
+      // await this.userService.handleKeyOrAccountCreation(user, createUserDto);
+
       // encrypt escrow key if password is provided
       this.userService.encryptEscrowKey(user, createUserDto);
       const savedUser = await this.userService.save(user);
