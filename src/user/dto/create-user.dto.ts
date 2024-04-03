@@ -17,11 +17,11 @@ export class CreateUserDto {
   @IsString()
   hashedPassword: string;
 
-  @IsBoolean()
-  withKey: boolean = false;
-
-  @IsBoolean()
-  withAccount: boolean = false;
+  // REMOVED BECAUSE THESE SHOULD BE HANDLED BY THE USER AFTER SIGNUP
+  // @IsBoolean()
+  // withKey: boolean = false;
+  // @IsBoolean()
+  // withAccount: boolean = false;
 
   @IsOptional()
   @IsString()

@@ -149,30 +149,30 @@ export class UserService {
    * @param user - The user for whom the key or account is to be created.
    * @param createUserDto - The data transfer object containing the user's details.
    */
-  async handleKeyOrAccountCreation(user: User, createUserDto: CreateUserDto) {
-    if (!createUserDto.withAccount && !createUserDto.withKey) {
-      // logging for data tracking in future
-      return console.log('Only creating user');
-    }
+  // async handleKeyOrAccountCreation(user: User, createUserDto: CreateUserDto) {
+  //   if (!createUserDto.withAccount && !createUserDto.withKey) {
+  //     // logging for data tracking in future
+  //     return console.log('Only creating user');
+  //   }
 
-    const key = await this.keyService.create(user.escrowKey).save();
-    user.keys = [key];
-    // user.keys = Promise.resolve([key]);
+  //   const key = await this.keyService.create(user.escrowKey).save();
+  //   user.keys = [key];
+  //   // user.keys = Promise.resolve([key]);
 
-    if (createUserDto.withAccount) {
-      const accountTransaction =
-        await this.accountService.createTransactionAndExecute(
-          {
-            key,
-            initialBalance: createUserDto.network === Network.MAINNET ? 0 : 100,
-          },
-          createUserDto.network,
-        );
-      const account = await accountTransaction.save();
-      user.accounts = [account];
-      // user.accounts = Promise.resolve([account]);
-    }
-  }
+  //   if (createUserDto.withAccount) {
+  //     const accountTransaction =
+  //       await this.accountService.createTransactionAndExecute(
+  //         {
+  //           key,
+  //           initialBalance: createUserDto.network === Network.MAINNET ? 0 : 100,
+  //         },
+  //         createUserDto.network,
+  //       );
+  //     const account = await accountTransaction.save();
+  //     user.accounts = [account];
+  //     // user.accounts = Promise.resolve([account]);
+  //   }
+  // }
 
   /**
    * This function encrypts the escrow key with the user's password.
