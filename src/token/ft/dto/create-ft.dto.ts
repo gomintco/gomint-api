@@ -16,7 +16,6 @@ export class CreateFtDto {
   @IsString()
   tokenSymbol: string;
 
-  @IsOptional() // defaults to main api account
   @IsString()
   treasuryAccountId: string;
 

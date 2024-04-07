@@ -27,23 +27,22 @@ export class NftService extends TokenService {
   }
 
   async createToken(user: User, createNftDto: CreateNftDto) {
-    // get account and keys from user
-    const accounts = await this.accountService.findAccountsByUserId(user.id);
-    // only support one account for now
-    const account = accounts[0];
     let escrowKey = user.escrowKey;
     if (user.hasEncryptionKey)
       escrowKey = this.keyService.decryptString(
         user.escrowKey,
         createNftDto.encryptionKey,
       );
-    // decrypt keys
-    const decryptedKeys = account.keys.map((key) =>
-      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+    // get treasury account and keys for signing
+    const treasuryAccount = await this.accountService.getUserAccountByAlias(
+      user.id,
+      createNftDto.treasuryAccountId,
     );
+
     const tokenPublicKeys = this.parsePublicKeys(
       createNftDto,
-      account.keys[0].publicKey,
+      // public keys default to the treasury account's public key
+      treasuryAccount.keys[0].publicKey,
     );
     const customFees = await this.parseCustomFees(user.id, createNftDto);
     //create token
@@ -51,21 +50,19 @@ export class NftService extends TokenService {
       tokenName: createNftDto.tokenName,
       tokenSymbol: createNftDto.tokenSymbol,
       maxSupply: createNftDto.maxSupply,
-      treasuryAccountId:
-        (
-          await this.accountService.getUserAccountByAlias(
-            user.id,
-            createNftDto.treasuryAccountId,
-          )
-        ).id ?? account.id,
+      treasuryAccountId: treasuryAccount.id,
       customFees,
       ...tokenPublicKeys,
     };
+    // decrypt keys
+    const decryptedKeys = treasuryAccount.keys.map((key) =>
+      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+    );
     return this.createTransactionAndExecute(
       nftCreateInput,
       this.clientService.buildClient(
         user.network,
-        account.id,
+        treasuryAccount.id,
         decryptedKeys[0], // client with multikey?? -> investiage further
         // cant have a multikey client... each user will need to have a client account with only one key...
       ),
@@ -125,31 +122,30 @@ export class NftService extends TokenService {
   }
 
   async mintToken(user: User, mintNftDto: MintNftDto) {
-    const { account, decryptedKeys } =
-      await this.getDefaultAccountAndDecryptKeys(
-        user,
-        user.hasEncryptionKey,
-        mintNftDto.encryptionKey,
-      );
-
-    const nftMintInput: NftMintInput = {
-      tokenId: mintNftDto.tokenId,
-      metadatas: mintNftDto.metadatas.length // handle both metdata formats
-        ? mintNftDto.metadatas.map((metadata) => Buffer.from(metadata))
-        : Array(mintNftDto.amount).fill(Buffer.from(mintNftDto.metadata)),
-    };
-    // if supply key is not default, will need to find the private key
-    // decrypt it, and use it to sign the transaction
-    // therefore will need to built tx and execute after
-    // it should be in the decruptedKeys array
-    return this.mintTransactionAndExecute(
-      nftMintInput,
-      this.clientService.buildClient(
-        user.network,
-        account.id,
-        decryptedKeys[0],
-      ),
-    );
+    // const { account, decryptedKeys } =
+    //   await this.getDefaultAccountAndDecryptKeys(
+    //     user,
+    //     user.hasEncryptionKey,
+    //     mintNftDto.encryptionKey,
+    //   );
+    // const nftMintInput: NftMintInput = {
+    //   tokenId: mintNftDto.tokenId,
+    //   metadatas: mintNftDto.metadatas.length // handle both metdata formats
+    //     ? mintNftDto.metadatas.map((metadata) => Buffer.from(metadata))
+    //     : Array(mintNftDto.amount).fill(Buffer.from(mintNftDto.metadata)),
+    // };
+    // // if supply key is not default, will need to find the private key
+    // // decrypt it, and use it to sign the transaction
+    // // therefore will need to built tx and execute after
+    // // it should be in the decruptedKeys array
+    // return this.mintTransactionAndExecute(
+    //   nftMintInput,
+    //   this.clientService.buildClient(
+    //     user.network,
+    //     account.id,
+    //     decryptedKeys[0],
+    //   ),
+    // );
   }
 
   async createTransactionAndExecute(
@@ -210,23 +206,23 @@ export class NftService extends TokenService {
       .setMetadata(ftMintInput.metadatas);
   }
 
-  private getDefaultAccountAndDecryptKeys = async (
-    user: User,
-    userHasEncryptionKey: boolean,
-    encryptionKey: string,
-  ) => {
-    // get account and keys from user
-    const accounts = await this.accountService.findAccountsByUserId(user.id);
-    // only support one account for now
-    const account = accounts[0];
-    let escrowKey = user.escrowKey;
-    if (userHasEncryptionKey)
-      escrowKey = this.keyService.decryptString(user.escrowKey, encryptionKey);
-    // decrypt keys
-    const decryptedKeys = account.keys.map((key) =>
-      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
-    );
+  // private getDefaultAccountAndDecryptKeys = async (
+  //   user: User,
+  //   userHasEncryptionKey: boolean,
+  //   encryptionKey: string,
+  // ) => {
+  //   // get account and keys from user
+  //   const accounts = await this.accountService.findAccountsByUserId(user.id);
+  //   // only support one account for now
+  //   const account = accounts[0];
+  //   let escrowKey = user.escrowKey;
+  //   if (userHasEncryptionKey)
+  //     escrowKey = this.keyService.decryptString(user.escrowKey, encryptionKey);
+  //   // decrypt keys
+  //   const decryptedKeys = account.keys.map((key) =>
+  //     this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+  //   );
 
-    return { account, decryptedKeys };
-  };
+  //   return { account, decryptedKeys };
+  // };
 }

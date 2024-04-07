@@ -46,7 +46,7 @@ export class TokenService {
 
   protected parsePublicKeys = (
     createTokenDto: CreateFtDto | CreateNftDto,
-    defaultKey: string,
+    defaultKey: string, // will replace with aliases in future - currently default = treasury account key
   ): TokenPublicKeys => {
     const keys = {
       adminKey: createTokenDto.adminKey,
