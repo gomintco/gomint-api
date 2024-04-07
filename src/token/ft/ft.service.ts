@@ -32,28 +32,28 @@ export class FtService extends TokenService {
   }
 
   async createToken(user: User, createFtDto: CreateFtDto) {
-    const { account, decryptedKeys } =
-      await this.getDefaultAccountAndDecryptKeys(
-        user,
-        user.hasEncryptionKey,
+    let escrowKey = user.escrowKey;
+    if (user.hasEncryptionKey)
+      escrowKey = this.keyService.decryptString(
+        user.escrowKey,
         createFtDto.encryptionKey,
       );
+    // get treasury account and keys for signing
+    const treasuryAccount = await this.accountService.getUserAccountByAlias(
+      user.id,
+      createFtDto.treasuryAccountId,
+    );
     const tokenPublicKeys = this.parsePublicKeys(
       createFtDto,
-      account.keys[0].publicKey,
+      treasuryAccount.keys[0].publicKey,
     );
+    console.log('tokenPublicKeys', tokenPublicKeys);
     const customFees = await this.parseCustomFees(user.id, createFtDto);
     // create token
     const ftCreateInput: FtCreateInput = {
       tokenName: createFtDto.tokenName,
       tokenSymbol: createFtDto.tokenSymbol,
-      treasuryAccountId:
-        (
-          await this.accountService.getUserAccountByAlias(
-            user.id,
-            createFtDto.treasuryAccountId,
-          )
-        ).id ?? account.id,
+      treasuryAccountId: treasuryAccount.id,
       decimals: createFtDto.decimals ?? 0,
       initialSupply: createFtDto.initialSupply ?? 0,
       maxSupply: createFtDto.maxSupply,
@@ -63,12 +63,15 @@ export class FtService extends TokenService {
       customFees,
       ...tokenPublicKeys,
     };
-
+    // decrypt keys
+    const decryptedKeys = treasuryAccount.keys.map((key) =>
+      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+    );
     return this.createTransactionAndExecute(
       ftCreateInput,
       this.clientService.buildClient(
         user.network,
-        account.id,
+        treasuryAccount.id,
         decryptedKeys[0], // client with multikey?? -> investiage further
         // cant have a multikey client... each user will need to have a client account with only one key...
       ),
@@ -127,29 +130,29 @@ export class FtService extends TokenService {
   }
 
   async mintToken(user: User, mintFtDto: MintFtDto) {
-    const { account, decryptedKeys } =
-      await this.getDefaultAccountAndDecryptKeys(
-        user,
-        user.hasEncryptionKey,
-        mintFtDto.encryptionKey,
-      );
-    const ftMintInput: FtMintInput = {
-      tokenId: mintFtDto.tokenId,
-      amount: mintFtDto.amount,
-    };
-    // if supply key is not default, will need to find the private key
-    // decrypt it, and use it to sign the transaction
-    // therefore will need to built tx and execute after
-    // it should be in the decruptedKeys array
-    return this.mintTransactionAndExecute(
-      ftMintInput,
-      this.clientService.buildClient(
-        user.network,
-        account.id,
-        decryptedKeys[0], // client with multikey?? -> investiage further
-        // cant have a multikey client... each user will need to have a client account with only one key...
-      ),
-    );
+    // const { account, decryptedKeys } =
+    //   await this.getDefaultAccountAndDecryptKeys(
+    //     user,
+    //     user.hasEncryptionKey,
+    //     mintFtDto.encryptionKey,
+    //   );
+    // const ftMintInput: FtMintInput = {
+    //   tokenId: mintFtDto.tokenId,
+    //   amount: mintFtDto.amount,
+    // };
+    // // if supply key is not default, will need to find the private key
+    // // decrypt it, and use it to sign the transaction
+    // // therefore will need to built tx and execute after
+    // // it should be in the decruptedKeys array
+    // return this.mintTransactionAndExecute(
+    //   ftMintInput,
+    //   this.clientService.buildClient(
+    //     user.network,
+    //     account.id,
+    //     decryptedKeys[0], // client with multikey?? -> investiage further
+    //     // cant have a multikey client... each user will need to have a client account with only one key...
+    //   ),
+    // );
   }
 
   async createTransactionAndExecute(
@@ -176,6 +179,7 @@ export class FtService extends TokenService {
   }
 
   private createTransaction(ftCreateInput: FtCreateInput) {
+    console.log('ftCreateInput', ftCreateInput);
     const transaction = new TokenCreateTransaction()
       .setTokenName(ftCreateInput.tokenName)
       .setTokenSymbol(ftCreateInput.tokenSymbol)
@@ -209,23 +213,23 @@ export class FtService extends TokenService {
       .setAmount(ftMintInput.amount);
   }
 
-  private getDefaultAccountAndDecryptKeys = async (
-    user: User,
-    userHasEncryptionKey: boolean,
-    encryptionKey: string,
-  ) => {
-    // get account and keys from user
-    const accounts = await this.accountService.findAccountsByUserId(user.id);
-    // only support one account for now
-    const account = accounts[0];
-    let escrowKey = user.escrowKey;
-    if (userHasEncryptionKey)
-      escrowKey = this.keyService.decryptString(user.escrowKey, encryptionKey);
-    // decrypt keys
-    const decryptedKeys = account.keys.map((key) =>
-      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
-    );
+  // private getDefaultAccountAndDecryptKeys = async (
+  //   user: User,
+  //   userHasEncryptionKey: boolean,
+  //   encryptionKey: string,
+  // ) => {
+  //   // get account and keys from user
+  //   const accounts = await this.accountService.findAccountsByUserId(user.id);
+  //   // only support one account for now
+  //   const account = accounts[0];
+  //   let escrowKey = user.escrowKey;
+  //   if (userHasEncryptionKey)
+  //     escrowKey = this.keyService.decryptString(user.escrowKey, encryptionKey);
+  //   // decrypt keys
+  //   const decryptedKeys = account.keys.map((key) =>
+  //     this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+  //   );
 
-    return { account, decryptedKeys };
-  };
+  //   return { account, decryptedKeys };
+  // };
 }

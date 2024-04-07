@@ -20,15 +20,16 @@ export class AccountService {
     private clientService: ClientService,
   ) {}
 
-  async getUserAccountByAlias(id: string, alias: string): Promise<Account> {
-    if (alias.startsWith('0.0.'))
-      return this.accountRepository.findOne({
-        where: { user: { id }, id: alias },
-        relations: ['keys'],
-      });
+  async getUserAccountByAlias(userId: string, alias: string): Promise<Account> {
+    // if (alias.startsWith('0.0.'))
+    //   return this.accountRepository.findOne({
+    //     where: { user: { id }, id: alias },
+    //     relations: ['keys'],
+    //   });
 
+    // can search by alias becaue if no alias, account id is used as alias
     return this.accountRepository.findOne({
-      where: { user: { id }, alias },
+      where: { user: { id: userId }, alias },
       relations: ['keys'],
     });
   }
@@ -81,7 +82,7 @@ export class AccountService {
       const account = this.accountRepository.create({
         id: accountId,
         keys: [accountCreateInput.key],
-        alias: accountCreateInput.alias,
+        alias: accountCreateInput.alias ?? accountId,
       });
       return new AccountBuilder(this, account);
     } catch (err) {
