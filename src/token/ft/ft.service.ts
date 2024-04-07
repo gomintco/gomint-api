@@ -229,24 +229,4 @@ export class FtService extends TokenService {
       .setTokenId(ftMintInput.tokenId)
       .setAmount(ftMintInput.amount);
   }
-
-  // private getDefaultAccountAndDecryptKeys = async (
-  //   user: User,
-  //   userHasEncryptionKey: boolean,
-  //   encryptionKey: string,
-  // ) => {
-  //   // get account and keys from user
-  //   const accounts = await this.accountService.findAccountsByUserId(user.id);
-  //   // only support one account for now
-  //   const account = accounts[0];
-  //   let escrowKey = user.escrowKey;
-  //   if (userHasEncryptionKey)
-  //     escrowKey = this.keyService.decryptString(user.escrowKey, encryptionKey);
-  //   // decrypt keys
-  //   const decryptedKeys = account.keys.map((key) =>
-  //     this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
-  //   );
-
-  //   return { account, decryptedKeys };
-  // };
 }
