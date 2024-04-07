@@ -21,17 +21,26 @@ export class AccountService {
   ) {}
 
   async getUserAccountByAlias(userId: string, alias: string): Promise<Account> {
-    // if (alias.startsWith('0.0.'))
-    //   return this.accountRepository.findOne({
-    //     where: { user: { id }, id: alias },
-    //     relations: ['keys'],
-    //   });
-
     // can search by alias becaue if no alias, account id is used as alias
     return this.accountRepository.findOne({
       where: { user: { id: userId }, alias },
       relations: ['keys'],
     });
+  }
+
+  async getUserAccountByPublicKey(
+    userId: string,
+    publicKey: string,
+  ): Promise<Account> {
+    return this.accountRepository
+      .createQueryBuilder('account')
+      .leftJoinAndSelect('account.keys', 'key')
+      .leftJoinAndSelect('account.user', 'user')
+      .where('user.id = :userId', { userId })
+      .andWhere('key.publicKey LIKE :publicKey', {
+        publicKey: `%${publicKey}%`,
+      })
+      .getOne();
   }
 
   async findAccountsByUserId(id: string): Promise<Account[]> {

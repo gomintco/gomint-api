@@ -47,7 +47,6 @@ export class FtService extends TokenService {
       createFtDto,
       treasuryAccount.keys[0].publicKey,
     );
-    console.log('tokenPublicKeys', tokenPublicKeys);
     const customFees = await this.parseCustomFees(user.id, createFtDto);
     // create token
     const ftCreateInput: FtCreateInput = {
@@ -130,29 +129,48 @@ export class FtService extends TokenService {
   }
 
   async mintToken(user: User, mintFtDto: MintFtDto) {
-    // const { account, decryptedKeys } =
-    //   await this.getDefaultAccountAndDecryptKeys(
-    //     user,
-    //     user.hasEncryptionKey,
-    //     mintFtDto.encryptionKey,
-    //   );
-    // const ftMintInput: FtMintInput = {
-    //   tokenId: mintFtDto.tokenId,
-    //   amount: mintFtDto.amount,
-    // };
-    // // if supply key is not default, will need to find the private key
-    // // decrypt it, and use it to sign the transaction
-    // // therefore will need to built tx and execute after
-    // // it should be in the decruptedKeys array
-    // return this.mintTransactionAndExecute(
-    //   ftMintInput,
-    //   this.clientService.buildClient(
-    //     user.network,
-    //     account.id,
-    //     decryptedKeys[0], // client with multikey?? -> investiage further
-    //     // cant have a multikey client... each user will need to have a client account with only one key...
-    //   ),
-    // );
+    let escrowKey = user.escrowKey;
+    if (user.hasEncryptionKey)
+      escrowKey = this.keyService.decryptString(
+        user.escrowKey,
+        mintFtDto.encryptionKey,
+      );
+    // fetch supplyKey from mirrornode
+    const supplyKey = await this.getTokenMirronodeInfo(
+      user.network,
+      mintFtDto.tokenId,
+    )
+      .then((info) => info.supply_key.key)
+      .catch(() => {
+        throw new Error(
+          `Token ${mintFtDto.tokenId} does not have a supply key`,
+        );
+      });
+    // get and decrypt private keys for supply key
+    const supplyAccount = await this.accountService.getUserAccountByPublicKey(
+      user.id,
+      supplyKey,
+    );
+    if (!supplyAccount)
+      // could probaly throw error in typeorm function
+      throw new Error('Your GoMint user does not own this supply account');
+    // decrypt keys
+    const decryptedKeys = supplyAccount.keys.map((key) =>
+      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+    );
+    const ftMintInput: FtMintInput = {
+      tokenId: mintFtDto.tokenId,
+      amount: mintFtDto.amount,
+    };
+    return this.mintTransactionAndExecute(
+      ftMintInput,
+      this.clientService.buildClient(
+        user.network,
+        supplyAccount.id,
+        decryptedKeys[0], // client with multikey?? -> investiage further
+        // cant have a multikey client... each user will need to have a client account with only one key...
+      ),
+    );
   }
 
   async createTransactionAndExecute(
@@ -179,7 +197,6 @@ export class FtService extends TokenService {
   }
 
   private createTransaction(ftCreateInput: FtCreateInput) {
-    console.log('ftCreateInput', ftCreateInput);
     const transaction = new TokenCreateTransaction()
       .setTokenName(ftCreateInput.tokenName)
       .setTokenSymbol(ftCreateInput.tokenSymbol)
