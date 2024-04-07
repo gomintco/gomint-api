@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotIn, IsOptional, IsString } from 'class-validator';
 import { KeyType } from '../../app.interface';
 
 export class CreateAccountDto {
@@ -11,5 +11,6 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsString()
+  @IsNotIn(['buyer', 'receiver'])
   encryptionKey: string;
 }

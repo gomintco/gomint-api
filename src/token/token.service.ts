@@ -9,11 +9,35 @@ import {
   Key,
   PublicKey,
 } from '@hashgraph/sdk';
-import { FixedFee, TokenPublicKeys } from './token.interface';
+import {
+  FixedFee,
+  TokenMirrornodeInfo,
+  TokenPublicKeys,
+} from './token.interface';
 import { BadRequestException } from '@nestjs/common';
+import { Network } from 'src/app.interface';
+import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
 
 export class TokenService {
   constructor() {}
+
+  protected async getTokenMirronodeInfo(
+    network: Network,
+    tokenId: string,
+  ): Promise<TokenMirrornodeInfo> {
+    let mirrornodeUrl = '';
+    switch (network) {
+      case Network.TESTNET:
+        mirrornodeUrl = TESTNET_MIRRONODE_URL;
+        break;
+      case Network.MAINNET:
+        mirrornodeUrl = MAINNET_MIRRONODE_URL;
+        break;
+    }
+    const res = await fetch(`${mirrornodeUrl}/tokens/${tokenId}`);
+    const data = await res.json();
+    return data as TokenMirrornodeInfo;
+  }
 
   // used in ft and nft services for creating custom fees
   protected parseFixedFee = (

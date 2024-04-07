@@ -8,6 +8,7 @@ import {
   TokenMintTransaction,
   CustomFee,
   CustomRoyaltyFee,
+  TokenId,
 } from '@hashgraph/sdk';
 import { User } from 'src/user/user.entity';
 import { CreateNftDto, RoyaltyFee } from './dto/create-nft.dto';
@@ -16,6 +17,7 @@ import { ClientService } from 'src/client/client.service';
 import { AccountService } from 'src/account/account.service';
 import { TokenService } from '../token.service';
 import { MintNftDto } from './dto/mint-nft.dto';
+
 @Injectable()
 export class NftService extends TokenService {
   constructor(
@@ -122,30 +124,43 @@ export class NftService extends TokenService {
   }
 
   async mintToken(user: User, mintNftDto: MintNftDto) {
-    // const { account, decryptedKeys } =
-    //   await this.getDefaultAccountAndDecryptKeys(
-    //     user,
-    //     user.hasEncryptionKey,
-    //     mintNftDto.encryptionKey,
-    //   );
-    // const nftMintInput: NftMintInput = {
-    //   tokenId: mintNftDto.tokenId,
-    //   metadatas: mintNftDto.metadatas.length // handle both metdata formats
-    //     ? mintNftDto.metadatas.map((metadata) => Buffer.from(metadata))
-    //     : Array(mintNftDto.amount).fill(Buffer.from(mintNftDto.metadata)),
-    // };
-    // // if supply key is not default, will need to find the private key
-    // // decrypt it, and use it to sign the transaction
-    // // therefore will need to built tx and execute after
-    // // it should be in the decruptedKeys array
-    // return this.mintTransactionAndExecute(
-    //   nftMintInput,
-    //   this.clientService.buildClient(
-    //     user.network,
-    //     account.id,
-    //     decryptedKeys[0],
-    //   ),
-    // );
+    let escrowKey = user.escrowKey;
+    if (user.hasEncryptionKey)
+      escrowKey = this.keyService.decryptString(
+        user.escrowKey,
+        mintNftDto.encryptionKey,
+      );
+    // fetch supplyKey from mirrornode
+    const supplyKey = await this.getTokenMirronodeInfo(
+      user.network,
+      mintNftDto.tokenId,
+    ).then((info) => info.supply_key.key);
+    // get and decrypt private keys for supply key
+    const supplyAccount = await this.accountService.getUserAccountByPublicKey(
+      user.id,
+      supplyKey,
+    );
+    if (!supplyAccount)
+      // could probaly throw error in typeorm function
+      throw new Error('Your GoMint user does not own this supply account');
+    // decrypt keys
+    const decryptedKeys = supplyAccount.keys.map((key) =>
+      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+    );
+    const nftMintInput: NftMintInput = {
+      tokenId: mintNftDto.tokenId,
+      metadatas: mintNftDto.metadatas.length // handle both metdata formats
+        ? mintNftDto.metadatas.map((metadata) => Buffer.from(metadata))
+        : Array(mintNftDto.amount).fill(Buffer.from(mintNftDto.metadata)),
+    };
+    return this.mintTransactionAndExecute(
+      nftMintInput,
+      this.clientService.buildClient(
+        user.network,
+        supplyAccount.id,
+        decryptedKeys[0],
+      ),
+    );
   }
 
   async createTransactionAndExecute(
