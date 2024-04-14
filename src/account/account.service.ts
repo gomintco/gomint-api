@@ -20,8 +20,36 @@ export class AccountService {
     private clientService: ClientService,
   ) {}
 
+  /**
+   * This function retrieves the account ID of a user by their alias.
+   * It takes the user ID and alias as parameters.
+   * It returns a Promise that resolves to the account ID as a string.
+   *
+   * @param {string} userId - The ID of the user.
+   * @param {string} alias - The alias of the account.
+   * @returns {Promise<string>} A Promise that resolves to the account ID as a string.
+   */
+  async getUserAccountIdByAlias(
+    userId: string,
+    alias: string,
+  ): Promise<string> {
+    const account = await this.accountRepository.findOne({
+      where: { user: { id: userId }, alias },
+    });
+    return account.id;
+  }
+
+  /**
+   * This function retrieves the user account by their alias.
+   * It takes the user ID and alias as parameters.
+   * It returns a Promise that resolves to the Account object with its relevant keys.
+   *
+   * @param {string} userId - The ID of the user.
+   * @param {string} alias - The alias of the account.
+   * @returns {Promise<Account>} A Promise that resolves to the Account object with its relevant keys.
+   */
   async getUserAccountByAlias(userId: string, alias: string): Promise<Account> {
-    // can search by alias becaue if no alias, account id is used as alias
+    // can search by alias because if no alias, account ID is used as alias
     return this.accountRepository.findOne({
       where: { user: { id: userId }, alias },
       relations: ['keys'],

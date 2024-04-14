@@ -39,12 +39,12 @@ export class DealController {
   }
 
   // get deal bytes -> GET when account does not have an encryption key
-  @Get('bytes/:dealid')
+  @Get('bytes/:dealId')
   async getDealBytes(
-    @Param('dealid') dealId: string,
+    @Param('dealId') dealId: string,
     @Query('network') network: Network,
-    @Query('receiverId') receiverId: string,
-    @Query('buyerId') buyerId: string | undefined,
+    @Query('buyerId') buyerId: string,
+    @Query('receiverId') receiverId: string | undefined,
     @Query('serial') serial: string | undefined,
   ) {
     if (!buyerId) throw new BadRequestException('buyerId is required');
@@ -52,9 +52,9 @@ export class DealController {
     return this.dealService.getDealBytes(
       network,
       dealId,
-      receiverId,
       buyerId,
-      serial,
+      receiverId,
+      Number(serial),
     );
   }
 
@@ -70,10 +70,10 @@ export class DealController {
     return this.dealService.getDealBytes(
       network,
       dealId,
-      receiverId,
       buyerId,
-      encryptionKey,
+      receiverId,
       serial,
+      encryptionKey,
     );
   }
 }

@@ -1,4 +1,4 @@
-import { Client } from '@hashgraph/sdk';
+import { Client, Hbar } from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
 import { Network } from 'src/app.interface';
 
@@ -24,9 +24,13 @@ export class ClientService {
   buildClient(network: Network, accountId: string, privateKey: string) {
     switch (network) {
       case Network.MAINNET:
-        return Client.forMainnet().setOperator(accountId, privateKey);
+        return Client.forMainnet()
+          .setOperator(accountId, privateKey)
+          .setDefaultMaxTransactionFee(new Hbar(10));
       case Network.TESTNET:
-        return Client.forTestnet().setOperator(accountId, privateKey);
+        return Client.forTestnet()
+          .setOperator(accountId, privateKey)
+          .setDefaultMaxTransactionFee(new Hbar(10));
       default:
         throw new Error('Invalid network');
     }

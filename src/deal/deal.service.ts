@@ -4,7 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { CreateDealDto } from './dto/create-deal.dto';
-import { createHash, sign } from 'crypto';
+import { createHash } from 'crypto';
 import { User } from 'src/user/user.entity';
 import { AccountService } from 'src/account/account.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -38,10 +38,16 @@ export class DealService {
     if (!isValid) {
       throw new Error('HBAR or fungible token transfers do not add up to 0');
     }
-    // get the user's default account
-    const accounts = await this.accountService.findAccountsByUserId(user.id);
-    const account = accounts[0];
-    createDealDto = this.swapAccountId(createDealDto, 'default', account.id);
+    // swap aliases with account ids
+    createDealDto = await this.swapAliasForAccountId(
+      createDealDto,
+      user.id,
+    ).catch((err) => {
+      console.error('Error swapping aliases for account ids: ' + err.message);
+      throw new Error(
+        'Error swapping aliases for account ids. Ensure all aliases are valid',
+      );
+    });
     // create the deal hash
     const dealJson = JSON.stringify(createDealDto);
     const dealId = createHash('sha256').update(dealJson).digest('hex');
@@ -63,18 +69,28 @@ export class DealService {
   async getDealBytes(
     network: Network,
     dealId: string,
-    receiverId: string,
-    buyerId: string | undefined,
-    encryptionKey: string | undefined = undefined,
+    buyerId: string,
+    receiverId: string | undefined = undefined,
     serialNumber: number | undefined = undefined,
+    encryptionKey: string | undefined = undefined,
   ) {
-    const deal = await this.dealRepository.findOne({
-      where: { dealId },
-    });
+    console.log('dealId', dealId);
+    const deal = await this.dealRepository
+      .findOneOrFail({
+        where: { dealId },
+      })
+      .catch((err) => {
+        console.error('Error fetching deal: ' + err.message);
+        throw new BadRequestException('Unable to find deal', {
+          description: "The dealId doesn't exist or is invalid",
+        });
+      });
+
     let dealData = JSON.parse(deal.dealJson) as CreateDealDto;
+
     // swap the receiver's account id
-    dealData = this.swapAccountId(dealData, 'buyer', buyerId || receiverId);
-    dealData = this.swapAccountId(dealData, 'receiver', receiverId);
+    dealData = this.swapAccountId(dealData, 'buyer', buyerId);
+    dealData = this.swapAccountId(dealData, 'receiver', buyerId || receiverId);
     // inject the serial number
     dealData = await this.injectNftSerialNumber(
       network,
@@ -94,7 +110,7 @@ export class DealService {
     // decrypt the keys
     const decryptedKeys = signerAccounts.flatMap((account) => {
       let escrowKey = account.user.escrowKey;
-      if (account.user.hasEncryptionKey)
+      if (account.user.hasEncryptionKey) {
         if (!encryptionKey)
           // user will need to use proxy server if they want to use their escrow key
           throw new BadRequestException(
@@ -103,7 +119,8 @@ export class DealService {
               description: 'No encryption key provided',
             },
           );
-      escrowKey = this.keyService.decryptString(escrowKey, encryptionKey);
+        escrowKey = this.keyService.decryptString(escrowKey, encryptionKey);
+      }
       return account.keys.map((key) => {
         return {
           type: key.type,
@@ -150,6 +167,7 @@ export class DealService {
   }
 
   private transferTransaction(dealData: CreateDealDto, feePayerId: string) {
+    console.log('dealData', dealData);
     const transactionId = TransactionId.generate(feePayerId);
     const transaction = new TransferTransaction()
       .setTransactionId(transactionId)
@@ -183,9 +201,73 @@ export class DealService {
     return transaction.freeze();
   }
 
+  private async swapAliasForAccountId(
+    dto: CreateDealDto,
+    userId: string,
+  ): Promise<CreateDealDto> {
+    // Helper function to determine if the account should be swapped
+    const shouldSwap = (accountId: string) =>
+      accountId !== 'buyer' &&
+      accountId !== 'receiver' &&
+      !accountId.startsWith('0.0.'); // if already in account id format, no need to swap
+
+    // Create an array to hold all the promises for parallel processing
+    const promises = [];
+
+    // Process hbarTransfers
+    dto.hbarTransfers.forEach((transfer) => {
+      if (shouldSwap(transfer.accountId)) {
+        const promise = this.accountService
+          .getUserAccountIdByAlias(userId, transfer.accountId)
+          .then((newAccountId) => {
+            transfer.accountId = newAccountId;
+          });
+        promises.push(promise);
+      }
+    });
+
+    // Process ftTransfers
+    dto.ftTransfers.forEach((transfer) => {
+      if (shouldSwap(transfer.accountId)) {
+        const promise = this.accountService
+          .getUserAccountIdByAlias(userId, transfer.accountId)
+          .then((newAccountId) => {
+            transfer.accountId = newAccountId;
+          });
+        promises.push(promise);
+      }
+    });
+
+    // Process nftTransfers for both senderId and receiverId
+    dto.nftTransfers.forEach((transfer) => {
+      if (shouldSwap(transfer.senderId)) {
+        const senderPromise = this.accountService
+          .getUserAccountIdByAlias(userId, transfer.senderId)
+          .then((newSenderId) => {
+            transfer.senderId = newSenderId;
+          });
+        promises.push(senderPromise);
+      }
+      if (shouldSwap(transfer.receiverId)) {
+        const receiverPromise = this.accountService
+          .getUserAccountIdByAlias(userId, transfer.receiverId)
+          .then((newReceiverId) => {
+            transfer.receiverId = newReceiverId;
+          });
+        promises.push(receiverPromise);
+      }
+    });
+
+    // Wait for all promises to resolve
+    await Promise.all(promises);
+
+    // Return the updated DTO
+    return dto;
+  }
+
   private swapAccountId(
     dto: CreateDealDto,
-    alias: 'default' | 'buyer' | 'receiver',
+    alias: 'buyer' | 'receiver',
     newAccountId: string,
   ): CreateDealDto {
     dto.hbarTransfers.forEach((transfer) => {
@@ -260,7 +342,7 @@ export class DealService {
       // randomly pick a serial number
       if (nfts.length === 0) {
         throw new BadRequestException(
-          'The seller does not have own the NFT: ' + tokenId,
+          `The seller ${sellerId} does not own the NFT: ${tokenId}`,
         );
       }
       const randomIndex = Math.floor(Math.random() * nfts.length);
