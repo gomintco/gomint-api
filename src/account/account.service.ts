@@ -21,6 +21,25 @@ export class AccountService {
   ) {}
 
   /**
+   * Checks if an account alias already exists for a given user ID.
+   * @param userId The user's ID to check the alias against.
+   * @param alias The alias to check for existence.
+   * @returns Promise resolving to a boolean indicating if the alias exists.
+   */
+  async accountAliasExists(userId: string, alias: string): Promise<boolean> {
+    const account = await this.accountRepository.findOne({
+      where: {
+        alias: alias,
+        user: { id: userId },
+      },
+      relations: ['user'], // This ensures the user relationship is joined
+    });
+
+    // Return true if an account is found, otherwise false
+    return !!account;
+  }
+
+  /**
    * This function retrieves the account ID of a user by their alias.
    * It takes the user ID and alias as parameters.
    * It returns a Promise that resolves to the account ID as a string.
@@ -49,6 +68,12 @@ export class AccountService {
    * @returns {Promise<Account>} A Promise that resolves to the Account object with its relevant keys.
    */
   async getUserAccountByAlias(userId: string, alias: string): Promise<Account> {
+    if (alias.startsWith('0.0.')) {
+      // this is very hacky... handles edge case where royalty fee is a non-user account
+      // current issues: if tx payer is 0.0. alias, this doesn't return a key to sign
+      // also, currently if a non 0.0. alias exists, the 0.0. cannot be used as signer
+      return { id: alias } as Account;
+    }
     // can search by alias because if no alias, account ID is used as alias
     return this.accountRepository.findOne({
       where: { user: { id: userId }, alias },
@@ -120,6 +145,7 @@ export class AccountService {
         id: accountId,
         keys: [accountCreateInput.key],
         alias: accountCreateInput.alias ?? accountId,
+        // userId: accountCreateInput.key.user.id, // set user ID - this is used for ensuring unique account alias's per user
       });
       return new AccountBuilder(this, account);
     } catch (err) {

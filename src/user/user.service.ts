@@ -21,7 +21,6 @@ export class UserService {
     private keyService: KeyService,
     private accountService: AccountService,
   ) {}
-
   /**
    * This function returns all the users in the database.
    *
@@ -101,6 +100,13 @@ export class UserService {
   }
 
   async createAndSaveAccount(user: User, createAccountDto: CreateAccountDto) {
+    // check if alias is unique
+    const accountAliasExists = await this.accountService.accountAliasExists(
+      user.id,
+      createAccountDto.alias,
+    );
+    if (accountAliasExists) throw new Error('Account alias already exists');
+
     const escrowKey = this.handleDecryptEscrowKey(
       user,
       createAccountDto.encryptionKey,
