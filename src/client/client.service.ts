@@ -26,11 +26,11 @@ export class ClientService {
       case Network.MAINNET:
         return Client.forMainnet()
           .setOperator(accountId, privateKey)
-          .setDefaultMaxTransactionFee(new Hbar(10));
+          .setDefaultMaxTransactionFee(new Hbar(50));
       case Network.TESTNET:
         return Client.forTestnet()
           .setOperator(accountId, privateKey)
-          .setDefaultMaxTransactionFee(new Hbar(10));
+          .setDefaultMaxTransactionFee(new Hbar(50));
       default:
         throw new Error('Invalid network');
     }

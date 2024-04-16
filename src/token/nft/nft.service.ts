@@ -36,6 +36,11 @@ export class NftService extends TokenService {
         createNftDto.encryptionKey,
       );
     // get treasury account and keys for signing
+    // TO DO
+    // here, if treasuryAccountId is 0.0. type then check by account id first
+    // if not found, then throw error
+    // else check by alias
+    // this means if a non 0.0. alias's account id is being provided, tx will still fly
     const treasuryAccount = await this.accountService.getUserAccountByAlias(
       user.id,
       createNftDto.treasuryAccountId,
