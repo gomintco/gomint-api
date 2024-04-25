@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/user/user.service';
 import { ApiKey } from './api-key.entity';
 import { Repository } from 'typeorm';
-import { getRandomValues } from 'crypto';
+import * as crypto from 'crypto';
 import { User } from 'src/user/user.entity';
 
 @Injectable()
@@ -78,13 +78,24 @@ export class AuthService {
   private generateCryptoSecureKey(length = 32) {
     // Ensure the length is an integer and at least 1
     length = Math.max(1, Math.floor(length));
-    // Create a Uint8Array of the desired length
-    const array = new Uint8Array(length);
-    // Populate the array with cryptographically strong random values
-    getRandomValues(array);
-    // Convert the array to a hexadecimal string
-    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
-      '',
-    );
+    // Generate a buffer with cryptographically strong random bytes
+    const buffer = crypto.randomBytes(length);
+    // Convert the buffer to a hexadecimal string
+    return Array.from(buffer, (byte) =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
   }
+
+  // private generateCryptoSecureKey(length = 32) {
+  //   // Ensure the length is an integer and at least 1
+  //   length = Math.max(1, Math.floor(length));
+  //   // Create a Uint8Array of the desired length
+  //   const array = new Uint8Array(length);
+  //   // Populate the array with cryptographically strong random values
+  //   getRandomValues(array);
+  //   // Convert the array to a hexadecimal string
+  //   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
+  //     '',
+  //   );
+  // }
 }
