@@ -17,7 +17,7 @@ import {
   TransferTransaction,
 } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
-import { Network } from 'src/app.interface';
+import { DealAlias, Network } from 'src/app.interface';
 import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
 
 @Injectable()
@@ -69,8 +69,8 @@ export class DealService {
   async getDealBytes(
     network: Network,
     dealId: string,
-    buyerId: string,
-    receiverId: string | undefined = undefined,
+    receiverId: string,
+    payerId: string | undefined = undefined,
     serialNumber: number | undefined = undefined,
     encryptionKey: string | undefined = undefined,
   ) {
@@ -89,8 +89,12 @@ export class DealService {
     let dealData = JSON.parse(deal.dealJson) as CreateDealDto;
 
     // swap the receiver's account id
-    dealData = this.swapAccountId(dealData, 'buyer', buyerId);
-    dealData = this.swapAccountId(dealData, 'receiver', buyerId || receiverId);
+    dealData = this.swapAccountId(dealData, DealAlias.RECEIVER, receiverId);
+    dealData = this.swapAccountId(
+      dealData,
+      DealAlias.PAYER,
+      payerId || receiverId,
+    );
     // inject the serial number
     dealData = await this.injectNftSerialNumber(
       network,
@@ -100,7 +104,7 @@ export class DealService {
     // create transfer transaction
     const transaction = this.transferTransaction(
       dealData,
-      buyerId || receiverId,
+      payerId || receiverId,
     );
     // get required signers
     const requiredSigners = this.findRequiredSigners(dealData);
@@ -207,8 +211,8 @@ export class DealService {
   ): Promise<CreateDealDto> {
     // Helper function to determine if the account should be swapped
     const shouldSwap = (accountId: string) =>
-      accountId !== 'buyer' &&
       accountId !== 'receiver' &&
+      accountId !== 'payer' &&
       !accountId.startsWith('0.0.'); // if already in account id format, no need to swap
 
     // Create an array to hold all the promises for parallel processing
@@ -267,7 +271,7 @@ export class DealService {
 
   private swapAccountId(
     dto: CreateDealDto,
-    alias: 'buyer' | 'receiver',
+    alias: DealAlias,
     newAccountId: string,
   ): CreateDealDto {
     dto.hbarTransfers.forEach((transfer) => {

@@ -20,7 +20,7 @@ export class GetBytesDto {
 
   @IsString()
   @IsOptional()
-  buyerId: string;
+  payerId: string | undefined;
 
   @IsNumber()
   @IsOptional()

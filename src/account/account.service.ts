@@ -75,7 +75,7 @@ export class AccountService {
       return { id: alias } as Account;
     }
     // can search by alias because if no alias, account ID is used as alias
-    return this.accountRepository.findOne({
+    return this.accountRepository.findOneOrFail({
       where: { user: { id: userId }, alias },
       relations: ['keys'],
     });
