@@ -20,6 +20,10 @@ export class CreateFtDto {
   treasuryAccountId: string;
 
   @IsOptional()
+  @IsString()
+  payerId: string;
+
+  @IsOptional()
   @IsNumber()
   decimals: number = 0;
 

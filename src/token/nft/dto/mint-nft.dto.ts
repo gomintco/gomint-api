@@ -11,6 +11,10 @@ export class MintNftDto {
   @IsString()
   tokenId: string;
 
+  @IsOptional()
+  @IsString()
+  payerId: string;
+
   @IsArray()
   @IsString({ each: true })
   metadatas: string[] = [];

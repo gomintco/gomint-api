@@ -1,4 +1,4 @@
-import { Client, Hbar } from '@hashgraph/sdk';
+import { AccountId, Client, Hbar, PrivateKey } from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
 import { Network } from 'src/app.interface';
 
@@ -21,7 +21,11 @@ export class ClientService {
     }
   }
 
-  buildClient(network: Network, accountId: string, privateKey: string) {
+  buildClient(
+    network: Network,
+    accountId: string | AccountId,
+    privateKey: string | PrivateKey,
+  ) {
     switch (network) {
       case Network.MAINNET:
         return Client.forMainnet()

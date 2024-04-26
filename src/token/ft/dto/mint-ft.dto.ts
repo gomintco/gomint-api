@@ -12,5 +12,9 @@ export class MintFtDto {
 
   @IsOptional()
   @IsString()
+  payerId: string;
+
+  @IsOptional()
+  @IsString()
   encryptionKey: string;
 }

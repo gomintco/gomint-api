@@ -18,6 +18,10 @@ export class CreateNftDto {
   @IsString()
   treasuryAccountId: string;
 
+  @IsOptional()
+  @IsString()
+  payerId: string;
+
   @IsString()
   supplyKey: string = 'default';
 
