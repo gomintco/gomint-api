@@ -136,7 +136,10 @@ export class AccountService {
     network: Network,
   ): Promise<AccountBuilder> {
     const transaction = this.createTransaction(accountCreateInput);
+    // ONLY FIRST ACCOUNT CREATION IS 'FREE'
     const client = this.clientService.getClient(network);
+    // WHEN USER HAS ONE ACCOUNT THEY SHOULD USE THEIR ACCOUNT TO PAY FOR THE NEXT ACCOUNT
+
     try {
       const transactionResponse = await transaction.execute(client);
       const receipt = await transactionResponse.getReceipt(client);

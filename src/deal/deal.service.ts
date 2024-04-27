@@ -74,7 +74,6 @@ export class DealService {
     serialNumber: number | undefined = undefined,
     encryptionKey: string | undefined = undefined,
   ) {
-    console.log('dealId', dealId);
     const deal = await this.dealRepository
       .findOneOrFail({
         where: { dealId },
@@ -171,7 +170,6 @@ export class DealService {
   }
 
   private transferTransaction(dealData: CreateDealDto, feePayerId: string) {
-    console.log('dealData', dealData);
     const transactionId = TransactionId.generate(feePayerId);
     const transaction = new TransferTransaction()
       .setTransactionId(transactionId)
@@ -314,7 +312,6 @@ export class DealService {
       );
     }
     if (!dto.nftTransfers[0].serialNumber) {
-      console.log('ting has run yeahh');
       dto.nftTransfers[0].serialNumber = serialNumber;
     }
 
