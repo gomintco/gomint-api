@@ -10,6 +10,7 @@ import {
   CustomRoyaltyFee,
   TokenId,
   PrivateKey,
+  TokenSupplyType,
 } from '@hashgraph/sdk';
 import { User } from 'src/user/user.entity';
 import { CreateNftDto, RoyaltyFee } from './dto/create-nft.dto';
@@ -273,30 +274,36 @@ export class NftService extends TokenService {
     return receipt.status.toString();
   }
 
-  private createTransaction(ftCreateInput: NftCreateInput) {
+  private createTransaction(nftCreateInput: NftCreateInput) {
     const transaction = new TokenCreateTransaction()
-      .setTokenName(ftCreateInput.tokenName)
+      .setTokenName(nftCreateInput.tokenName)
       .setTokenType(TokenType.NonFungibleUnique)
-      .setTokenSymbol(ftCreateInput.tokenSymbol)
+      .setTokenSymbol(nftCreateInput.tokenSymbol)
       .setInitialSupply(0)
-      .setTreasuryAccountId(ftCreateInput.treasuryAccountId)
-      .setAdminKey(ftCreateInput.adminKey)
-      .setKycKey(ftCreateInput.kycKey)
-      .setFreezeKey(ftCreateInput.freezeKey)
-      .setWipeKey(ftCreateInput.wipeKey)
-      .setSupplyKey(ftCreateInput.supplyKey)
-      .setPauseKey(ftCreateInput.pauseKey)
-      .setFreezeDefault(ftCreateInput.freezeDefault)
-      .setExpirationTime(ftCreateInput.expirationTime ?? this.todayPlus90Days())
-      .setFeeScheduleKey(ftCreateInput.feeScheduleKey)
-      .setCustomFees(ftCreateInput.customFees ?? [])
-      .setSupplyType(ftCreateInput.supplyType)
-      .setMaxSupply(ftCreateInput.maxSupply)
-      .setTokenMemo(ftCreateInput.tokenMemo)
-      .setAutoRenewAccountId(
-        ftCreateInput.autoRenewAccountId ?? ftCreateInput.treasuryAccountId,
+      .setTreasuryAccountId(nftCreateInput.treasuryAccountId)
+      .setAdminKey(nftCreateInput.adminKey)
+      .setKycKey(nftCreateInput.kycKey)
+      .setFreezeKey(nftCreateInput.freezeKey)
+      .setWipeKey(nftCreateInput.wipeKey)
+      .setSupplyKey(nftCreateInput.supplyKey)
+      .setPauseKey(nftCreateInput.pauseKey)
+      .setFreezeDefault(nftCreateInput.freezeDefault)
+      .setExpirationTime(
+        nftCreateInput.expirationTime ?? this.todayPlus90Days(),
       )
-      .setAutoRenewPeriod(ftCreateInput.autoRenewPeriod ?? 7890000);
+      .setFeeScheduleKey(nftCreateInput.feeScheduleKey)
+      .setCustomFees(nftCreateInput.customFees ?? [])
+      .setSupplyType(
+        nftCreateInput.supplyType ?? nftCreateInput.maxSupply // if maxSupply is provided, supplyType is finite
+          ? TokenSupplyType.Finite
+          : TokenSupplyType.Infinite,
+      )
+      .setMaxSupply(nftCreateInput.maxSupply)
+      .setTokenMemo(nftCreateInput.tokenMemo)
+      .setAutoRenewAccountId(
+        nftCreateInput.autoRenewAccountId ?? nftCreateInput.treasuryAccountId,
+      )
+      .setAutoRenewPeriod(nftCreateInput.autoRenewPeriod ?? 7890000);
 
     return transaction;
   }
