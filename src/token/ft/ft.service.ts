@@ -293,7 +293,11 @@ export class FtService extends TokenService {
       .setExpirationTime(ftCreateInput.expirationTime ?? this.todayPlus90Days())
       .setFeeScheduleKey(ftCreateInput.feeScheduleKey)
       .setCustomFees(ftCreateInput.customFees ?? [])
-      .setSupplyType(ftCreateInput.supplyType)
+      .setSupplyType(
+        ftCreateInput.supplyType ?? ftCreateInput.maxSupply // if maxSupply is provided, supplyType is finite
+          ? TokenSupplyType.Finite
+          : TokenSupplyType.Infinite,
+      )
       .setMaxSupply(ftCreateInput.maxSupply)
       .setTokenMemo(ftCreateInput.tokenMemo)
       .setAutoRenewAccountId(
