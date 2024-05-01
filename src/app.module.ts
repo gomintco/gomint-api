@@ -24,7 +24,7 @@ import { Deal } from './deal/deal.entity';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       entities: [User, Key, Account, ApiKey, Deal],
-      synchronize: true,
+      synchronize: false,
     }),
     // KeyModule,
     TokenModule,
