@@ -17,6 +17,8 @@ import {
 import { BadRequestException } from '@nestjs/common';
 import { Network } from 'src/app.interface';
 import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
+import fetch from 'node-fetch';
+
 
 export class TokenService {
   constructor() {}
