@@ -1,16 +1,24 @@
-import { AccountCreateTransaction, PublicKey } from '@hashgraph/sdk';
+import {
+  AccountCreateTransaction,
+  Client,
+  PrivateKey,
+  PublicKey,
+  TokenAssociateTransaction,
+} from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { AccountCreateInput } from './account.interface';
-import { Network } from '../app.interface';
+import { KeyType, Network } from '../app.interface';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
 import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
+import { AssociateDto } from './dto/associate.dto';
+import { KeyService } from 'src/key/key.service';
 
 @Injectable()
 export class AccountService {
@@ -18,7 +26,91 @@ export class AccountService {
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
     private clientService: ClientService,
+    private keyService: KeyService,
   ) {}
+
+  // associates tokens to a user
+  async associate(user: User, associateDto: AssociateDto) {
+    let escrowKey = user.escrowKey;
+    if (user.hasEncryptionKey) {
+      escrowKey = this.keyService.decryptString(
+        user.escrowKey,
+        associateDto.encryptionKey,
+      );
+    }
+    const associatingAccount = await this.getUserAccountByAlias(
+      user.id,
+      associateDto.associatingId,
+    ).catch((err) => {
+      throw new Error(
+        'Unable to find account with associatingId: ' +
+          associateDto.associatingId,
+      );
+    });
+
+    // ALL OF THIS LOGIC SHOULD BE ENCAPSULATED IN ITS OWN FUNCTION
+    // I AM USING THIS IN LOTS FT SERVICE, NFT SERVICE, ETC
+    let client: Client;
+    let signingKeys: PrivateKey[] = [];
+    // decrypt associating account keys
+    // associating account always needs to sign it association tx
+    const decryptedAssociatingKeys = associatingAccount.keys.map((key) => {
+      const decryptedKey = this.keyService.decryptString(
+        key.encryptedPrivateKey,
+        escrowKey,
+      );
+      // return as PrivateKey type
+      switch (key.type) {
+        case KeyType.ED25519:
+          return PrivateKey.fromStringED25519(decryptedKey);
+        case KeyType.ECDSA:
+          return PrivateKey.fromStringECDSA(decryptedKey);
+        default:
+          throw new Error('Invalid key type in treasury account');
+      }
+    });
+    // handle logic for payer other than associating account
+    if (associateDto.payerId) {
+      const payerAccount = await this.getUserAccountByAlias(
+        user.id,
+        associateDto.payerId,
+      ).catch((err) => {
+        throw new Error(
+          'Unable to find payer account with alias: ' + associateDto.payerId,
+        );
+      });
+      const decryptedPayerKeys = payerAccount.keys.map((key) =>
+        this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+      );
+      client = this.clientService.buildClient(
+        user.network,
+        payerAccount.id,
+        decryptedPayerKeys[0],
+      );
+      // add treasury account keys for signing
+      signingKeys.push(decryptedAssociatingKeys[0]);
+    } else {
+      client = this.clientService.buildClient(
+        user.network,
+        associatingAccount.id,
+        decryptedAssociatingKeys[0],
+      );
+    }
+
+    // this should be moved into a dedicated HederaService along with all other Hedera actions
+    const transaction = new TokenAssociateTransaction()
+      .setAccountId(associatingAccount.id)
+      .setTokenIds(associateDto.tokenIds)
+      .freezeWith(client);
+
+    if (signingKeys.length)
+      await Promise.all(signingKeys.map((key) => transaction.sign(key)));
+
+    const submit = await transaction.execute(client);
+    const receipt = await submit.getReceipt(client);
+
+    return receipt.status.toString();
+  }
 
   /**
    * Checks if an account alias already exists for a given user ID.
@@ -34,7 +126,6 @@ export class AccountService {
       },
       relations: ['user'], // This ensures the user relationship is joined
     });
-
     // Return true if an account is found, otherwise false
     return !!account;
   }
