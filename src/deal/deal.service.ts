@@ -18,7 +18,6 @@ import {
 } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
 import { DealAlias, Network } from 'src/app.interface';
-import fetch from 'node-fetch'
 import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
 
 @Injectable()
@@ -351,7 +350,7 @@ export class DealService {
       const randomSerialNumber = nfts[randomIndex].serial_number;
       return randomSerialNumber;
     } catch (err) {
-      console.error(err)
+      console.error(err);
       throw new ServiceUnavailableException('Error setting NFT serial', {
         description: err.message,
         cause: err,
