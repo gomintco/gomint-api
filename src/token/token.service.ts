@@ -79,6 +79,7 @@ export class TokenService {
       pauseKey: createTokenDto.pauseKey,
       supplyKey: createTokenDto.supplyKey,
       wipeKey: createTokenDto.wipeKey,
+      feeScheduleKey: createTokenDto.feeScheduleKey,
     };
     const tokenPublicKeys: TokenPublicKeys = {};
     Object.entries(keys).forEach(([keyType, keyValue]) => {
