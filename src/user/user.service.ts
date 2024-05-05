@@ -70,8 +70,9 @@ export class UserService {
   }
 
   private cleanAccounts(accounts: Account[]) {
-    return accounts.map(({ id, keys }) => ({
+    return accounts.map(({ id, alias, keys }) => ({
       id,
+      alias,
       keys: this.cleanKeys(keys),
     }));
   }
