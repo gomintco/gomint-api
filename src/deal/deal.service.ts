@@ -17,7 +17,7 @@ import {
   TransferTransaction,
 } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
-import { DealAlias, Network } from 'src/app.interface';
+import { DealAlias, KeyType, Network } from 'src/app.interface';
 import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
 
 @Injectable()
@@ -139,9 +139,9 @@ export class DealService {
     await Promise.all(
       decryptedKeys.map(({ type, privateKey }) => {
         switch (type) {
-          case 'ed25519':
+          case KeyType.ED25519:
             return transaction.sign(PrivateKey.fromStringED25519(privateKey));
-          case 'ecdsa':
+          case KeyType.ECDSA:
             return transaction.sign(PrivateKey.fromStringECDSA(privateKey));
           default:
             throw new Error('Invalid key type');
