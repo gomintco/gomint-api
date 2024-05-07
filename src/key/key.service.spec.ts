@@ -40,14 +40,14 @@ describe('KeyService', () => {
     const escrowKey = 'some-encryption-key';
     const keyBuilder = service.create(escrowKey, KeyType.ED25519);
     expect(keyBuilder).toBeDefined();
-    expect(keyBuilder.type).toBe('ed25519');
+    expect(keyBuilder.type).toBe(KeyType.ED25519);
   });
 
   it('should create an ECDSA key successfully', async () => {
     const escrowKey = 'some-encryption-key';
     const keyBuilder = service.create(escrowKey, KeyType.ECDSA);
     expect(keyBuilder).toBeDefined();
-    expect(keyBuilder.type).toBe('ecdsa');
+    expect(keyBuilder.type).toBe(KeyType.ECDSA);
   });
 
   it('should encrypt and decrypt a string correctly', () => {
