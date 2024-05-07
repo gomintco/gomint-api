@@ -1,10 +1,8 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   InternalServerErrorException,
-  Param,
   Post,
   UseGuards,
   Req,
@@ -15,6 +13,9 @@ import { CreateKeyDto } from './dto/create-key.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { User } from './user.entity';
+import { UserResponse } from './response/user.response';
+import { AccountResponse } from './response/account.response';
+import { KeyResponse } from './response/key.response';
 
 @Controller('user')
 export class UserController {
@@ -34,6 +35,7 @@ export class UserController {
       const { username, id, network } = savedUser;
       return { username, id, network };
     } catch (err) {
+      // if more errors may occur, handle them separately per their status code (exception type)
       console.error(err);
       throw new InternalServerErrorException('Error creating user', {
         cause: err,
@@ -44,23 +46,33 @@ export class UserController {
 
   @UseGuards(ApiKeyGuard)
   @Get()
-  getUser(@Req() request) {
-    const user = request.user as User;
-    return this.userService.getUser(user.id);
+  async getUser(@Req() request): Promise<UserResponse> {
+    const { id: userId } = request.user as User;
+    const user = await this.userService.getUser(userId);
+    return new UserResponse(user);
   }
 
   @UseGuards(ApiKeyGuard)
   @Get('accounts')
-  getUserAccounts(@Req() request) {
-    const user = request.user as User;
-    return this.userService.getUserAccounts(user.id);
+  async getUserAccounts(
+    @Req() request,
+  ): Promise<{ id: string; accounts: AccountResponse[] }> {
+    const { id: userId } = request.user as User;
+    const { id, accounts } = await this.userService.getUserAccounts(userId);
+    return {
+      id,
+      accounts: accounts.map((account) => new AccountResponse(account)),
+    };
   }
 
   @UseGuards(ApiKeyGuard)
   @Get('keys')
-  getUserKeys(@Req() request) {
-    const user = request.user as User;
-    return this.userService.getUserKeys(user.id);
+  async getUserKeys(
+    @Req() request,
+  ): Promise<{ id: string; keys: KeyResponse[] }> {
+    const { id: userId } = request.user as User;
+    const { id, keys } = await this.userService.getUserKeys(userId);
+    return { id, keys: keys.map((key) => new KeyResponse(key)) };
   }
 
   @UseGuards(ApiKeyGuard)

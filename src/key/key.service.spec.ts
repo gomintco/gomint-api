@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeyService } from './key.service';
-import { Repository } from 'typeorm';
 import { Key } from './key.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { KeyType } from '../app.interface';
@@ -16,7 +15,6 @@ const mockRepository = {
 
 describe('KeyService', () => {
   let service: KeyService;
-  let keyRepository: Repository<Key>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

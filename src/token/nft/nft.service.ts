@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { NftCreateInput, NftMintInput } from './nft.interface';
 import {
-  Key,
   TokenCreateTransaction,
   Client,
   TokenType,
   TokenMintTransaction,
   CustomFee,
   CustomRoyaltyFee,
-  TokenId,
   PrivateKey,
   TokenSupplyType,
 } from '@hashgraph/sdk';
@@ -51,7 +49,7 @@ export class NftService extends TokenService {
       });
 
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt treasury keys
     const decryptedTreasuryKeys = treasuryAccount.keys.map((key) => {
       const decryptedKey = this.keyService.decryptString(
@@ -190,7 +188,7 @@ export class NftService extends TokenService {
       throw new Error('Your GoMint user does not own this supply account');
     // configure correct client
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt supply keys
     const decryptedSupplyKeys = supplyAccount.keys.map((key) => {
       const decryptedKey = this.keyService.decryptString(

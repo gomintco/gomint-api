@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 // modules
 import { UserModule } from './user/user.module';
 import { TokenModule } from './token/token.module';
-import { KeyModule } from './key/key.module';
 // entities
 import { User } from './user/user.entity';
 import { Key } from './key/key.entity';
