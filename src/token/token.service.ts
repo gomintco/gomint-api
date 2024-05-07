@@ -2,13 +2,7 @@ import { CreateFtDto } from './ft/dto/create-ft.dto';
 import { FtCreateInput } from './ft/ft.interface';
 import { CreateNftDto } from './nft/dto/create-nft.dto';
 import { NftCreateInput } from './nft/nft.interface';
-import {
-  CustomFee,
-  CustomFixedFee,
-  Hbar,
-  Key,
-  PublicKey,
-} from '@hashgraph/sdk';
+import { CustomFixedFee, Hbar, Key, PublicKey } from '@hashgraph/sdk';
 import {
   FixedFee,
   TokenMirrornodeInfo,

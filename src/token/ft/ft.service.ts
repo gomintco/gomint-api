@@ -1,15 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-
+import { Injectable } from '@nestjs/common';
 import { FtCreateInput, FtMintInput } from './ft.interface';
 import {
-  Key,
   TokenCreateTransaction,
   Client,
   TokenSupplyType,
   TokenMintTransaction,
   CustomFee,
-  CustomFixedFee,
-  Hbar,
   CustomFractionalFee,
   FeeAssessmentMethod,
   PrivateKey,
@@ -48,7 +44,7 @@ export class FtService extends TokenService {
       });
 
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt treasury keys
     const decryptedTreasuryKeys = treasuryAccount.keys.map((key) => {
       const decryptedKey = this.keyService.decryptString(
@@ -108,10 +104,6 @@ export class FtService extends TokenService {
       customFees,
       ...tokenPublicKeys,
     };
-    // decrypt keys
-    const decryptedKeys = treasuryAccount.keys.map((key) =>
-      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
-    );
     return this.createTransactionAndExecute(ftCreateInput, client, signingKeys);
   }
 
@@ -194,7 +186,7 @@ export class FtService extends TokenService {
       throw new Error('Your GoMint user does not own this supply account');
     // configure correct client
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt supply keys
     const decryptedSupplyKeys = supplyAccount.keys.map((key) => {
       const decryptedKey = this.keyService.decryptString(

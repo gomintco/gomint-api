@@ -1,16 +1,13 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 // auth.service.ts
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserService } from 'src/user/user.service';
 import { ApiKey } from './api-key.entity';
 import { Repository } from 'typeorm';
 import { getRandomValues } from 'crypto';
 import { User } from 'src/user/user.entity';
+import { WrongPasswordError } from './error/wrong-password.error';
+import { UserNotFoundError } from './error/user-not-found.error';
 
 @Injectable()
 export class AuthService {
@@ -26,9 +23,8 @@ export class AuthService {
     try {
       const user = await this.userRepository.findOneByOrFail({ username });
       if (user?.hashedPassword !== pass) {
-        throw new UnauthorizedException();
+        throw new WrongPasswordError();
       }
-      const { hashedPassword, escrowKey, ...result } = user;
 
       const payload = { username: user.username, sub: user.id };
 
@@ -36,7 +32,7 @@ export class AuthService {
         access_token: await this.jwtService.signAsync(payload),
       };
     } catch (e) {
-      throw new NotFoundException("User doesn't exist", {
+      throw new UserNotFoundError("User doesn't exist", {
         cause: e,
         description: e.message,
       });
@@ -63,7 +59,7 @@ export class AuthService {
     try {
       const apiKey = await this.apiKeyRepository.findOne({
         where: { key },
-        relations: ['user'],
+        relations: { user: true },
       });
       if (!apiKey) throw new Error("API key doesn't exist");
       return apiKey.user;

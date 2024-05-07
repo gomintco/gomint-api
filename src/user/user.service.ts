@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -8,10 +8,9 @@ import { KeyService } from 'src/key/key.service';
 import { AccountService } from '../account/account.service';
 import { CreateKeyDto } from './dto/create-key.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { CleanedAccount, CleanedKey, CleanedUser } from './user.interface';
-import { Key } from '../key/key.entity';
-import { Account } from '../account/account.entity';
-import { Network } from 'src/app.interface';
+import { Account } from 'src/account/account.entity';
+import { Key } from 'src/key/key.entity';
+import { FailedUserSaveError } from './error/failed-user-save.error';
 
 @Injectable()
 export class UserService {
@@ -30,51 +29,24 @@ export class UserService {
     return this.usersRepository.find();
   }
 
-  // findOne(id: string): Promise<User> {
-  //   return this.usersRepository.findOneByOrFail({ id });
-  // }
-
-  async getUser(userId: string): Promise<CleanedUser> {
-    const user = await this.usersRepository.findOne({
+  async getUser(userId: string): Promise<User> {
+    return this.usersRepository.findOne({
       where: { id: userId },
-      relations: ['accounts.keys', 'keys'],
+      relations: { accounts: { keys: true }, keys: true },
     });
-    // clean data before returning
-    const { id, username, network, accounts, keys } = user;
-    const cleanedKeys = this.cleanKeys(keys);
-    const cleanedAccounts = this.cleanAccounts(accounts);
-    return {
-      id,
-      username,
-      network,
-      keys: cleanedKeys,
-      accounts: cleanedAccounts,
-    };
   }
 
   async getUserAccounts(
     id: string,
-  ): Promise<{ id: string; accounts: CleanedAccount[] }> {
+  ): Promise<{ id: string; accounts: Account[] }> {
     const accounts = await this.accountService.findAccountsByUserId(id);
-    return { id, accounts: this.cleanAccounts(accounts) };
+    return { id, accounts };
   }
 
-  async getUserKeys(id: string): Promise<{ id: string; keys: CleanedKey[] }> {
+  async getUserKeys(id: string): Promise<{ id: string; keys: Key[] }> {
     const keys = await this.keyService.findKeysByUserId(id);
 
-    return { id, keys: this.cleanKeys(keys) };
-  }
-
-  private cleanKeys(keys: Key[]) {
-    return keys.map(({ type, publicKey }) => ({ type, publicKey }));
-  }
-
-  private cleanAccounts(accounts: Account[]) {
-    return accounts.map(({ id, alias, keys }) => ({
-      id,
-      alias,
-      keys: this.cleanKeys(keys),
-    }));
+    return { id, keys };
   }
 
   findOneByUsername(username: string): Promise<User> {
@@ -201,18 +173,19 @@ export class UserService {
   /**
    * This function saves the user entity to the database.
    * If an error occurs during the save operation, it is caught and logged,
-   * and an InternalServerErrorException is thrown with the error message.
+   * and an FailedUserSaveError is thrown with the error message.
    *
    * @param user - The user entity to be saved.
    * @returns A promise that resolves to the saved user entity.
-   * @throws {InternalServerErrorException} If an error occurs during the save operation.
+   * @throws {FailedUserSaveError} If an error occurs during the save operation.
    */
   async save(user: User): Promise<User> {
-    return this.usersRepository.save(user).catch((err) => {
+    try {
+      // await is needed to catch errors here
+      return await this.usersRepository.save(user);
+    } catch (err) {
       console.error(err);
-      throw new InternalServerErrorException(
-        err.code || err.message || 'Error saving user',
-      );
-    });
+      throw new FailedUserSaveError(err.code || err.message);
+    }
   }
 }
