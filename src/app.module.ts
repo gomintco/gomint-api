@@ -1,37 +1,31 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-// modules
 import { UserModule } from './user/user.module';
 import { TokenModule } from './token/token.module';
-// entities
-import { User } from './user/user.entity';
-import { Key } from './key/key.entity';
-import { Account } from './account/account.entity';
-import { ApiKey } from './auth/api-key.entity';
 import { DealModule } from './deal/deal.module';
-import { Deal } from './deal/deal.entity';
+import configuration from './config/configuration';
+import { validate } from './config/validation';
+import { ConfigurationType } from './config/config.type';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST || 'localhost',
-      port: 3306,
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      entities: [User, Key, Account, ApiKey, Deal],
-      synchronize: false,
+    ConfigModule.forRoot({
+      validate,
+      load: [configuration],
+      isGlobal: true,
     }),
-    // KeyModule,
+    TypeOrmModule.forRootAsync({
+      useFactory: (configService: ConfigService<ConfigurationType, true>) => {
+        const config = configService.get<ConfigurationType['db']>('db');
+        console.log(config);
+        return config;
+      },
+      inject: [ConfigService],
+    }),
     TokenModule,
     UserModule,
     DealModule,
-    // AccountModule,
-    // ClientModule,
-    // AuthModule,
   ],
   controllers: [],
   providers: [],
