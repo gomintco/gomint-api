@@ -17,7 +17,11 @@ import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
 
 @Injectable()
 export class TokenService {
-  createTransaction(tokenCreateInput: CreateTokenDto, defaultKey: string) {
+  createTransaction(
+    tokenCreateInput: CreateTokenDto,
+    tokenType: TokenType,
+    defaultKey?: string,
+  ) {
     // parses input data into correct format
     const createTokenTransaction = this.parseTransaction(
       tokenCreateInput,
@@ -29,7 +33,7 @@ export class TokenService {
       .setDecimals(createTokenTransaction.decimals)
       .setInitialSupply(createTokenTransaction.initialSupply)
       .setTreasuryAccountId(createTokenTransaction.treasuryAccountId)
-      .setTokenType(createTokenTransaction.tokenType)
+      .setTokenType(tokenType)
       .setAdminKey(createTokenTransaction.adminKey)
       .setKycKey(createTokenTransaction.kycKey)
       .setFreezeKey(createTokenTransaction.freezeKey)
@@ -63,14 +67,13 @@ export class TokenService {
 
   private parseTransaction(
     tokenCreateInput: CreateTokenDto,
-    defaultKey: string,
+    defaultKey?: string,
   ): CreateTokenTransaction {
     const tokenPubKeys = this.parsePublicKeys(tokenCreateInput, defaultKey);
     // MAY STILL BE BITS TO FILL OUT
     const createTokenTransaction: CreateTokenTransaction = {
       tokenName: tokenCreateInput.tokenName,
       tokenSymbol: tokenCreateInput.tokenSymbol,
-      tokenType: tokenCreateInput.tokenType,
       treasuryAccountId: tokenCreateInput.treasuryAccountId,
       decimals: tokenCreateInput.decimals ?? 0,
       initialSupply: tokenCreateInput.initialSupply ?? 0,
@@ -85,7 +88,7 @@ export class TokenService {
 
   private parsePublicKeys(
     createTokenInput: CreateTokenKeysDto,
-    defaultKey: string,
+    defaultKey?: string,
   ) {
     const keys = {
       adminKey: createTokenInput.adminKey,

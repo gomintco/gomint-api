@@ -17,7 +17,6 @@ export interface CreateTokenDto extends CreateTokenKeysDto {
   initialSupply?: number;
   maxSupply?: number;
   finite?: boolean;
-  tokenType: TokenType; // this we can set ourself based on the endpoint
   fixedFees?: FixedFeeDto[];
   royaltyFees?: RoyaltyFeeDto[];
   fractionalFees?: FractionalFeeDto[];
@@ -29,7 +28,6 @@ export interface CreateTokenTransaction extends CreateTokenKeys {
   decimals?: number;
   treasuryAccountId: string;
   initialSupply?: number;
-  tokenType: TokenType;
   freezeDefault?: boolean;
   expirationTime?: Date;
   customFees?: CustomFee[];

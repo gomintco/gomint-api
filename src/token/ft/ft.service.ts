@@ -13,24 +13,105 @@ import {
   CustomFractionalFee,
   FeeAssessmentMethod,
   PrivateKey,
+  TokenType,
 } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { User } from 'src/user/user.entity';
 import { CreateFtDto, FractionalFee } from 'src/token/ft/dto/create-ft.dto';
 import { AccountService } from 'src/account/account.service';
-import { TokenService } from 'src/token/token.service';
+// import { TokenService } from 'src/token/token.service';
 import { MintFtDto } from './dto/mint-ft.dto';
 import { KeyType } from 'src/app.interface';
+import { TransactionService } from 'src/hedera/transaction/transaction.service';
+import { TokenService } from 'src/hedera/token/token.service';
 
 @Injectable()
-export class FtService extends TokenService {
+export class FtService {
   constructor(
     private keyService: KeyService,
     private clientService: ClientService,
     private accountService: AccountService,
-  ) {
-    super();
+    private tokenService: TokenService,
+    private transactionService: TransactionService,
+  ) {}
+
+  async handleCreateToken(user: User, createFtDto: CreateFtDto) {
+    // get required accounts, keys, and clients
+    let escrowKey = user.escrowKey;
+    if (user.hasEncryptionKey)
+      escrowKey = this.keyService.decryptString(
+        user.escrowKey,
+        createFtDto.encryptionKey,
+      );
+    const treasuryAccount = await this.accountService.getUserAccountByAlias(
+      user.id,
+      createFtDto.treasuryAccountId,
+    );
+    let client: Client;
+    let signers: PrivateKey[] = [];
+    // decrypt treasury keys
+    const decryptedTreasuryKeys = treasuryAccount.keys.map((key) => {
+      const decryptedKey = this.keyService.decryptString(
+        key.encryptedPrivateKey,
+        escrowKey,
+      );
+      // return as PrivateKey type
+      switch (key.type) {
+        case KeyType.ED25519:
+          return PrivateKey.fromStringED25519(decryptedKey);
+        case KeyType.ECDSA:
+          return PrivateKey.fromStringECDSA(decryptedKey);
+        default:
+          throw new Error('Invalid key type in treasury account');
+      }
+    });
+    // handle logic for payer other than treasury account
+    if (createFtDto.payerId) {
+      // get payer account and keys for signing
+      const payerAccount = await this.accountService.getUserAccountByAlias(
+        user.id,
+        createFtDto.payerId,
+      );
+      const decryptedPayerKeys = payerAccount.keys.map((key) =>
+        this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+      );
+      client = this.clientService.buildClient(
+        user.network,
+        payerAccount.id,
+        decryptedPayerKeys[0],
+      );
+      // add treasury account keys for signing
+      signers.push(decryptedTreasuryKeys[0]);
+    } else {
+      client = this.clientService.buildClient(
+        user.network,
+        treasuryAccount.id,
+        decryptedTreasuryKeys[0],
+      );
+    }
+    // create token transaction
+    const createTokenTransaction = this.tokenService.createTransaction(
+      createFtDto,
+      TokenType.FungibleCommon,
+      treasuryAccount.keys[0].publicKey,
+    );
+    // freeze transaction
+    const transaction = this.transactionService.freezeWithClient(
+      // could also offer an API to use .freezeWithPayer
+      createTokenTransaction,
+      client,
+    );
+    // execute transaction
+    const transactionResponse =
+      await this.transactionService.executeTransaction(
+        transaction,
+        client,
+        signers,
+      );
+    // get created token
+    const tokenReceipt = await transactionResponse.getReceipt(client);
+    return { token: tokenReceipt.tokenId.toString() };
   }
 
   async createToken(user: User, createFtDto: CreateFtDto) {
