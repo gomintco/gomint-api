@@ -36,7 +36,7 @@ export class FtService {
     private transactionService: TransactionService,
   ) {}
 
-  async handleCreateToken(user: User, createFtDto: CreateFtDto) {
+  async createTokenHandler(user: User, createFtDto: CreateFtDto) {
     // get required accounts, keys, and clients
     let escrowKey = user.escrowKey;
     if (user.hasEncryptionKey)
