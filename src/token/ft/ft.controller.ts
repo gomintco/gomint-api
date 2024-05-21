@@ -34,7 +34,7 @@ export class FtController {
   async create(@Req() request, @Body() createFtDto: CreateFtDto) {
     const user = request.user as User;
     try {
-      const token = await this.ftService.handleCreateToken(user, createFtDto);
+      const token = await this.ftService.createTokenHandler(user, createFtDto);
       return { token };
 
       // const token = await this.ftService.createToken(user, createFtDto);
