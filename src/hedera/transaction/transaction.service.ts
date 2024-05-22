@@ -4,6 +4,7 @@ import {
   PrivateKey,
   Transaction,
   TransactionId,
+  TransactionReceipt,
   TransactionResponse,
 } from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
@@ -28,6 +29,19 @@ export class TransactionService {
       .setNodeAccountIds([new AccountId(3)]) // is there a better way of doing this?
       .setTransactionId(TransactionId.generate(payerAccount))
       .freeze();
+  }
+
+  async freezeSignExecuteAndGetReceipt(
+    transaction: Transaction,
+    client: Client,
+    signers?: PrivateKey[],
+  ): Promise<TransactionReceipt> {
+    const txRes = await this.executeTransaction(
+      this.freezeWithClient(transaction, client),
+      client,
+      signers,
+    );
+    return txRes.getReceipt(client);
   }
 
   async addSigners(

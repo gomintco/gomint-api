@@ -89,20 +89,20 @@ class FixedFee {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  hbarAmount: number;
+  hbarAmount?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  ftAmount: number;
+  ftAmount?: number;
 
   @IsOptional()
   @IsString()
-  ftId: string;
+  ftId?: string;
 
   @IsOptional()
   @IsBoolean()
-  allCollectorsAreExempt: boolean;
+  allCollectorsAreExempt?: boolean;
 }
 
 export class FractionalFee {
@@ -117,17 +117,17 @@ export class FractionalFee {
 
   @IsOptional()
   @IsNumber()
-  max: number;
+  max?: number;
 
   @IsOptional()
   @IsNumber()
-  min: number;
+  min?: number;
 
   @IsOptional()
   @IsBoolean()
-  senderPaysFees: boolean; // this maps to .setAssessmentMethod() in the sdk
+  senderPaysFees?: boolean; // this maps to .setAssessmentMethod() in the sdk
 
   @IsOptional()
   @IsBoolean()
-  allCollectorsAreExempt: boolean;
+  allCollectorsAreExempt?: boolean;
 }

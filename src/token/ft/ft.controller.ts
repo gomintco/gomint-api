@@ -46,18 +46,18 @@ export class FtController {
     }
   }
 
-  @Post('mint')
-  async mint(@Req() request, @Body() mintFtDto: MintFtDto) {
-    // return { status: 'ok' };
-    const user = request.user as User;
-    try {
-      const status = await this.ftService.mintToken(user, mintFtDto);
-      return { status };
-    } catch (err) {
-      throw new ServiceUnavailableException('Error minting token', {
-        cause: err,
-        description: err.message,
-      });
-    }
-  }
+  // @Post('mint')
+  // async mint(@Req() request, @Body() mintFtDto: MintFtDto) {
+  //   // return { status: 'ok' };
+  //   const user = request.user as User;
+  //   try {
+  //     const status = await this.ftService.mintToken(user, mintFtDto);
+  //     return { status };
+  //   } catch (err) {
+  //     throw new ServiceUnavailableException('Error minting token', {
+  //       cause: err,
+  //       description: err.message,
+  //     });
+  //   }
+  // }
 }

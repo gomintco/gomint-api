@@ -13,7 +13,6 @@ import { ApiKey } from './auth/api-key.entity';
 import { DealModule } from './deal/deal.module';
 import { Deal } from './deal/deal.entity';
 import { HederaModule } from './hedera/hedera.module';
-import { HederaTokenService } from './hedera.token/hedera.token.service';
 
 @Module({
   imports: [
@@ -38,6 +37,6 @@ import { HederaTokenService } from './hedera.token/hedera.token.service';
     // AuthModule,
   ],
   controllers: [],
-  providers: [HederaTokenService],
+  providers: [],
 })
 export class AppModule {}

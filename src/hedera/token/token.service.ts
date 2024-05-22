@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   Key,
   TokenCreateTransaction,
@@ -11,9 +11,19 @@ import {
   PrivateKey,
   TokenSupplyType,
   PublicKey,
+  CustomFractionalFee,
+  FeeAssessmentMethod,
+  CustomFixedFee,
+  Hbar,
+  TokenAssociateTransaction,
 } from '@hashgraph/sdk';
-import { CreateTokenDto, CreateTokenTransaction } from './token.interface';
+import {
+  AssociateTokenDto,
+  CreateTokenDto,
+  CreateTokenTransaction,
+} from './token.interface';
 import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
+import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 
 @Injectable()
 export class TokenService {
@@ -23,10 +33,11 @@ export class TokenService {
     defaultKey?: string,
   ) {
     // parses input data into correct format
-    const createTokenTransaction = this.parseTransaction(
+    const createTokenTransaction = this.parseCreateTransactionDto(
       tokenCreateInput,
       defaultKey,
     );
+    const nDays = 90;
     const transaction = new TokenCreateTransaction()
       .setTokenName(createTokenTransaction.tokenName)
       .setTokenSymbol(createTokenTransaction.tokenSymbol)
@@ -42,7 +53,7 @@ export class TokenService {
       .setPauseKey(createTokenTransaction.pauseKey)
       .setFreezeDefault(createTokenTransaction.freezeDefault)
       .setExpirationTime(
-        createTokenTransaction.expirationTime ?? this.todayPlusNDays(90),
+        createTokenTransaction.expirationTime ?? this.todayPlusNDays(nDays),
       )
       .setFeeScheduleKey(createTokenTransaction.feeScheduleKey)
       .setCustomFees(createTokenTransaction.customFees ?? [])
@@ -58,14 +69,19 @@ export class TokenService {
           createTokenTransaction.treasuryAccountId,
       )
       .setAutoRenewPeriod(
-        createTokenTransaction.autoRenewPeriod ??
-          this.todayPlusNDays(90).getUTCSeconds(),
+        createTokenTransaction.autoRenewPeriod ?? nDays * 24 * 60 * 60, // 90 days in seconds
       );
 
     return transaction;
   }
 
-  private parseTransaction(
+  associateTransaction(tokenAssociateInput: AssociateTokenDto) {
+    return new TokenAssociateTransaction()
+      .setAccountId(tokenAssociateInput.associatingId)
+      .setTokenIds(tokenAssociateInput.tokenIds);
+  }
+
+  private parseCreateTransactionDto(
     tokenCreateInput: CreateTokenDto,
     defaultKey?: string,
   ): CreateTokenTransaction {
@@ -81,6 +97,7 @@ export class TokenService {
       supplyType: tokenCreateInput.finite
         ? TokenSupplyType.Finite
         : TokenSupplyType.Infinite,
+      customFees: this.parseCustomFees(tokenCreateInput),
       ...tokenPubKeys,
     };
     return createTokenTransaction;
@@ -111,7 +128,91 @@ export class TokenService {
     return tokenPublicKeys;
   }
 
-  private todayPlusNDays(n: number) {
+  private parseCustomFees(tokenCreateInput: CreateTokenDto): CustomFee[] {
+    // custom fee ids need to have been parsed before this
+    const { fixedFees, fractionalFees, royaltyFees } = tokenCreateInput;
+    if (!fixedFees && !fractionalFees && !royaltyFees) return [];
+    // ensure all fee aliases are parsed correctly before returnin
+    this.validateFeeCollectorAccountIds(fixedFees, fractionalFees, royaltyFees);
+    const customFees: CustomFee[] = [];
+    // set fixed fees
+    if (fixedFees)
+      customFees.push(...fixedFees.map((fee) => this.parseFixedFee(fee)));
+    // set fractional fees
+    if (fractionalFees)
+      customFees.push(
+        ...fractionalFees.map((fee) => this.parseFractionalFee(fee)),
+      );
+    // set royalty fees
+    if (royaltyFees)
+      customFees.push(...royaltyFees.map((fee) => this.parseRoyaltyFee(fee)));
+    return customFees;
+  }
+
+  private validateFeeCollectorAccountIds(
+    fixedFees: FixedFeeDto[],
+    fractionalFees: FractionalFeeDto[],
+    royaltyFees: RoyaltyFeeDto[],
+  ) {
+    if (fixedFees)
+      fixedFees.forEach((fee) => {
+        if (!fee.feeCollectorAccountId.startsWith('0.0.'))
+          throw new Error(
+            "Fixed fee collector account id must start with '0.0.'",
+          );
+      });
+    if (fractionalFees)
+      fractionalFees.forEach((fee) => {
+        if (!fee.feeCollectorAccountId.startsWith('0.0.'))
+          throw new Error(
+            "Fractional fee collector account id must start with '0.0.'",
+          );
+      });
+    if (royaltyFees)
+      royaltyFees.forEach((fee) => {
+        if (!fee.feeCollectorAccountId.startsWith('0.0.'))
+          throw new Error(
+            "Royalty fee collector account id must start with '0.0.'",
+          );
+      });
+  }
+
+  private parseFixedFee = (fee: FixedFeeDto): CustomFixedFee => {
+    const customFee = new CustomFixedFee().setFeeCollectorAccountId(
+      fee.feeCollectorAccountId,
+    );
+    if (fee.hbarAmount) customFee.setHbarAmount(new Hbar(fee.hbarAmount));
+    if (fee.ftId) {
+      if (!fee.ftAmount)
+        throw new Error('ftAmount is required when ftId is provided');
+      customFee.setAmount(fee.ftAmount).setDenominatingTokenId(fee.ftId);
+    }
+    customFee.setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
+    return customFee;
+  };
+
+  private parseRoyaltyFee(fee: RoyaltyFeeDto) {
+    const royaltyFee = new CustomRoyaltyFee()
+      .setFeeCollectorAccountId(fee.feeCollectorAccountId)
+      .setNumerator(fee.numerator)
+      .setDenominator(fee.denominator)
+      .setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
+    if (fee.fallbackFee) royaltyFee.setFallbackFee(this.parseFixedFee(fee));
+    return royaltyFee;
+  }
+
+  private parseFractionalFee(fee: FractionalFeeDto) {
+    return new CustomFractionalFee()
+      .setFeeCollectorAccountId(fee.feeCollectorAccountId)
+      .setNumerator(fee.numerator)
+      .setDenominator(fee.denominator)
+      .setMax(fee.max)
+      .setMin(fee.min)
+      .setAssessmentMethod(new FeeAssessmentMethod(fee.senderPaysFees)) // prob need to fall back on false here
+      .setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
+  }
+
+  private todayPlusNDays(n: number): Date {
     return new Date(new Date().setDate(new Date().getDate() + n));
   }
 }

@@ -8,6 +8,11 @@ import {
 import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 
+export interface AssociateTokenDto {
+  associatingId: string;
+  tokenIds: string[];
+}
+
 export interface CreateTokenDto extends CreateTokenKeysDto {
   tokenName: string;
   tokenSymbol: string;
