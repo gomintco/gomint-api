@@ -11,24 +11,11 @@ import { FtService } from './ft.service';
 import { CreateFtDto } from './dto/create-ft.dto';
 import { ApiKeyGuard } from '../../auth/auth.guard';
 import { User } from 'src/user/user.entity';
-import { MintFtDto } from './dto/mint-ft.dto';
-import { TokenService } from 'src/hedera/token/token.service';
-import { TransactionService } from 'src/hedera/transaction/transaction.service';
-import { Client, PrivateKey, TokenType } from '@hashgraph/sdk';
-import { AccountService } from 'src/account/account.service';
-import { KeyService } from 'src/key/key.service';
-import { KeyType } from 'src/app.interface';
 
 @Controller('ft')
 @UseGuards(ApiKeyGuard) // might be better to use middleware for this
 export class FtController {
-  constructor(
-    private ftService: FtService,
-    private tokenService: TokenService,
-    private transactionService: TransactionService,
-    private accountService: AccountService,
-    private keyService: KeyService,
-  ) {}
+  constructor(private ftService: FtService) {}
 
   @Post('create')
   async create(@Req() request, @Body() createFtDto: CreateFtDto) {
@@ -36,8 +23,6 @@ export class FtController {
     try {
       const token = await this.ftService.createTokenHandler(user, createFtDto);
       return { token };
-
-      // const token = await this.ftService.createToken(user, createFtDto);
     } catch (err) {
       throw new ServiceUnavailableException('Error creating token', {
         cause: err,

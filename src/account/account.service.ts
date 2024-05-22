@@ -116,23 +116,32 @@ export class AccountService {
     };
     // Collect all fee processing promises
     const feeProcessingPromises = [];
+    // parse fixed fees
     if (createTokenDto.fixedFees) {
       const fixedFeesPromise = parseFees(createTokenDto.fixedFees, processFee);
       feeProcessingPromises.push(fixedFeesPromise);
+    } else {
+      feeProcessingPromises.push([]);
     }
+    // parse fractional fees
     if (createTokenDto.fractionalFees) {
       const fractionalFeesPromise = parseFees(
         createTokenDto.fractionalFees,
         processFee,
       );
       feeProcessingPromises.push(fractionalFeesPromise);
+    } else {
+      feeProcessingPromises.push([]);
     }
+    // parse royalty fees
     if (createTokenDto.royaltyFees) {
       const royaltyFeesPromise = parseFees(
         createTokenDto.royaltyFees,
         processRoyaltyFee,
       );
       feeProcessingPromises.push(royaltyFeesPromise);
+    } else {
+      feeProcessingPromises.push([]);
     }
     // Wait for all processing to complete
     const [fixedFees = [], fractionalFees = [], royaltyFees = []] =
