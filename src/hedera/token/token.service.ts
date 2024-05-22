@@ -197,7 +197,8 @@ export class TokenService {
       .setNumerator(fee.numerator)
       .setDenominator(fee.denominator)
       .setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
-    if (fee.fallbackFee) royaltyFee.setFallbackFee(this.parseFixedFee(fee));
+    if (fee.fallbackFee)
+      royaltyFee.setFallbackFee(this.parseFixedFee(fee.fallbackFee));
     return royaltyFee;
   }
 

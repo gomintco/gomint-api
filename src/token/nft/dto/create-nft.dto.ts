@@ -75,20 +75,20 @@ class FixedFee {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  hbarAmount: number;
+  hbarAmount?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  ftAmount: number;
+  ftAmount?: number;
 
   @IsOptional()
   @IsString()
-  ftId: string;
+  ftId?: string;
 
   @IsOptional()
   @IsBoolean()
-  allCollectorsAreExempt: boolean;
+  allCollectorsAreExempt?: boolean;
 }
 
 export class RoyaltyFee {
@@ -104,9 +104,9 @@ export class RoyaltyFee {
   @IsOptional()
   @Type(() => FixedFee)
   @ValidateNested()
-  fallbackFee: FixedFee;
+  fallbackFee?: FixedFee;
 
   @IsOptional()
   @IsBoolean()
-  allCollectorsAreExempt: boolean;
+  allCollectorsAreExempt?: boolean;
 }
