@@ -139,6 +139,34 @@ export class KeyService {
     return iv.toString('hex') + ':' + encrypted.toString('hex'); // Combine IV and encrypted data
   }
 
+  decryptUserEscrowKey(user: User, encryptionKey?: string): string {
+    let escrowKey = user.escrowKey;
+    if (user.hasEncryptionKey)
+      escrowKey = this.decryptString(user.escrowKey, encryptionKey);
+    return escrowKey;
+  }
+
+  decryptAccountKeys(
+    encryptedPrivateKey: Key[],
+    escrowKey: string,
+  ): PrivateKey[] {
+    return encryptedPrivateKey.map((key) => {
+      const decryptedKey = this.decryptString(
+        key.encryptedPrivateKey,
+        escrowKey,
+      );
+      // return as PrivateKey type
+      switch (key.type) {
+        case KeyType.ED25519:
+          return PrivateKey.fromStringED25519(decryptedKey);
+        case KeyType.ECDSA:
+          return PrivateKey.fromStringECDSA(decryptedKey);
+        default:
+          throw new Error('Invalid key type in treasury account');
+      }
+    });
+  }
+
   /**
    * This function decrypts a string with the provided encryption key.
    * It splits the encrypted string into the initialization vector and the encrypted data,

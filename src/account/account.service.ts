@@ -19,6 +19,9 @@ import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
 import { KeyService } from 'src/key/key.service';
+import { CreateTokenDto } from 'src/hedera/token/token.interface';
+import { TokenService } from 'src/hedera/token/token.service';
+import { TransactionService } from 'src/hedera/transaction/transaction.service';
 
 @Injectable()
 export class AccountService {
@@ -27,17 +30,16 @@ export class AccountService {
     private accountRepository: Repository<Account>,
     private clientService: ClientService,
     private keyService: KeyService,
+    private tokenService: TokenService,
+    private transactionService: TransactionService,
   ) {}
 
   // associates tokens to a user
   async associate(user: User, associateDto: AssociateDto) {
-    let escrowKey = user.escrowKey;
-    if (user.hasEncryptionKey) {
-      escrowKey = this.keyService.decryptString(
-        user.escrowKey,
-        associateDto.encryptionKey,
-      );
-    }
+    const escrowKey = this.keyService.decryptUserEscrowKey(
+      user,
+      associateDto.encryptionKey,
+    );
     const associatingAccount = await this.getUserAccountByAlias(
       user.id,
       associateDto.associatingId,
@@ -47,68 +49,32 @@ export class AccountService {
           associateDto.associatingId,
       );
     });
-
-    // ALL OF THIS LOGIC SHOULD BE ENCAPSULATED IN ITS OWN FUNCTION
-    // I AM USING THIS IN LOTS FT SERVICE, NFT SERVICE, ETC
-    let client: Client;
-    let signingKeys: PrivateKey[] = [];
-    // decrypt associating account keys
-    // associating account always needs to sign it association tx
-    const decryptedAssociatingKeys = associatingAccount.keys.map((key) => {
-      const decryptedKey = this.keyService.decryptString(
-        key.encryptedPrivateKey,
-        escrowKey,
-      );
-      // return as PrivateKey type
-      switch (key.type) {
-        case KeyType.ED25519:
-          return PrivateKey.fromStringED25519(decryptedKey);
-        case KeyType.ECDSA:
-          return PrivateKey.fromStringECDSA(decryptedKey);
-        default:
-          throw new Error('Invalid key type in treasury account');
-      }
-    });
-    // handle logic for payer other than associating account
-    if (associateDto.payerId) {
-      const payerAccount = await this.getUserAccountByAlias(
+    // handle case if payerId is separate
+    let payerAccount: Account;
+    if (associateDto.payerId)
+      payerAccount = await this.getUserAccountByAlias(
         user.id,
         associateDto.payerId,
       ).catch((err) => {
         throw new Error(
-          'Unable to find payer account with alias: ' + associateDto.payerId,
+          'Unable to find account with payerId: ' + associateDto.payerId,
         );
       });
-      const decryptedPayerKeys = payerAccount.keys.map((key) =>
-        this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+    // build client and signers
+    const { client, signers } = this.clientService.buildClientAndSigningKeys(
+      user.network,
+      escrowKey,
+      associatingAccount,
+      payerAccount,
+    );
+    // handle token associate transaction
+    const transaction = this.tokenService.associateTransaction(associateDto);
+    const receipt =
+      await this.transactionService.freezeSignExecuteAndGetReceipt(
+        transaction,
+        client,
+        signers,
       );
-      client = this.clientService.buildClient(
-        user.network,
-        payerAccount.id,
-        decryptedPayerKeys[0],
-      );
-      // add treasury account keys for signing
-      signingKeys.push(decryptedAssociatingKeys[0]);
-    } else {
-      client = this.clientService.buildClient(
-        user.network,
-        associatingAccount.id,
-        decryptedAssociatingKeys[0],
-      );
-    }
-
-    // this should be moved into a dedicated HederaService along with all other Hedera actions
-    const transaction = new TokenAssociateTransaction()
-      .setAccountId(associatingAccount.id)
-      .setTokenIds(associateDto.tokenIds)
-      .freezeWith(client);
-
-    if (signingKeys.length)
-      await Promise.all(signingKeys.map((key) => transaction.sign(key)));
-
-    const submit = await transaction.execute(client);
-    const receipt = await submit.getReceipt(client);
-
     return receipt.status.toString();
   }
 
@@ -128,6 +94,54 @@ export class AccountService {
     });
     // Return true if an account is found, otherwise false
     return !!account;
+  }
+
+  async parseCustomFeeAliases(userId: string, createTokenDto: CreateTokenDto) {
+    const parseFees = async (fees, feeProcessor) => {
+      return await Promise.all(fees.map(feeProcessor));
+    };
+    const processFee = async (fee) => ({
+      ...fee,
+      feeCollectorAccountId: await this.getUserAccountIdByAlias(
+        userId,
+        fee.feeCollectorAccountId,
+      ),
+    });
+    const processRoyaltyFee = async (fee) => {
+      const processedFee = await processFee(fee);
+      if (fee.fallbackFee) {
+        processedFee.fallbackFee = await processFee(fee.fallbackFee);
+      }
+      return processedFee;
+    };
+    // Collect all fee processing promises
+    const feeProcessingPromises = [];
+    if (createTokenDto.fixedFees) {
+      const fixedFeesPromise = parseFees(createTokenDto.fixedFees, processFee);
+      feeProcessingPromises.push(fixedFeesPromise);
+    }
+    if (createTokenDto.fractionalFees) {
+      const fractionalFeesPromise = parseFees(
+        createTokenDto.fractionalFees,
+        processFee,
+      );
+      feeProcessingPromises.push(fractionalFeesPromise);
+    }
+    if (createTokenDto.royaltyFees) {
+      const royaltyFeesPromise = parseFees(
+        createTokenDto.royaltyFees,
+        processRoyaltyFee,
+      );
+      feeProcessingPromises.push(royaltyFeesPromise);
+    }
+    // Wait for all processing to complete
+    const [fixedFees = [], fractionalFees = [], royaltyFees = []] =
+      await Promise.all(feeProcessingPromises);
+    // Assign processed fees
+    createTokenDto.fixedFees = fixedFees;
+    createTokenDto.fractionalFees = fractionalFees;
+    createTokenDto.royaltyFees = royaltyFees;
+    return createTokenDto;
   }
 
   /**
@@ -160,10 +174,10 @@ export class AccountService {
    */
   async getUserAccountByAlias(userId: string, alias: string): Promise<Account> {
     if (alias.startsWith('0.0.')) {
-      // this is very hacky... handles edge case where royalty fee is a non-user account
-      // current issues: if tx payer is 0.0. alias, this doesn't return a key to sign
-      // also, currently if a non 0.0. alias exists, the 0.0. cannot be used as signer
-      return { id: alias } as Account;
+      return this.accountRepository.findOneOrFail({
+        where: { id: alias },
+        relations: ['keys'],
+      });
     }
     // can search by alias because if no alias, account ID is used as alias
     return this.accountRepository.findOneOrFail({

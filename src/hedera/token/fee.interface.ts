@@ -20,6 +20,6 @@ export interface RoyaltyFeeDto {
   feeCollectorAccountId: string;
   numerator: number;
   denominator: number;
-  fixedFee?: FixedFeeDto;
+  fallbackFee?: FixedFeeDto;
   allCollectorsAreExempt?: boolean;
 }
