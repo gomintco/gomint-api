@@ -97,6 +97,7 @@ export class AccountService {
   }
 
   async parseCustomFeeAliases(userId: string, createTokenDto: CreateTokenDto) {
+    // doesn't feel like this function belongs here...
     const parseFees = async (fees, feeProcessor) => {
       return await Promise.all(fees.map(feeProcessor));
     };
@@ -207,7 +208,7 @@ export class AccountService {
       .andWhere('key.publicKey LIKE :publicKey', {
         publicKey: `%${publicKey}%`,
       })
-      .getOne();
+      .getOneOrFail();
   }
 
   async findAccountsByUserId(id: string): Promise<Account[]> {
