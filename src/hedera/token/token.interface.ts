@@ -42,3 +42,8 @@ export interface CreateTokenTransaction extends CreateTokenKeys {
   autoRenewAccountId?: string;
   autoRenewPeriod?: number;
 }
+
+export interface MintTokenDto {
+  tokenId: string;
+  amount: number;
+}

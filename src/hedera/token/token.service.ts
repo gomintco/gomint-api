@@ -21,6 +21,7 @@ import {
   AssociateTokenDto,
   CreateTokenDto,
   CreateTokenTransaction,
+  MintTokenDto,
 } from './token.interface';
 import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
@@ -73,6 +74,12 @@ export class TokenService {
       );
 
     return transaction;
+  }
+
+  mintTransaction(mintTokenDto: MintTokenDto) {
+    return new TokenMintTransaction()
+      .setTokenId(mintTokenDto.tokenId)
+      .setAmount(mintTokenDto.amount);
   }
 
   associateTransaction(tokenAssociateInput: AssociateTokenDto) {
