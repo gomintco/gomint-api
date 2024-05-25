@@ -17,16 +17,17 @@ import {
   TransferTransaction,
 } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
-import { DealAlias, Network } from 'src/app.interface';
-import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
+import { DealAlias, KeyType, Network } from 'src/app.interface';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class DealService {
   constructor(
     @InjectRepository(Deal)
-    private dealRepository: Repository<Deal>,
-    private accountService: AccountService,
-    private keyService: KeyService,
+    private readonly dealRepository: Repository<Deal>,
+    private readonly accountService: AccountService,
+    private readonly keyService: KeyService,
+    private readonly configService: AppConfigService,
   ) {}
 
   async createDeal(user: User, createDealDto: CreateDealDto) {
@@ -59,7 +60,7 @@ export class DealService {
 
     try {
       await this.dealRepository.save(deal);
-    } catch (err) {
+    } catch (err: any) {
       console.log('Error saving deal: ' + err.code);
     }
 
@@ -139,9 +140,9 @@ export class DealService {
     await Promise.all(
       decryptedKeys.map(({ type, privateKey }) => {
         switch (type) {
-          case 'ed25519':
+          case KeyType.ED25519:
             return transaction.sign(PrivateKey.fromStringED25519(privateKey));
-          case 'ecdsa':
+          case KeyType.ECDSA:
             return transaction.sign(PrivateKey.fromStringECDSA(privateKey));
           default:
             throw new Error('Invalid key type');
@@ -323,13 +324,13 @@ export class DealService {
     tokenId: string,
     sellerId: string,
   ) {
-    let mirrornodeUrl = '';
+    let mirrorNodeUrl = '';
     switch (network) {
       case Network.MAINNET:
-        mirrornodeUrl = MAINNET_MIRRONODE_URL;
+        mirrorNodeUrl = this.configService.hedera.mainnet.mirrornodeUrl;
         break;
       case Network.TESTNET:
-        mirrornodeUrl = TESTNET_MIRRONODE_URL;
+        mirrorNodeUrl = this.configService.hedera.testnet.mirrornodeUrl;
         break;
       default:
         throw new BadRequestException('Invalid network');
@@ -337,7 +338,7 @@ export class DealService {
     try {
       // fetch the nft
       const res = await fetch(
-        `${mirrornodeUrl}/accounts/${sellerId}/nfts?token.id=${tokenId}`,
+        `${mirrorNodeUrl}/accounts/${sellerId}/nfts?token.id=${tokenId}`,
       );
       const { nfts } = await res.json();
       // randomly pick a serial number
@@ -349,7 +350,7 @@ export class DealService {
       const randomIndex = Math.floor(Math.random() * nfts.length);
       const randomSerialNumber = nfts[randomIndex].serial_number;
       return randomSerialNumber;
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       throw new ServiceUnavailableException('Error setting NFT serial', {
         description: err.message,

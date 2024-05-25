@@ -24,9 +24,9 @@ import { KeyService } from 'src/key/key.service';
 export class AccountService {
   constructor(
     @InjectRepository(Account)
-    private accountRepository: Repository<Account>,
-    private clientService: ClientService,
-    private keyService: KeyService,
+    private readonly accountRepository: Repository<Account>,
+    private readonly clientService: ClientService,
+    private readonly keyService: KeyService,
   ) {}
 
   // associates tokens to a user
@@ -41,7 +41,7 @@ export class AccountService {
     const associatingAccount = await this.getUserAccountByAlias(
       user.id,
       associateDto.associatingId,
-    ).catch((err) => {
+    ).catch(() => {
       throw new Error(
         'Unable to find account with associatingId: ' +
           associateDto.associatingId,
@@ -51,7 +51,7 @@ export class AccountService {
     // ALL OF THIS LOGIC SHOULD BE ENCAPSULATED IN ITS OWN FUNCTION
     // I AM USING THIS IN LOTS FT SERVICE, NFT SERVICE, ETC
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt associating account keys
     // associating account always needs to sign it association tx
     const decryptedAssociatingKeys = associatingAccount.keys.map((key) => {
@@ -74,7 +74,7 @@ export class AccountService {
       const payerAccount = await this.getUserAccountByAlias(
         user.id,
         associateDto.payerId,
-      ).catch((err) => {
+      ).catch(() => {
         throw new Error(
           'Unable to find payer account with alias: ' + associateDto.payerId,
         );
@@ -124,7 +124,7 @@ export class AccountService {
         alias: alias,
         user: { id: userId },
       },
-      relations: ['user'], // This ensures the user relationship is joined
+      relations: { user: true }, // This ensures the user relationship is joined
     });
     // Return true if an account is found, otherwise false
     return !!account;
@@ -168,7 +168,7 @@ export class AccountService {
     // can search by alias because if no alias, account ID is used as alias
     return this.accountRepository.findOneOrFail({
       where: { user: { id: userId }, alias },
-      relations: ['keys'],
+      relations: { keys: true },
     });
   }
 
@@ -190,7 +190,7 @@ export class AccountService {
   async findAccountsByUserId(id: string): Promise<Account[]> {
     return this.accountRepository.find({
       where: { user: { id } },
-      relations: ['keys'],
+      relations: { keys: true },
     });
   }
 
@@ -199,7 +199,7 @@ export class AccountService {
       where: {
         id: In(accountIds),
       },
-      relations: ['keys', 'user'],
+      relations: { keys: true, user: true },
     });
   }
 
@@ -242,7 +242,7 @@ export class AccountService {
         // userId: accountCreateInput.key.user.id, // set user ID - this is used for ensuring unique account alias's per user
       });
       return new AccountBuilder(this, account);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       throw new ServiceUnavailableException("Couldn't create Hedera account", {
         cause: err,
@@ -282,8 +282,8 @@ export class AccountService {
 
 class AccountBuilder {
   constructor(
-    private accountService: AccountService,
-    private account: Account,
+    private readonly accountService: AccountService,
+    private readonly account: Account,
   ) {}
 
   async addUser(user: User) {

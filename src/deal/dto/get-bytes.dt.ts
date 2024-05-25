@@ -1,11 +1,4 @@
-import {
-  IsNumber,
-  IsString,
-  IsArray,
-  ValidateNested,
-  IsOptional,
-  IsEnum,
-} from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import { Network } from 'src/app.interface';
 
 export class GetBytesDto {

@@ -1,42 +1,42 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 // auth.service.ts
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserService } from 'src/user/user.service';
 import { ApiKey } from './api-key.entity';
 import { Repository } from 'typeorm';
 import { getRandomValues } from 'crypto';
 import { User } from 'src/user/user.entity';
+import { WrongPasswordError } from './error/wrong-password.error';
+import { UserNotFoundError } from './error/user-not-found.error';
+import { JwtPayload } from './jwt-payload.type';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(ApiKey)
-    private apiKeyRepository: Repository<ApiKey>,
+    private readonly apiKeyRepository: Repository<ApiKey>,
     @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private jwtService: JwtService,
+    private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async signIn(username: string, pass: string): Promise<any> {
+  async signIn(
+    username: string,
+    pass: string,
+  ): Promise<{ access_token: string }> {
     try {
       const user = await this.userRepository.findOneByOrFail({ username });
       if (user?.hashedPassword !== pass) {
-        throw new UnauthorizedException();
+        throw new WrongPasswordError();
       }
-      const { hashedPassword, escrowKey, ...result } = user;
 
-      const payload = { username: user.username, sub: user.id };
+      const payload: JwtPayload = { username: user.username, sub: user.id };
 
       return {
         access_token: await this.jwtService.signAsync(payload),
       };
-    } catch (e) {
-      throw new NotFoundException("User doesn't exist", {
+    } catch (e: any) {
+      throw new UserNotFoundError("User doesn't exist", {
         cause: e,
         description: e.message,
       });
@@ -51,7 +51,7 @@ export class AuthService {
       apiKey.user = user;
       await this.apiKeyRepository.save(apiKey);
       return { apiKey: apiKey.key };
-    } catch (e) {
+    } catch (e: any) {
       throw new NotFoundException("User doesn't exist", {
         cause: e,
         description: e.message,
@@ -63,11 +63,12 @@ export class AuthService {
     try {
       const apiKey = await this.apiKeyRepository.findOne({
         where: { key },
-        relations: ['user'],
+        relations: { user: true },
       });
       if (!apiKey) throw new Error("API key doesn't exist");
+      if (!apiKey.user) throw new Error('No user associated with the API key');
       return apiKey.user;
-    } catch (e) {
+    } catch (e: any) {
       throw new NotFoundException('Error validating API Key', {
         cause: e,
         description: e.message,

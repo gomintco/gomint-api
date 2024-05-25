@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { NftCreateInput, NftMintInput } from './nft.interface';
 import {
-  Key,
   TokenCreateTransaction,
   Client,
   TokenType,
   TokenMintTransaction,
   CustomFee,
   CustomRoyaltyFee,
-  TokenId,
   PrivateKey,
   TokenSupplyType,
 } from '@hashgraph/sdk';
@@ -20,15 +18,17 @@ import { AccountService } from 'src/account/account.service';
 import { TokenService } from '../token.service';
 import { MintNftDto } from './dto/mint-nft.dto';
 import { KeyType } from 'src/app.interface';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class NftService extends TokenService {
   constructor(
-    private keyService: KeyService,
-    private clientService: ClientService,
-    private accountService: AccountService,
+    private readonly keyService: KeyService,
+    private readonly clientService: ClientService,
+    private readonly accountService: AccountService,
+    protected readonly configService: AppConfigService,
   ) {
-    super();
+    super(configService);
   }
 
   async createToken(user: User, createNftDto: CreateNftDto) {
@@ -51,7 +51,7 @@ export class NftService extends TokenService {
       });
 
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt treasury keys
     const decryptedTreasuryKeys = treasuryAccount.keys.map((key) => {
       const decryptedKey = this.keyService.decryptString(
@@ -176,7 +176,7 @@ export class NftService extends TokenService {
         mintNftDto.encryptionKey,
       );
     // fetch supplyKey from mirrornode
-    const supplyKey = await this.getTokenMirronodeInfo(
+    const supplyKey = await this.getTokenMirrornodeInfo(
       user.network,
       mintNftDto.tokenId,
     ).then((info) => info.supply_key.key);
@@ -190,7 +190,7 @@ export class NftService extends TokenService {
       throw new Error('Your GoMint user does not own this supply account');
     // configure correct client
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt supply keys
     const decryptedSupplyKeys = supplyAccount.keys.map((key) => {
       const decryptedKey = this.keyService.decryptString(
