@@ -1,27 +1,17 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { TokenModule } from './token/token.module';
 import { DealModule } from './deal/deal.module';
-import configuration from './config/configuration';
-import { validate } from './config/validation';
-import { ConfigurationType } from './config/config.type';
+import { AppConfigModule } from './config/app-config.module';
+import { AppConfigService } from './config/app-config.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      validate,
-      load: [configuration],
-      isGlobal: true,
-    }),
+    AppConfigModule,
     TypeOrmModule.forRootAsync({
-      useFactory: (configService: ConfigService<ConfigurationType, true>) => {
-        const config = configService.get<ConfigurationType['db']>('db');
-        console.log(config);
-        return config;
-      },
-      inject: [ConfigService],
+      useFactory: async (configService: AppConfigService) => configService.db,
+      inject: [AppConfigService],
     }),
     TokenModule,
     UserModule,
