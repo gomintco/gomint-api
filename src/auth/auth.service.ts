@@ -8,30 +8,34 @@ import { getRandomValues } from 'crypto';
 import { User } from 'src/user/user.entity';
 import { WrongPasswordError } from './error/wrong-password.error';
 import { UserNotFoundError } from './error/user-not-found.error';
+import { JwtPayload } from './jwt-payload.type';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(ApiKey)
-    private apiKeyRepository: Repository<ApiKey>,
+    private readonly apiKeyRepository: Repository<ApiKey>,
     @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private jwtService: JwtService,
+    private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async signIn(username: string, pass: string): Promise<any> {
+  async signIn(
+    username: string,
+    pass: string,
+  ): Promise<{ access_token: string }> {
     try {
       const user = await this.userRepository.findOneByOrFail({ username });
       if (user?.hashedPassword !== pass) {
         throw new WrongPasswordError();
       }
 
-      const payload = { username: user.username, sub: user.id };
+      const payload: JwtPayload = { username: user.username, sub: user.id };
 
       return {
         access_token: await this.jwtService.signAsync(payload),
       };
-    } catch (e) {
+    } catch (e: any) {
       throw new UserNotFoundError("User doesn't exist", {
         cause: e,
         description: e.message,
@@ -47,7 +51,7 @@ export class AuthService {
       apiKey.user = user;
       await this.apiKeyRepository.save(apiKey);
       return { apiKey: apiKey.key };
-    } catch (e) {
+    } catch (e: any) {
       throw new NotFoundException("User doesn't exist", {
         cause: e,
         description: e.message,
@@ -62,8 +66,9 @@ export class AuthService {
         relations: { user: true },
       });
       if (!apiKey) throw new Error("API key doesn't exist");
+      if (!apiKey.user) throw new Error('No user associated with the API key');
       return apiKey.user;
-    } catch (e) {
+    } catch (e: any) {
       throw new NotFoundException('Error validating API Key', {
         cause: e,
         description: e.message,

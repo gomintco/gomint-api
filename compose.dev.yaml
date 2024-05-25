@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  db:
+  gm_main_db:
     image: mysql:latest
     restart: always
     environment:
@@ -12,8 +10,7 @@ services:
     ports:
       - "${DB_PORT}:${DB_PORT}"
     volumes:
-      - db_data:/var/lib/mysql
-    container_name: db
+      - gm_main_db_data:/var/lib/mysql
 
 volumes:
-  db_data:
+  gm_main_db_data:

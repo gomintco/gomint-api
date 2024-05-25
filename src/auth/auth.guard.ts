@@ -5,53 +5,51 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { jwtConstants } from './constants';
 import { AuthService } from './auth.service';
+import { Request } from 'express';
+import { JwtPayload } from './jwt-payload.type';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: AppConfigService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
+    const req = context.switchToHttp().getRequest<Request>();
+    const token = this.extractTokenFromHeader(req);
     if (!token) {
       throw new UnauthorizedException('No token provided');
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: jwtConstants.secret,
+      req.payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+        secret: this.configService.app.jwtSecret,
       });
-      // 💡 We're assigning the payload to the request object here
-      // so that we can access it in our route handlers
-      request['user'] = payload;
     } catch {
       throw new UnauthorizedException();
     }
     return true;
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers['authorization'].split(' ') ?? [];
+  private extractTokenFromHeader(req: Request): string | undefined {
+    const [type, token] = req.headers['authorization'].split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }
 }
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const apiKey = request.headers['x-api-key'];
+    const req = context.switchToHttp().getRequest();
+    const apiKey = req.headers['x-api-key'];
     if (!apiKey) {
       throw new UnauthorizedException('API Key is required');
     }
-    const user = await this.authService.validateApiKey(apiKey);
-    if (!user) {
-      throw new UnauthorizedException('Invalid API Key');
-    } // throws error in service if api key doesn't exist
-    request['user'] = user;
+    req.user = await this.authService.validateApiKey(apiKey);
     return true;
   }
 }

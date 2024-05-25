@@ -16,9 +16,9 @@ import { FailedUserSaveError } from './error/failed-user-save.error';
 export class UserService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
-    private keyService: KeyService,
-    private accountService: AccountService,
+    private readonly usersRepository: Repository<User>,
+    private readonly keyService: KeyService,
+    private readonly accountService: AccountService,
   ) {}
   /**
    * This function returns all the users in the database.
@@ -183,7 +183,7 @@ export class UserService {
     try {
       // await is needed to catch errors here
       return await this.usersRepository.save(user);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       throw new FailedUserSaveError(err.code || err.message);
     }

@@ -18,15 +18,17 @@ import { AccountService } from 'src/account/account.service';
 import { TokenService } from '../token.service';
 import { MintNftDto } from './dto/mint-nft.dto';
 import { KeyType } from 'src/app.interface';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class NftService extends TokenService {
   constructor(
-    private keyService: KeyService,
-    private clientService: ClientService,
-    private accountService: AccountService,
+    private readonly keyService: KeyService,
+    private readonly clientService: ClientService,
+    private readonly accountService: AccountService,
+    protected readonly configService: AppConfigService,
   ) {
-    super();
+    super(configService);
   }
 
   async createToken(user: User, createNftDto: CreateNftDto) {
@@ -174,7 +176,7 @@ export class NftService extends TokenService {
         mintNftDto.encryptionKey,
       );
     // fetch supplyKey from mirrornode
-    const supplyKey = await this.getTokenMirronodeInfo(
+    const supplyKey = await this.getTokenMirrornodeInfo(
       user.network,
       mintNftDto.tokenId,
     ).then((info) => info.supply_key.key);

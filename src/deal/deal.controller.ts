@@ -14,23 +14,23 @@ import {
 import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { DealService } from './deal.service';
 import { CreateDealDto } from './dto/create-deal.dto';
-import { User } from 'src/user/user.entity';
 import { GetBytesDto } from './dto/get-bytes.dt';
 import { Network } from 'src/app.interface';
+import { Request } from 'express';
 
 @Controller('deal')
 export class DealController {
-  constructor(private dealService: DealService) {}
+  constructor(private readonly dealService: DealService) {}
 
   @UseGuards(ApiKeyGuard)
   @Post('create')
-  async create(@Req() request, @Body() createDealDto: CreateDealDto) {
-    const user = request.user as User;
+  async create(@Req() req: Request, @Body() createDealDto: CreateDealDto) {
+    const user = req.user;
 
     try {
       const dealId = await this.dealService.createDeal(user, createDealDto);
       return { dealId };
-    } catch (err) {
+    } catch (err: any) {
       throw new ServiceUnavailableException('Error creating deal', {
         cause: err,
         description: err.message,

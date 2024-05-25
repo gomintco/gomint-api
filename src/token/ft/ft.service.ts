@@ -18,15 +18,17 @@ import { AccountService } from 'src/account/account.service';
 import { TokenService } from 'src/token/token.service';
 import { MintFtDto } from './dto/mint-ft.dto';
 import { KeyType } from 'src/app.interface';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class FtService extends TokenService {
   constructor(
-    private keyService: KeyService,
-    private clientService: ClientService,
-    private accountService: AccountService,
+    private readonly keyService: KeyService,
+    private readonly clientService: ClientService,
+    private readonly accountService: AccountService,
+    protected readonly configService: AppConfigService,
   ) {
-    super();
+    super(configService);
   }
 
   async createToken(user: User, createFtDto: CreateFtDto) {
@@ -166,7 +168,7 @@ export class FtService extends TokenService {
         mintFtDto.encryptionKey,
       );
     // fetch supplyKey from mirrornode
-    const supplyKey = await this.getTokenMirronodeInfo(
+    const supplyKey = await this.getTokenMirrornodeInfo(
       user.network,
       mintFtDto.tokenId,
     )

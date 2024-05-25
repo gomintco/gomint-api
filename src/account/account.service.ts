@@ -24,9 +24,9 @@ import { KeyService } from 'src/key/key.service';
 export class AccountService {
   constructor(
     @InjectRepository(Account)
-    private accountRepository: Repository<Account>,
-    private clientService: ClientService,
-    private keyService: KeyService,
+    private readonly accountRepository: Repository<Account>,
+    private readonly clientService: ClientService,
+    private readonly keyService: KeyService,
   ) {}
 
   // associates tokens to a user
@@ -242,7 +242,7 @@ export class AccountService {
         // userId: accountCreateInput.key.user.id, // set user ID - this is used for ensuring unique account alias's per user
       });
       return new AccountBuilder(this, account);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       throw new ServiceUnavailableException("Couldn't create Hedera account", {
         cause: err,
@@ -282,8 +282,8 @@ export class AccountService {
 
 class AccountBuilder {
   constructor(
-    private accountService: AccountService,
-    private account: Account,
+    private readonly accountService: AccountService,
+    private readonly account: Account,
   ) {}
 
   async addUser(user: User) {
