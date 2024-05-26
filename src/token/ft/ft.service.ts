@@ -1,15 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-
+import { Injectable } from '@nestjs/common';
 import { FtCreateInput, FtMintInput } from './ft.interface';
 import {
-  Key,
   TokenCreateTransaction,
   Client,
   TokenSupplyType,
   TokenMintTransaction,
   CustomFee,
-  CustomFixedFee,
-  Hbar,
   CustomFractionalFee,
   FeeAssessmentMethod,
   PrivateKey,
@@ -22,15 +18,17 @@ import { AccountService } from 'src/account/account.service';
 import { TokenService } from 'src/token/token.service';
 import { MintFtDto } from './dto/mint-ft.dto';
 import { KeyType } from 'src/app.interface';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class FtService extends TokenService {
   constructor(
-    private keyService: KeyService,
-    private clientService: ClientService,
-    private accountService: AccountService,
+    private readonly keyService: KeyService,
+    private readonly clientService: ClientService,
+    private readonly accountService: AccountService,
+    protected readonly configService: AppConfigService,
   ) {
-    super();
+    super(configService);
   }
 
   async createToken(user: User, createFtDto: CreateFtDto) {
@@ -48,7 +46,7 @@ export class FtService extends TokenService {
       });
 
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt treasury keys
     const decryptedTreasuryKeys = treasuryAccount.keys.map((key) => {
       const decryptedKey = this.keyService.decryptString(
@@ -108,10 +106,6 @@ export class FtService extends TokenService {
       customFees,
       ...tokenPublicKeys,
     };
-    // decrypt keys
-    const decryptedKeys = treasuryAccount.keys.map((key) =>
-      this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
-    );
     return this.createTransactionAndExecute(ftCreateInput, client, signingKeys);
   }
 
@@ -174,7 +168,7 @@ export class FtService extends TokenService {
         mintFtDto.encryptionKey,
       );
     // fetch supplyKey from mirrornode
-    const supplyKey = await this.getTokenMirronodeInfo(
+    const supplyKey = await this.getTokenMirrornodeInfo(
       user.network,
       mintFtDto.tokenId,
     )
@@ -194,7 +188,7 @@ export class FtService extends TokenService {
       throw new Error('Your GoMint user does not own this supply account');
     // configure correct client
     let client: Client;
-    let signingKeys: PrivateKey[] = [];
+    const signingKeys: PrivateKey[] = [];
     // decrypt supply keys
     const decryptedSupplyKeys = supplyAccount.keys.map((key) => {
       const decryptedKey = this.keyService.decryptString(

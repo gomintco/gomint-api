@@ -2,13 +2,7 @@ import { CreateFtDto } from './ft/dto/create-ft.dto';
 import { FtCreateInput } from './ft/ft.interface';
 import { CreateNftDto } from './nft/dto/create-nft.dto';
 import { NftCreateInput } from './nft/nft.interface';
-import {
-  CustomFee,
-  CustomFixedFee,
-  Hbar,
-  Key,
-  PublicKey,
-} from '@hashgraph/sdk';
+import { CustomFixedFee, Hbar, Key, PublicKey } from '@hashgraph/sdk';
 import {
   FixedFee,
   TokenMirrornodeInfo,
@@ -16,22 +10,22 @@ import {
 } from './token.interface';
 import { BadRequestException } from '@nestjs/common';
 import { Network } from 'src/app.interface';
-import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
+import { AppConfigService } from 'src/config/app-config.service';
 
 export class TokenService {
-  constructor() {}
+  constructor(protected readonly configService: AppConfigService) {}
 
-  protected async getTokenMirronodeInfo(
+  protected async getTokenMirrornodeInfo(
     network: Network,
     tokenId: string,
   ): Promise<TokenMirrornodeInfo> {
     let mirrornodeUrl = '';
     switch (network) {
       case Network.TESTNET:
-        mirrornodeUrl = TESTNET_MIRRONODE_URL;
+        mirrornodeUrl = this.configService.hedera.testnet.mirrornodeUrl;
         break;
       case Network.MAINNET:
-        mirrornodeUrl = MAINNET_MIRRONODE_URL;
+        mirrornodeUrl = this.configService.hedera.mainnet.mirrornodeUrl;
         break;
     }
     const res = await fetch(`${mirrornodeUrl}/tokens/${tokenId}`);

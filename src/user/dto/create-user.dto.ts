@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsBoolean,
-  IsEmail,
-  IsEnum,
-} from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsEnum } from 'class-validator';
 import { Network } from '../../app.interface';
 
 export class CreateUserDto {

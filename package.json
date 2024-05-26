@@ -18,7 +18,16 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "dotenv -e .env -- ts-node ./node_modules/typeorm/cli-ts-node-esm.js",
+    "seed:new": "sh -c 'npm run typeorm migration:create ./src/db/seeds/$0'",
+    "postseed:new": "prettier --write \"src/db/seeds/*.ts\"",
+    "seed:run": "npm run typeorm migration:run -- -d ./src/db/seeds-data-source.ts",
+    "seed:rev": "npm run typeorm migration:revert -- -d ./src/db/seeds-data-source.ts",
+    "mig:gen": "sh -c 'npm run typeorm migration:generate -- -d ./src/db/migrations-data-source.ts ./src/db/migrations/$0'",
+    "postmig:gen": "prettier --write \"src/db/migrations/*.ts\"",
+    "mig:run": "npm run typeorm migration:run -- -d ./src/db/migrations-data-source.ts",
+    "mig:rev": "npm run typeorm migration:revert -- -d ./src/db/migrations-data-source.ts"
   },
   "dependencies": {
     "@hashgraph/sdk": "^2.40.0",
@@ -29,13 +38,14 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.2.0",
-    "@nestjs/typeorm": "^10.0.1",
+    "@nestjs/typeorm": "^10.0.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
-    "mysql2": "^3.7.1",
+    "mysql2": "^3.9.7",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.19"
+    "typeorm": "^0.3.20",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -49,6 +59,7 @@
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "dotenv-cli": "^7.4.2",
     "eslint": "^8.42.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
@@ -58,25 +69,8 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.3"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
   }
 }
