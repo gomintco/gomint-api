@@ -22,10 +22,10 @@ export class TokenService {
     let mirrornodeUrl = '';
     switch (network) {
       case Network.TESTNET:
-        mirrornodeUrl = this.configService.hedera.mainnet.mirrornodeUrl;
+        mirrornodeUrl = this.configService.hedera.testnet.mirrornodeUrl;
         break;
       case Network.MAINNET:
-        mirrornodeUrl = this.configService.hedera.testnet.mirrornodeUrl;
+        mirrornodeUrl = this.configService.hedera.mainnet.mirrornodeUrl;
         break;
     }
     const res = await fetch(`${mirrornodeUrl}/tokens/${tokenId}`);
