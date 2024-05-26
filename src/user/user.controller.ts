@@ -1,10 +1,8 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   InternalServerErrorException,
-  Param,
   Post,
   UseGuards,
   Req,
@@ -14,11 +12,14 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { CreateKeyDto } from './dto/create-key.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { ApiKeyGuard } from 'src/auth/auth.guard';
-import { User } from './user.entity';
+import { UserResponse } from './response/user.response';
+import { AccountResponse } from './response/account.response';
+import { KeyResponse } from './response/key.response';
+import { Request } from 'express';
 
 @Controller('user')
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(private readonly userService: UserService) {}
 
   @Post('create')
   async create(@Body() createUserDto: CreateUserDto) {
@@ -33,7 +34,8 @@ export class UserController {
       const savedUser = await this.userService.save(user);
       const { username, id, network } = savedUser;
       return { username, id, network };
-    } catch (err) {
+    } catch (err: any) {
+      // if more errors may occur, handle them separately per their status code (exception type)
       console.error(err);
       throw new InternalServerErrorException('Error creating user', {
         cause: err,
@@ -44,36 +46,46 @@ export class UserController {
 
   @UseGuards(ApiKeyGuard)
   @Get()
-  getUser(@Req() request) {
-    const user = request.user as User;
-    return this.userService.getUser(user.id);
+  async getUser(@Req() req: Request): Promise<UserResponse> {
+    const { id: userId } = req.user;
+    const user = await this.userService.getUser(userId);
+    return new UserResponse(user);
   }
 
   @UseGuards(ApiKeyGuard)
   @Get('accounts')
-  getUserAccounts(@Req() request) {
-    const user = request.user as User;
-    return this.userService.getUserAccounts(user.id);
+  async getUserAccounts(
+    @Req() req: Request,
+  ): Promise<{ id: string; accounts: AccountResponse[] }> {
+    const { id: userId } = req.user;
+    const { id, accounts } = await this.userService.getUserAccounts(userId);
+    return {
+      id,
+      accounts: accounts.map((account) => new AccountResponse(account)),
+    };
   }
 
   @UseGuards(ApiKeyGuard)
   @Get('keys')
-  getUserKeys(@Req() request) {
-    const user = request.user as User;
-    return this.userService.getUserKeys(user.id);
+  async getUserKeys(
+    @Req() req: Request,
+  ): Promise<{ id: string; keys: KeyResponse[] }> {
+    const { id: userId } = req.user;
+    const { id, keys } = await this.userService.getUserKeys(userId);
+    return { id, keys: keys.map((key) => new KeyResponse(key)) };
   }
 
   @UseGuards(ApiKeyGuard)
   @Post('create/key')
-  async createKey(@Req() request, @Body() createKey: CreateKeyDto) {
-    const user = request.user as User;
+  async createKey(@Req() req: Request, @Body() createKey: CreateKeyDto) {
+    const user = req.user;
     try {
       const { type, publicKey } = await this.userService.createAndSaveKey(
         user,
         createKey,
       );
       return { type, publicKey };
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       throw new InternalServerErrorException('Error creating key', {
         cause: err,
@@ -85,10 +97,10 @@ export class UserController {
   @UseGuards(ApiKeyGuard)
   @Post('create/account')
   async createAccount(
-    @Req() request,
+    @Req() req: Request,
     @Body() createAccountDto: CreateAccountDto,
   ) {
-    const user = request.user as User;
+    const user = req.user;
     try {
       const account = await this.userService.createAndSaveAccount(
         user,
@@ -96,7 +108,7 @@ export class UserController {
       );
       const { id } = account;
       return { id };
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       throw new InternalServerErrorException('Error creating account', {
         cause: err,
