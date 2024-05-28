@@ -7,10 +7,10 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsString()
+  @IsNotIn(['buyer', 'receiver'])
   alias: string;
 
   @IsOptional()
   @IsString()
-  @IsNotIn(['buyer', 'receiver'])
   encryptionKey: string;
 }
