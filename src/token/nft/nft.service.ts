@@ -81,94 +81,49 @@ export class NftService {
     return receipt.tokenId.toString();
   }
 
-  async mintToken(user: User, mintNftDto: MintNftDto) {
-    let escrowKey = user.escrowKey;
-    if (user.hasEncryptionKey)
-      escrowKey = this.keyService.decryptString(
-        user.escrowKey,
-        mintNftDto.encryptionKey,
-      );
-    // fetch supplyKey from mirrornode
+  async mintTokenHandler(user: User, mintNftDto: MintNftDto): Promise<string> {
+    // get required accounts, keys, and clients
+    const escrowKey = this.keyService.decryptUserEscrowKey(
+      user,
+      mintNftDto.encryptionKey,
+    );
+    // get supply key from mirrornode
     const supplyKey = await this.mirrornodeService
       .getTokenMirronodeInfo(user.network, mintNftDto.tokenId)
-      .then((info) => info.supply_key.key);
+      .then((info) => info.supply_key.key)
+      .catch(() => {
+        throw new Error(
+          `Token ${mintNftDto.tokenId} does not have a supply key`,
+        );
+      });
     // get and decrypt private keys for supply key
-    const supplyAccount = await this.accountService.getUserAccountByPublicKey(
-      user.id,
-      supplyKey,
-    );
-    if (!supplyAccount)
-      // could probaly throw error in typeorm function
-      throw new Error('Your GoMint user does not own this supply account');
-    // configure correct client
-    let client: Client;
-    let signingKeys: PrivateKey[] = [];
-    // decrypt supply keys
-    const decryptedSupplyKeys = supplyAccount.keys.map((key) => {
-      const decryptedKey = this.keyService.decryptString(
-        key.encryptedPrivateKey,
-        escrowKey,
-      );
-      // return as PrivateKey type
-      switch (key.type) {
-        case KeyType.ED25519:
-          return PrivateKey.fromStringED25519(decryptedKey);
-        case KeyType.ECDSA:
-          return PrivateKey.fromStringECDSA(decryptedKey);
-        default:
-          throw new Error('Invalid key type in supply account');
-      }
-    });
-    // handle logic for payer other than supply account
-    if (mintNftDto.payerId) {
-      // get payer account and keys for signing
-      const payerAccount = await this.accountService.getUserAccountByAlias(
+    const supplyAccount = await this.accountService
+      .getUserAccountByPublicKey(user.id, supplyKey)
+      .catch(() => {
+        throw new Error('Your GoMint user does not own this supply account');
+      });
+    // handle case if payer is separate
+    let payerAccount: Account;
+    if (mintNftDto.payerId)
+      payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
         mintNftDto.payerId,
       );
-      const decryptedPayerKeys = payerAccount.keys.map((key) =>
-        this.keyService.decryptString(key.encryptedPrivateKey, escrowKey),
+    // build client and signers
+    const { client, signers } = this.clientService.buildClientAndSigningKeys(
+      user.network,
+      escrowKey,
+      supplyAccount,
+      payerAccount,
+    );
+    // create mint transaction
+    const mintTransaction = this.tokenService.mintNftTransaction(mintNftDto);
+    const receipt =
+      await this.transactionService.freezeSignExecuteAndGetReceipt(
+        mintTransaction,
+        client,
+        signers,
       );
-      client = this.clientService.buildClient(
-        user.network,
-        payerAccount.id,
-        decryptedPayerKeys[0],
-      );
-      // add supply account keys for signing
-      signingKeys.push(decryptedSupplyKeys[0]);
-    } else {
-      client = this.clientService.buildClient(
-        user.network,
-        supplyAccount.id,
-        decryptedSupplyKeys[0],
-      );
-    }
-    const nftMintInput: NftMintInput = {
-      tokenId: mintNftDto.tokenId,
-      metadatas: mintNftDto.metadatas.length // handle both metdata formats
-        ? mintNftDto.metadatas.map((metadata) => Buffer.from(metadata))
-        : Array(mintNftDto.amount).fill(Buffer.from(mintNftDto.metadata)),
-    };
-    return this.mintTransactionAndExecute(nftMintInput, client, signingKeys);
-  }
-
-  async mintTransactionAndExecute(
-    ftMintInput: NftMintInput,
-    client: Client,
-    privateKeys: PrivateKey[],
-  ) {
-    const transaction = this.mintTransaction(ftMintInput);
-    transaction.freezeWith(client);
-    if (privateKeys.length)
-      await Promise.all(privateKeys.map((key) => transaction.sign(key)));
-    const submit = await transaction.execute(client);
-    const receipt = await submit.getReceipt(client);
     return receipt.status.toString();
-  }
-
-  private mintTransaction(ftMintInput: NftMintInput) {
-    return new TokenMintTransaction()
-      .setTokenId(ftMintInput.tokenId)
-      .setMetadata(ftMintInput.metadatas);
   }
 }
