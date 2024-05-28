@@ -21,13 +21,16 @@ import {
   AssociateTokenDto,
   CreateTokenDto,
   CreateTokenTransaction,
-  MintTokenDto,
+  MintFtDto,
+  MintNftDto,
 } from './token.interface';
 import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 
 @Injectable()
 export class TokenService {
+  nDays = 90;
+
   createTransaction(
     tokenCreateInput: CreateTokenDto,
     tokenType: TokenType,
@@ -38,7 +41,6 @@ export class TokenService {
       tokenCreateInput,
       defaultKey,
     );
-    const nDays = 90;
     const transaction = new TokenCreateTransaction()
       .setTokenName(createTokenTransaction.tokenName)
       .setTokenSymbol(createTokenTransaction.tokenSymbol)
@@ -53,33 +55,34 @@ export class TokenService {
       .setSupplyKey(createTokenTransaction.supplyKey)
       .setPauseKey(createTokenTransaction.pauseKey)
       .setFreezeDefault(createTokenTransaction.freezeDefault)
-      .setExpirationTime(
-        createTokenTransaction.expirationTime ?? this.todayPlusNDays(nDays),
-      )
+      .setExpirationTime(createTokenTransaction.expirationTime)
       .setFeeScheduleKey(createTokenTransaction.feeScheduleKey)
-      .setCustomFees(createTokenTransaction.customFees ?? [])
-      .setSupplyType(
-        createTokenTransaction.supplyType ?? createTokenTransaction.maxSupply // if maxSupply is provided, supplyType is finite
-          ? TokenSupplyType.Finite
-          : TokenSupplyType.Infinite,
-      )
+      .setCustomFees(createTokenTransaction.customFees)
+      .setSupplyType(createTokenTransaction.supplyType)
       .setMaxSupply(createTokenTransaction.maxSupply)
       .setTokenMemo(createTokenTransaction.tokenMemo)
-      .setAutoRenewAccountId(
-        createTokenTransaction.autoRenewAccountId ??
-          createTokenTransaction.treasuryAccountId,
-      )
+      .setAutoRenewAccountId(createTokenTransaction.autoRenewAccountId)
       .setAutoRenewPeriod(
-        createTokenTransaction.autoRenewPeriod ?? nDays * 24 * 60 * 60, // 90 days in seconds
+        createTokenTransaction.autoRenewPeriod ?? this.nDays * 24 * 60 * 60, // 90 days in seconds
       );
 
     return transaction;
   }
 
-  mintTransaction(mintTokenDto: MintTokenDto) {
+  mintFtTransaction(mintTokenDto: MintFtDto) {
     return new TokenMintTransaction()
       .setTokenId(mintTokenDto.tokenId)
       .setAmount(mintTokenDto.amount);
+  }
+
+  mintNftTransaction(mintNftDto: MintNftDto) {
+    return new TokenMintTransaction()
+      .setTokenId(mintNftDto.tokenId)
+      .setMetadata(
+        mintNftDto.metadatas.length // handle both metdata formats
+          ? mintNftDto.metadatas.map((metadata) => Buffer.from(metadata))
+          : Array(mintNftDto.amount).fill(Buffer.from(mintNftDto.metadata)),
+      );
   }
 
   associateTransaction(tokenAssociateInput: AssociateTokenDto) {
@@ -100,10 +103,20 @@ export class TokenService {
       treasuryAccountId: tokenCreateInput.treasuryAccountId,
       decimals: tokenCreateInput.decimals ?? 0,
       initialSupply: tokenCreateInput.initialSupply ?? 0,
-      maxSupply: tokenCreateInput.maxSupply,
-      supplyType: tokenCreateInput.finite
-        ? TokenSupplyType.Finite
-        : TokenSupplyType.Infinite,
+      maxSupply:
+        // hedera needs max supply if finite
+        // if user sets finite with no max supply, max supply is set to initial supply
+        tokenCreateInput.finite && !tokenCreateInput.maxSupply
+          ? tokenCreateInput.initialSupply
+          : tokenCreateInput.maxSupply,
+      expirationTime: tokenCreateInput.expirationTime ?? this.todayPlusNDays(),
+      autoRenewAccountId:
+        tokenCreateInput.autoRenewAccountId ||
+        tokenCreateInput.treasuryAccountId,
+      supplyType:
+        tokenCreateInput.finite || tokenCreateInput.maxSupply
+          ? TokenSupplyType.Finite
+          : TokenSupplyType.Infinite,
       customFees: this.parseCustomFees(tokenCreateInput),
       ...tokenPubKeys,
     };
@@ -220,7 +233,7 @@ export class TokenService {
       .setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
   }
 
-  private todayPlusNDays(n: number): Date {
+  private todayPlusNDays(n: number = this.nDays): Date {
     return new Date(new Date().setDate(new Date().getDate() + n));
   }
 }

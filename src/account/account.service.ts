@@ -167,9 +167,13 @@ export class AccountService {
     userId: string,
     alias: string,
   ): Promise<string> {
-    const account = await this.accountRepository.findOne({
-      where: { user: { id: userId }, alias },
-    });
+    const account = await this.accountRepository
+      .findOneOrFail({
+        where: { user: { id: userId }, alias },
+      })
+      .catch((err) => {
+        throw new Error(`Account not found for alias: ${alias}`);
+      });
     return account.id;
   }
 

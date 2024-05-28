@@ -85,7 +85,7 @@ export class FtService {
     return receipt.tokenId.toString();
   }
 
-  async mintTokenHandler(user: User, mintFtDto: MintFtDto) {
+  async mintTokenHandler(user: User, mintFtDto: MintFtDto): Promise<string> {
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,
@@ -121,7 +121,7 @@ export class FtService {
       payerAccount,
     );
     // create mint transaction
-    const mintTransaction = this.tokenService.mintTransaction(mintFtDto);
+    const mintTransaction = this.tokenService.mintFtTransaction(mintFtDto);
     const receipt =
       await this.transactionService.freezeSignExecuteAndGetReceipt(
         mintTransaction,

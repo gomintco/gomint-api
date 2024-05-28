@@ -37,32 +37,33 @@ export class NftController {
     }
   }
 
-  // @Post('mint')
-  // async mint(@Req() request, @Body() mintNftDto: MintNftDto) {
-  //   if (
-  //     !mintNftDto.metadata &&
-  //     !mintNftDto.amount &&
-  //     !mintNftDto.metadatas.length
-  //   ) {
-  //     throw new BadRequestException('Metadata is required');
-  //   }
-  //   if (
-  //     !mintNftDto.metadatas.length &&
-  //     (!mintNftDto.metadata || !mintNftDto.amount)
-  //   ) {
-  //     throw new BadRequestException(
-  //       'Both amount and metadata must be provided if metadatas array is empty',
-  //     );
-  //   }
-  //   const user = request.user as User;
-  //   try {
-  //     const status = await this.nftService.mintToken(user, mintNftDto);
-  //     return { status };
-  //   } catch (err) {
-  //     throw new ServiceUnavailableException('Error minting token', {
-  //       cause: err,
-  //       description: err.message,
-  //     });
-  //   }
-  // }
+  @Post('mint')
+  async mint(@Req() request, @Body() mintNftDto: MintNftDto) {
+    // error handling which (Jake thinks) cannot be done using class-validator
+    if (
+      !mintNftDto.metadata &&
+      !mintNftDto.amount &&
+      !mintNftDto.metadatas.length
+    ) {
+      throw new BadRequestException('Metadata is required');
+    }
+    if (
+      !mintNftDto.metadatas.length &&
+      (!mintNftDto.metadata || !mintNftDto.amount)
+    ) {
+      throw new BadRequestException(
+        'Both amount and metadata must be provided if metadatas array is empty',
+      );
+    }
+    const user = request.user as User;
+    try {
+      const status = await this.nftService.mintTokenHandler(user, mintNftDto);
+      return { status };
+    } catch (err) {
+      throw new ServiceUnavailableException('Error minting token', {
+        cause: err,
+        description: err.message,
+      });
+    }
+  }
 }

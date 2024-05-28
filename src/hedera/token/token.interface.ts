@@ -22,6 +22,8 @@ export interface CreateTokenDto extends CreateTokenKeysDto {
   initialSupply?: number;
   maxSupply?: number;
   finite?: boolean;
+  expirationTime?: Date;
+  autoRenewAccountId?: string;
   fixedFees?: FixedFeeDto[];
   royaltyFees?: RoyaltyFeeDto[];
   fractionalFees?: FractionalFeeDto[];
@@ -43,7 +45,14 @@ export interface CreateTokenTransaction extends CreateTokenKeys {
   autoRenewPeriod?: number;
 }
 
-export interface MintTokenDto {
+export interface MintFtDto {
   tokenId: string;
   amount: number;
+}
+
+export interface MintNftDto {
+  tokenId: string;
+  metadata?: string;
+  metadatas?: string[];
+  amount?: number;
 }
