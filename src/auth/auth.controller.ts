@@ -6,45 +6,55 @@ import {
   HttpStatus,
   UseGuards,
   Get,
-  Request,
-  Param,
-  ForbiddenException,
+  UnauthorizedException,
+  InternalServerErrorException,
+  NotFoundException,
+  Req,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { JwtGuard } from './auth.guard';
-// auth.controller.ts
+import { WrongPasswordError } from './error/wrong-password.error';
+import { UserNotFoundError } from './error/user-not-found.error';
+import { Request } from 'express';
+import { JwtPayload } from 'jsonwebtoken';
+
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @HttpCode(HttpStatus.OK)
   @Post('signin')
-  signIn(@Body() signInDto: SignInDto) {
-    return this.authService.signIn(
-      signInDto.username,
-      signInDto.hashedPassword,
-    );
+  async signIn(
+    @Body() signInDto: SignInDto,
+  ): Promise<{ access_token: string }> {
+    try {
+      return await this.authService.signIn(
+        signInDto.username,
+        signInDto.hashedPassword,
+      );
+    } catch (err) {
+      switch (true) {
+        case err instanceof WrongPasswordError:
+          throw new UnauthorizedException();
+        case err instanceof UserNotFoundError:
+          throw new NotFoundException(err.message, err.options);
+        default:
+          console.error(err);
+          throw new InternalServerErrorException();
+      }
+    }
   }
 
   @UseGuards(JwtGuard)
-  // @Post(':userId/api-keys')
-  // async createApiKey(@Param('userId') userId: string, @Request() req) {
   @Post('/api-key')
-  async createApiKey(@Request() req) {
-    // Ensure the authenticated user is the same as userId
-
-    // is this needed? - the jwt is unique anyway...
-    // if (req.user.sub !== userId) {
-    //   throw new ForbiddenException();
-    // }
-
-    return this.authService.generateApiKey(req.user.sub);
+  async createApiKey(@Req() req: Request): Promise<{ apiKey: string }> {
+    return this.authService.generateApiKey(req.payload.sub);
   }
 
   @UseGuards(JwtGuard)
   @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  getProfile(@Req() req: Request): JwtPayload {
+    return req.payload;
   }
 }

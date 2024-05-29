@@ -1,10 +1,4 @@
-import {
-  CustomFee,
-  Key,
-  PublicKey,
-  TokenSupplyType,
-  TokenType,
-} from '@hashgraph/sdk';
+import { CustomFee, TokenSupplyType } from '@hashgraph/sdk';
 import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 

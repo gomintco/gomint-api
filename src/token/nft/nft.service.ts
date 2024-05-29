@@ -1,28 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { NftCreateInput, NftMintInput } from './nft.interface';
-import {
-  Key,
-  TokenCreateTransaction,
-  Client,
-  TokenType,
-  TokenMintTransaction,
-  CustomFee,
-  CustomRoyaltyFee,
-  TokenId,
-  PrivateKey,
-  TokenSupplyType,
-} from '@hashgraph/sdk';
+import { TokenType } from '@hashgraph/sdk';
 import { User } from 'src/user/user.entity';
-import { CreateNftDto, RoyaltyFee } from './dto/create-nft.dto';
+import { CreateNftDto } from './dto/create-nft.dto';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { AccountService } from 'src/account/account.service';
 import { MintNftDto } from './dto/mint-nft.dto';
-import { KeyType } from 'src/app.interface';
 import { TransactionService } from 'src/hedera/transaction/transaction.service';
 import { TokenService } from 'src/hedera/token/token.service';
 import { Account } from 'src/account/account.entity';
 import { MirrornodeService } from 'src/hedera/mirrornode/mirrornode.service';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class NftService {
@@ -33,6 +21,7 @@ export class NftService {
     private tokenService: TokenService,
     private transactionService: TransactionService,
     private mirrornodeService: MirrornodeService,
+    private readonly configService: AppConfigService,
   ) {}
 
   async createTokenHandler(user: User, createNftDto: CreateNftDto) {
@@ -89,7 +78,7 @@ export class NftService {
     );
     // get supply key from mirrornode
     const supplyKey = await this.mirrornodeService
-      .getTokenMirronodeInfo(user.network, mintNftDto.tokenId)
+      .getTokenMirrornodeInfo(user.network, mintNftDto.tokenId)
       .then((info) => info.supply_key.key)
       .catch(() => {
         throw new Error(
