@@ -10,18 +10,18 @@ import {
 import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { NftService } from './nft.service';
 import { CreateNftDto } from './dto/create-nft.dto';
-import { User } from 'src/user/user.entity';
 import { MintNftDto } from './dto/mint-nft.dto';
+import { Request } from 'express';
 
 @Controller('nft')
 @UseGuards(ApiKeyGuard)
 export class NftController {
-  constructor(private nftService: NftService) {}
+  constructor(private readonly nftService: NftService) {}
 
   // Should be able to mint as well
   @Post('create')
-  async create(@Req() request, @Body() createNftDto: CreateNftDto) {
-    const user = request.user as User;
+  async create(@Req() req: Request, @Body() createNftDto: CreateNftDto) {
+    const user = req.user;
 
     try {
       const token = await this.nftService.createTokenHandler(
@@ -29,7 +29,7 @@ export class NftController {
         createNftDto,
       );
       return { token };
-    } catch (err) {
+    } catch (err: any) {
       throw new ServiceUnavailableException('Error creating token', {
         cause: err,
         description: err.message,
@@ -38,8 +38,7 @@ export class NftController {
   }
 
   @Post('mint')
-  async mint(@Req() request, @Body() mintNftDto: MintNftDto) {
-    // error handling which (Jake thinks) cannot be done using class-validator
+  async mint(@Req() req: Request, @Body() mintNftDto: MintNftDto) {
     if (
       !mintNftDto.metadata &&
       !mintNftDto.amount &&
@@ -55,11 +54,11 @@ export class NftController {
         'Both amount and metadata must be provided if metadatas array is empty',
       );
     }
-    const user = request.user as User;
+    const user = req.user;
     try {
       const status = await this.nftService.mintTokenHandler(user, mintNftDto);
       return { status };
-    } catch (err) {
+    } catch (err: any) {
       throw new ServiceUnavailableException('Error minting token', {
         cause: err,
         description: err.message,

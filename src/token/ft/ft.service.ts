@@ -1,28 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-
-import { FtCreateInput, FtMintInput } from './ft.interface';
-import {
-  Key,
-  TokenCreateTransaction,
-  Client,
-  TokenSupplyType,
-  TokenMintTransaction,
-  CustomFee,
-  CustomFixedFee,
-  Hbar,
-  CustomFractionalFee,
-  FeeAssessmentMethod,
-  PrivateKey,
-  TokenType,
-} from '@hashgraph/sdk';
+import { Injectable } from '@nestjs/common';
+import { TokenType } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { User } from 'src/user/user.entity';
-import { CreateFtDto, FractionalFee } from 'src/token/ft/dto/create-ft.dto';
+import { CreateFtDto } from 'src/token/ft/dto/create-ft.dto';
 import { AccountService } from 'src/account/account.service';
-// import { TokenService } from 'src/token/token.service';
 import { MintFtDto } from './dto/mint-ft.dto';
-import { KeyType } from 'src/app.interface';
+import { AppConfigService } from 'src/config/app-config.service';
 import { TransactionService } from 'src/hedera/transaction/transaction.service';
 import { TokenService } from 'src/hedera/token/token.service';
 import { Account } from 'src/account/account.entity';
@@ -31,12 +15,13 @@ import { MirrornodeService } from 'src/hedera/mirrornode/mirrornode.service';
 @Injectable()
 export class FtService {
   constructor(
-    private keyService: KeyService,
-    private clientService: ClientService,
-    private accountService: AccountService,
-    private tokenService: TokenService,
-    private transactionService: TransactionService,
-    private mirrornodeService: MirrornodeService,
+    private readonly keyService: KeyService,
+    private readonly clientService: ClientService,
+    private readonly accountService: AccountService,
+    private readonly configService: AppConfigService,
+    private readonly tokenService: TokenService,
+    private readonly transactionService: TransactionService,
+    private readonly mirrornodeService: MirrornodeService,
   ) {}
 
   async createTokenHandler(user: User, createFtDto: CreateFtDto) {
@@ -93,7 +78,7 @@ export class FtService {
     );
     // get supply key from mirrornode
     const supplyKey = await this.mirrornodeService
-      .getTokenMirronodeInfo(user.network, mintFtDto.tokenId)
+      .getTokenMirrornodeInfo(user.network, mintFtDto.tokenId)
       .then((info) => info.supply_key.key)
       .catch(() => {
         throw new Error(

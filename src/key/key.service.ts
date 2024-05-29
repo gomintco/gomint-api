@@ -12,7 +12,7 @@ import * as crypto from 'crypto';
 export class KeyService {
   constructor(
     @InjectRepository(Key)
-    private keysRepository: Repository<Key>,
+    private readonly keysRepository: Repository<Key>,
   ) {}
 
   async findKeysByUserId(id: string): Promise<Key[]> {
@@ -195,7 +195,7 @@ export class KeyService {
       let decrypted = decipher.update(encryptedText);
       decrypted = Buffer.concat([decrypted, decipher.final()]);
       return decrypted.toString();
-    } catch (err) {
+    } catch (err: any) {
       console.log('Error decrypting string', err);
       throw new InternalServerErrorException('Unable to decrypt private key', {
         cause: err,
@@ -207,8 +207,8 @@ export class KeyService {
 
 class KeyBuilder {
   constructor(
-    private keyService: KeyService,
-    private key: Key,
+    private readonly keyService: KeyService,
+    private readonly key: Key,
   ) {}
 
   addUser(user: User) {

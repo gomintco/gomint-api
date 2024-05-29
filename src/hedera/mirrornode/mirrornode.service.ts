@@ -1,21 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { TokenMirrornodeInfo } from './mirrornode.interface';
 import { Network } from 'src/app.interface';
-import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class MirrornodeService {
-  async getTokenMirronodeInfo(
+  constructor(private readonly configService: AppConfigService) {}
+
+  async getTokenMirrornodeInfo(
     network: Network,
     tokenId: string,
   ): Promise<TokenMirrornodeInfo> {
     let mirrornodeUrl = '';
     switch (network) {
       case Network.TESTNET:
-        mirrornodeUrl = TESTNET_MIRRONODE_URL;
+        mirrornodeUrl = this.configService.hedera.testnet.mirrornodeUrl;
         break;
       case Network.MAINNET:
-        mirrornodeUrl = MAINNET_MIRRONODE_URL;
+        mirrornodeUrl = this.configService.hedera.mainnet.mirrornodeUrl;
         break;
     }
     const res = await fetch(`${mirrornodeUrl}/tokens/${tokenId}`);

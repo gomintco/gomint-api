@@ -1,17 +1,11 @@
-import {
-  AccountCreateTransaction,
-  Client,
-  PrivateKey,
-  PublicKey,
-  TokenAssociateTransaction,
-} from '@hashgraph/sdk';
+import { AccountCreateTransaction, PublicKey } from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { AccountCreateInput } from './account.interface';
-import { KeyType, Network } from '../app.interface';
+import { Network } from '../app.interface';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
@@ -27,11 +21,11 @@ import { TransactionService } from 'src/hedera/transaction/transaction.service';
 export class AccountService {
   constructor(
     @InjectRepository(Account)
-    private accountRepository: Repository<Account>,
-    private clientService: ClientService,
-    private keyService: KeyService,
-    private tokenService: TokenService,
-    private transactionService: TransactionService,
+    private readonly accountRepository: Repository<Account>,
+    private readonly clientService: ClientService,
+    private readonly keyService: KeyService,
+    private readonly tokenService: TokenService,
+    private readonly transactionService: TransactionService,
   ) {}
 
   // associates tokens to a user
@@ -43,7 +37,7 @@ export class AccountService {
     const associatingAccount = await this.getUserAccountByAlias(
       user.id,
       associateDto.associatingId,
-    ).catch((err) => {
+    ).catch(() => {
       throw new Error(
         'Unable to find account with associatingId: ' +
           associateDto.associatingId,
@@ -55,7 +49,7 @@ export class AccountService {
       payerAccount = await this.getUserAccountByAlias(
         user.id,
         associateDto.payerId,
-      ).catch((err) => {
+      ).catch(() => {
         throw new Error(
           'Unable to find account with payerId: ' + associateDto.payerId,
         );
@@ -90,7 +84,7 @@ export class AccountService {
         alias: alias,
         user: { id: userId },
       },
-      relations: ['user'], // This ensures the user relationship is joined
+      relations: { user: true }, // This ensures the user relationship is joined
     });
     // Return true if an account is found, otherwise false
     return !!account;
@@ -171,7 +165,7 @@ export class AccountService {
       .findOneOrFail({
         where: { user: { id: userId }, alias },
       })
-      .catch((err) => {
+      .catch(() => {
         throw new Error(`Account not found for alias: ${alias}`);
       });
     return account.id;
@@ -196,7 +190,7 @@ export class AccountService {
     // can search by alias because if no alias, account ID is used as alias
     return this.accountRepository.findOneOrFail({
       where: { user: { id: userId }, alias },
-      relations: ['keys'],
+      relations: { keys: true },
     });
   }
 
@@ -218,7 +212,7 @@ export class AccountService {
   async findAccountsByUserId(id: string): Promise<Account[]> {
     return this.accountRepository.find({
       where: { user: { id } },
-      relations: ['keys'],
+      relations: { keys: true },
     });
   }
 
@@ -227,7 +221,7 @@ export class AccountService {
       where: {
         id: In(accountIds),
       },
-      relations: ['keys', 'user'],
+      relations: { keys: true, user: true },
     });
   }
 
@@ -270,7 +264,7 @@ export class AccountService {
         // userId: accountCreateInput.key.user.id, // set user ID - this is used for ensuring unique account alias's per user
       });
       return new AccountBuilder(this, account);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       throw new ServiceUnavailableException("Couldn't create Hedera account", {
         cause: err,
@@ -310,8 +304,8 @@ export class AccountService {
 
 class AccountBuilder {
   constructor(
-    private accountService: AccountService,
-    private account: Account,
+    private readonly accountService: AccountService,
+    private readonly account: Account,
   ) {}
 
   async addUser(user: User) {

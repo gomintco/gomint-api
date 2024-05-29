@@ -9,21 +9,21 @@ import {
 import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { AssociateDto } from './dto/associate.dto';
 import { AccountService } from './account.service';
-import { User } from 'src/user/user.entity';
+import { Request } from 'express';
 
 @Controller('account')
 @UseGuards(ApiKeyGuard)
 export class AccountController {
-  constructor(private accountService: AccountService) {}
+  constructor(private readonly accountService: AccountService) {}
 
   @Post('associate')
-  async associate(@Req() request, @Body() associateDto: AssociateDto) {
-    const user = request.user as User;
+  async associate(@Req() req: Request, @Body() associateDto: AssociateDto) {
+    const user = req.user;
 
     try {
       const status = await this.accountService.associate(user, associateDto);
       return { status };
-    } catch (err) {
+    } catch (err: any) {
       throw new ServiceUnavailableException('Error associating account', {
         cause: err,
         description: err.message,
