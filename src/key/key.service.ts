@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { EncryptedKeyPair } from './key.interface';
 import { PrivateKey } from '@hashgraph/sdk';
-import { KeyType } from '../app.interface';
+import { KeyType } from 'src/key/key-type.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Key } from './key.entity';
 import { Repository } from 'typeorm';

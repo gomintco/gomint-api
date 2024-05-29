@@ -1,6 +1,6 @@
 import { AccountId, Client, Hbar, PrivateKey } from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
-import { Network } from 'src/app.interface';
+import { Network } from 'src/hedera/network.enum';
 import { Account } from 'src/account/account.entity';
 import { KeyService } from 'src/key/key.service';
 

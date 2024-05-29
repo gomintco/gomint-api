@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TokenMirrornodeInfo } from './mirrornode.interface';
-import { Network } from 'src/app.interface';
+import { Network } from 'src/hedera/network.enum';
 import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
