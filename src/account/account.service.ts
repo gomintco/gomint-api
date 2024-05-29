@@ -5,7 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { AccountCreateInput } from './account.interface';
-import { Network } from '../app.interface';
+import { Network } from 'src/hedera/network.enum';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';

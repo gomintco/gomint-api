@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { User } from '../user/user.entity';
-import { KeyType } from '../app.interface';
+import { KeyType } from 'src/key/key-type.enum';
 import { Version } from '../app.entity';
 import { Account } from '../account/account.entity';
 

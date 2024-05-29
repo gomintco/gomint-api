@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEmail, IsEnum } from 'class-validator';
-import { Network } from '../../app.interface';
+import { Network } from 'src/hedera/network.enum';
 
 export class CreateUserDto {
   @IsEnum(Network)

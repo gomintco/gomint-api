@@ -1,4 +1,4 @@
-import { KeyType } from 'src/app.interface';
+import { KeyType } from 'src/key/key-type.enum';
 import { Key } from 'src/key/key.entity';
 
 export class KeyResponse {
