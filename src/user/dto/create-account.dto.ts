@@ -1,4 +1,5 @@
 import { IsEnum, IsNotIn, IsOptional, IsString } from 'class-validator';
+import { DealAlias } from 'src/deal/deal-alias.enum';
 import { KeyType } from 'src/key/key-type.enum';
 
 export class CreateAccountDto {
@@ -7,7 +8,7 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsString()
-  @IsNotIn(['buyer', 'receiver'])
+  @IsNotIn([DealAlias.PAYER, DealAlias.RECEIVER])
   alias: string;
 
   @IsOptional()
