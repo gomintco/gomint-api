@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountController } from './account.controller';
 import { AuthModule } from 'src/auth/auth.module';
 import { KeyModule } from 'src/key/key.module';
+import { HederaModule } from 'src/hedera/hedera.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { KeyModule } from 'src/key/key.module';
     ClientModule,
     AuthModule,
     KeyModule,
+    HederaModule,
   ],
   providers: [AccountService],
   exports: [AccountService],

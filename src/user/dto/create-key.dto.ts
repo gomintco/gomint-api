@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { KeyType } from '../../app.interface';
+import { KeyType } from 'src/key/key-type.enum';
 
 export class CreateKeyDto {
   @IsEnum(KeyType)
