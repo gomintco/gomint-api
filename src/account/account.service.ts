@@ -185,7 +185,7 @@ export class AccountService {
     if (alias.startsWith('0.0.')) {
       return this.accountRepository.findOneOrFail({
         where: { id: alias },
-        relations: ['keys'],
+        relations: { keys: true },
       });
     }
     // can search by alias because if no alias, account ID is used as alias
