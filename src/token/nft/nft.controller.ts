@@ -24,7 +24,10 @@ export class NftController {
     const user = req.user;
 
     try {
-      const token = await this.nftService.createToken(user, createNftDto);
+      const token = await this.nftService.createTokenHandler(
+        user,
+        createNftDto,
+      );
       return { token };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error creating token', {
@@ -53,7 +56,7 @@ export class NftController {
     }
     const user = req.user;
     try {
-      const status = await this.nftService.mintToken(user, mintNftDto);
+      const status = await this.nftService.mintTokenHandler(user, mintNftDto);
       return { status };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error minting token', {

@@ -1,10 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
-import { Network } from '../app.interface';
-import { Version } from '../app.entity';
+import { Network } from 'src/hedera/network.enum';
+import { Version } from 'src/app.entity';
 
-import { Account } from '../account/account.entity';
-import { Key } from '../key/key.entity';
+import { Account } from 'src/account/account.entity';
+import { Key } from 'src/key/key.entity';
 
 @Entity('gm_users')
 export class User extends Version {

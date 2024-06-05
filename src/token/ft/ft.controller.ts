@@ -22,7 +22,7 @@ export class FtController {
   async create(@Req() req: Request, @Body() createFtDto: CreateFtDto) {
     const user = req.user;
     try {
-      const token = await this.ftService.createToken(user, createFtDto);
+      const token = await this.ftService.createTokenHandler(user, createFtDto);
       return { token };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error creating token', {
@@ -37,7 +37,7 @@ export class FtController {
     // return { status: 'ok' };
     const user = req.user;
     try {
-      const status = await this.ftService.mintToken(user, mintFtDto);
+      const status = await this.ftService.mintTokenHandler(user, mintFtDto);
       return { status };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error minting token', {

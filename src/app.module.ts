@@ -5,6 +5,7 @@ import { TokenModule } from './token/token.module';
 import { DealModule } from './deal/deal.module';
 import { AppConfigModule } from './config/app-config.module';
 import { AppConfigService } from './config/app-config.service';
+import { HederaModule } from './hedera/hedera.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AppConfigService } from './config/app-config.service';
     TokenModule,
     UserModule,
     DealModule,
+    HederaModule,
   ],
   controllers: [],
   providers: [],
