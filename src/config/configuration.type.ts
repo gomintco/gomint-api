@@ -1,5 +1,6 @@
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
 import { NodeEnv } from './node-env.enum';
+import { PrivateKey } from '@hashgraph/sdk';
 
 export interface Configuration {
   app: AppConfiguration;
@@ -16,6 +17,7 @@ export interface AppConfiguration {
 }
 
 export interface HederaConfiguration {
+  custodialKey: PrivateKey;
   testnet: HederaNetworkConfiguration;
   mainnet: HederaNetworkConfiguration;
 }

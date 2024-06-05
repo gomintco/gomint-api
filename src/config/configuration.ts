@@ -1,3 +1,4 @@
+import { PrivateKey } from '@hashgraph/sdk';
 import { Configuration } from './configuration.type';
 import { getDBConfig } from './db-config';
 import { validate } from './validation';
@@ -12,6 +13,7 @@ export function configure(): Configuration {
     },
     db: getDBConfig(env),
     hedera: {
+      custodialKey: PrivateKey.fromStringECDSA(env.CUSTODIAL_KEY),
       testnet: {
         id: env.TESTNET_ID,
         key: env.TESTNET_KEY,

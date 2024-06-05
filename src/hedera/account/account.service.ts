@@ -1,26 +1,34 @@
-import { AccountCreateTransaction } from '@hashgraph/sdk';
+import { AccountCreateTransaction, Key } from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
 import { AccountCreateInput } from './account.interface';
+import { AccountCreateDto } from 'src/account/dto/account-create.dto';
 
 @Injectable()
-export class AccountService {
+export class HederaAccountService {
+
   createTransaction(
-    accountCreateInput: AccountCreateInput,
+    accountCreateDto: AccountCreateDto,
+    key: Key
   ): AccountCreateTransaction {
+    //const accountCreateDto = this.parseCreateTransaction(accountCreateDto)
     const transaction = new AccountCreateTransaction()
-      .setKey(accountCreateInput.key)
-      .setInitialBalance(accountCreateInput.initialBalance)
+      .setKey(key)
+      .setInitialBalance(accountCreateDto.initialBalance)
       .setReceiverSignatureRequired(
-        accountCreateInput.receiverSignatureRequired,
+        accountCreateDto.receiverSignatureRequired,
       )
       .setMaxAutomaticTokenAssociations(
-        accountCreateInput.maxAutomaticTokenAssociations,
+        accountCreateDto.maxAutomaticTokenAssociations,
       )
-      .setStakedAccountId(accountCreateInput.stakedAccountId)
-      .setStakedNodeId(accountCreateInput.stakedNodeId)
-      .setDeclineStakingReward(accountCreateInput.declineStakingReward)
-      .setAccountMemo(accountCreateInput.accountMemo);
-    // .setAutoRenewPeriod(accountCreateInput.autoRenewPeriod)
+      .setStakedAccountId(accountCreateDto.stakedAccountId)
+      .setStakedNodeId(accountCreateDto.stakedNodeId)
+      .setDeclineStakingReward(accountCreateDto.declineStakingReward)
+      .setAccountMemo(accountCreateDto.accountMemo);
+    // .setAutoRenewPeriod(accountCreateDto.autoRenewPeriod)
     return transaction;
   }
+
+  //private parseCreateTransaction(accountCreateDto: AccountCreateDto): AccountCreateInput {
+  //
+  //}
 }

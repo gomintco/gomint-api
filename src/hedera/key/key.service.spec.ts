@@ -1,73 +1,62 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { KeyService } from './key.service';
-import { PrivateKey } from '@hashgraph/sdk'; // Replace with actual import
-import { KeyType } from './key-type.enum'; // Adjust if KeyType is in a different file
+import { HederaKeyService } from './key.service';
+import { KeyType } from './key-type.enum';
+import { PrivateKey, KeyList } from '@hashgraph/sdk';
 
-jest.mock('@hashgraph/sdk', () => ({
-  PrivateKey: {
-    generateED25519: jest.fn(),
-    generateECDSA: jest.fn()
-  }
-}));
-
-describe('KeyService', () => {
-  let service: KeyService;
+describe('HederaKeyService', () => {
+  let service: HederaKeyService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [KeyService],
+      providers: [HederaKeyService],
     }).compile();
 
-    service = module.get<KeyService>(KeyService);
+    service = module.get<HederaKeyService>(HederaKeyService);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  it('should generate ED25519 key', () => {
-    const mockKey = {};
-    (PrivateKey.generateED25519 as jest.Mock).mockReturnValue(mockKey);
-
-    const result = service.generateED25519();
-
-    expect(result).toBe(mockKey);
-    expect(PrivateKey.generateED25519).toHaveBeenCalled();
+  it('should generate ED25519 private key', () => {
+    const key = service.generateED25519();
+    expect(key).toBeInstanceOf(PrivateKey);
   });
 
-  it('should generate ECDSA key', () => {
-    const mockKey = {};
-    (PrivateKey.generateECDSA as jest.Mock).mockReturnValue(mockKey);
-
-    const result = service.generateECDSA();
-
-    expect(result).toBe(mockKey);
-    expect(PrivateKey.generateECDSA).toHaveBeenCalled();
+  it('should generate ECDSA private key', () => {
+    const key = service.generateECDSA();
+    expect(key).toBeInstanceOf(PrivateKey);
   });
 
-  it('should generate key based on type - ED25519', () => {
-    const mockKey = {};
-    (PrivateKey.generateED25519 as jest.Mock).mockReturnValue(mockKey);
-
-    const result = service.generatePrivateKey(KeyType.ED25519);
-
-    expect(result).toBe(mockKey);
-    expect(PrivateKey.generateED25519).toHaveBeenCalled();
+  it('should generate private key of type ED25519', () => {
+    const key = service.generatePrivateKey(KeyType.ED25519);
+    expect(key).toBeInstanceOf(PrivateKey);
   });
 
-  it('should generate key based on type - ECDSA', () => {
-    const mockKey = {};
-    (PrivateKey.generateECDSA as jest.Mock).mockReturnValue(mockKey);
-
-    const result = service.generatePrivateKey(KeyType.ECDSA);
-
-    console.log(result)
-
-    expect(result).toBe(mockKey);
-    expect(PrivateKey.generateECDSA).toHaveBeenCalled();
+  it('should generate private key of type ECDSA', () => {
+    const key = service.generatePrivateKey(KeyType.ECDSA);
+    expect(key).toBeInstanceOf(PrivateKey);
   });
 
-  //it('should throw error for unsupported key type', () => {
-  //  expect(() => service.generatePrivateKey(999)).toThrowError('Unsupported key type');
-  //});
+  it('should throw an error for unsupported key type', () => {
+    expect(() => service.generatePrivateKey(-1 as unknown as KeyType)).toThrow(
+      'Unsupported key type',
+    );
+  });
+
+  it('should generate a KeyList with the specified number of keys', () => {
+    const n = 3;
+    const keyList = service.generateKeyList(n, KeyType.ED25519);
+    expect(keyList).toBeInstanceOf(KeyList);
+    expect(keyList._keys.length).toBe(n);
+  });
+
+  it('should generate a KeyList with the specified threshold', () => {
+    const n = 3;
+    const threshold = 2;
+    const keyList = service.generateKeyList(n, KeyType.ED25519, threshold);
+    expect(keyList).toBeInstanceOf(KeyList);
+    expect(keyList._keys.length).toBe(n);
+    expect(keyList.threshold).toBe(threshold);
+  });
 });
