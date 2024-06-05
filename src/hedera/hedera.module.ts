@@ -3,6 +3,7 @@ import { TokenService } from './token/token.service';
 import { AccountService } from './account/account.service';
 import { TransactionService } from './transaction/transaction.service';
 import { MirrornodeService } from './mirrornode/mirrornode.service';
+import { KeyModule } from './key/key.module';
 
 @Module({
   providers: [
@@ -17,6 +18,6 @@ import { MirrornodeService } from './mirrornode/mirrornode.service';
     TransactionService,
     MirrornodeService,
   ],
-  imports: [],
+  imports: [KeyModule],
 })
 export class HederaModule {}
