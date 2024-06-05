@@ -1,7 +1,7 @@
-import { PublicKey } from '@hashgraph/sdk';
+import { Key } from '@hashgraph/sdk';
 
 export interface AccountCreateInput {
-  key: PublicKey;
+  key: Key;
   initialBalance?: number;
   receiverSignatureRequired?: boolean;
   maxAutomaticTokenAssociations?: number;

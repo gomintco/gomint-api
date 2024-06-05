@@ -16,6 +16,9 @@ import { KeyService } from 'src/key/key.service';
 import { CreateTokenDto } from 'src/hedera/token/token.interface';
 import { TokenService } from 'src/hedera/token/token.service';
 import { TransactionService } from 'src/hedera/transaction/transaction.service';
+import { AccountCreateDto } from './dto/account-create.dto';
+import { HederaAccountService } from 'src/hedera/account/account.service';
+import { HederaKeyService } from 'src/hedera/key/key.service';
 
 @Injectable()
 export class AccountService {
@@ -24,9 +27,33 @@ export class AccountService {
     private readonly accountRepository: Repository<Account>,
     private readonly clientService: ClientService,
     private readonly keyService: KeyService,
+    private readonly hederaAccountService: HederaAccountService,
     private readonly tokenService: TokenService,
     private readonly transactionService: TransactionService,
+    private readonly hederaKeyService: HederaKeyService
   ) {}
+
+  async accountCreateHandler(user: User, accountCreateDto: AccountCreateDto) {
+    // here we should handle the user has account logic
+    //  ie. if user has no accounts, create first for free
+    const client = this.clientService.getClient(user.network)
+    // get required accounts, keys, and client
+    const escrowKey = this.keyService.decryptUserEscrowKey(
+      user,
+      accountCreateDto.encryptionKey,
+    );
+    // create the threshold key with GoMint account for management if anything goes wrong 
+    const key = this.hederaKeyService.generateGoMintKeyList(accountCreateDto.type)
+    // create account transaction
+    const accountCreateTransaction =
+      this.hederaAccountService.createTransaction(accountCreateDto, key);
+    // execute tx
+    const receipt = await this.transactionService.freezeSignExecuteAndGetReceipt(
+      accountCreateTransaction,
+      client
+    )
+    return receipt.accountId.toString()
+  }
 
   // associates tokens to a user
   async associate(user: User, associateDto: AssociateDto) {

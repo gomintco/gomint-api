@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { KeyService } from './key.service';
+import { HederaKeyService } from './key.service';
 
 @Module({
-  providers: [KeyService]
+  providers: [HederaKeyService]
 })
 export class KeyModule {}
