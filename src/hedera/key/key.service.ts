@@ -27,6 +27,6 @@ export class KeyService {
     const publicKeyList = new Array(n).map(
       () => this.generatePrivateKey(type).publicKey,
     );
-    return new KeyList(publicKeyList, threshold)
+    return new KeyList(publicKeyList, threshold);
   }
 }

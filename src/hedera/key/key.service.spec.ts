@@ -6,8 +6,8 @@ import { KeyType } from './key-type.enum'; // Adjust if KeyType is in a differen
 jest.mock('@hashgraph/sdk', () => ({
   PrivateKey: {
     generateED25519: jest.fn(),
-    generateECDSA: jest.fn()
-  }
+    generateECDSA: jest.fn(),
+  },
 }));
 
 describe('KeyService', () => {
@@ -61,7 +61,7 @@ describe('KeyService', () => {
 
     const result = service.generatePrivateKey(KeyType.ECDSA);
 
-    console.log(result)
+    console.log(result);
 
     expect(result).toBe(mockKey);
     expect(PrivateKey.generateECDSA).toHaveBeenCalled();

@@ -6,7 +6,6 @@ import { User } from 'src/user/user.entity';
 import { CreateFtDto } from 'src/token/ft/dto/create-ft.dto';
 import { AccountService } from 'src/account/account.service';
 import { MintFtDto } from './dto/mint-ft.dto';
-import { AppConfigService } from 'src/config/app-config.service';
 import { TransactionService } from 'src/hedera/transaction/transaction.service';
 import { TokenService } from 'src/hedera/token/token.service';
 import { Account } from 'src/account/account.entity';
@@ -18,7 +17,6 @@ export class FtService {
     private readonly keyService: KeyService,
     private readonly clientService: ClientService,
     private readonly accountService: AccountService,
-    private readonly configService: AppConfigService,
     private readonly tokenService: TokenService,
     private readonly transactionService: TransactionService,
     private readonly mirrornodeService: MirrornodeService,
