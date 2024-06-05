@@ -21,6 +21,26 @@ export class KeyService {
     });
   }
 
+  async attachKeyToUser(
+    type: KeyType,
+    privateKey: PrivateKey,
+    escrowKey: string,
+    user: User,
+  ) {
+    const key = new Key();
+    key.type = type;
+    key.publicKey = privateKey.publicKey.toString();
+
+    const encryptedPrivateKey = this.encryptString(
+      privateKey.toString(),
+      escrowKey,
+    );
+    key.encryptedPrivateKey = encryptedPrivateKey;
+    key.user = user;
+    await this.keysRepository.save(key);
+    return key;
+  }
+
   /**
    * This function creates a new key builder with the provided escrow key and key type.
    * It generates an encrypted key pair based on the key type and creates a new key entity with the encrypted key pair.

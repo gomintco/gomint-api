@@ -1,4 +1,8 @@
-import { AccountCreateTransaction, PublicKey } from '@hashgraph/sdk';
+import {
+  AccountCreateTransaction,
+  PrivateKey,
+  PublicKey,
+} from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
@@ -30,29 +34,57 @@ export class AccountService {
     private readonly hederaAccountService: HederaAccountService,
     private readonly tokenService: TokenService,
     private readonly transactionService: TransactionService,
-    private readonly hederaKeyService: HederaKeyService
+    private readonly hederaKeyService: HederaKeyService,
   ) {}
 
   async accountCreateHandler(user: User, accountCreateDto: AccountCreateDto) {
-    // here we should handle the user has account logic
-    //  ie. if user has no accounts, create first for free
-    const client = this.clientService.getClient(user.network)
-    // get required accounts, keys, and client
+    // decrypt user escrow key
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,
       accountCreateDto.encryptionKey,
     );
-    // create the threshold key with GoMint account for management if anything goes wrong 
-    const key = this.hederaKeyService.generateGoMintKeyList(accountCreateDto.type)
+    // check if alias already exists
+    const accountAliasExists = await this.accountAliasExists(
+      user.id,
+      accountCreateDto.alias,
+    );
+    if (accountAliasExists) throw new Error('Account alias already exists');
+
+    // here we should handle the user has account logic
+    // ie. if user has no accounts, create first for free
+    // .getClient method uses the GoMint account as payer
+    const client = this.clientService.getClient(user.network);
+    // create the threshold key with GoMint account for management if anything goes wrong
+    const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
+      accountCreateDto.type,
+    );
+    // encrypt and attach user to key
+    const key = await this.keyService.attachKeyToUser(
+      accountCreateDto.type,
+      privateKey,
+      escrowKey,
+      user,
+    );
+
     // create account transaction
     const accountCreateTransaction =
-      this.hederaAccountService.createTransaction(accountCreateDto, key);
+      this.hederaAccountService.createTransaction(accountCreateDto, keyList);
     // execute tx
-    const receipt = await this.transactionService.freezeSignExecuteAndGetReceipt(
-      accountCreateTransaction,
-      client
-    )
-    return receipt.accountId.toString()
+    const receipt =
+      await this.transactionService.freezeSignExecuteAndGetReceipt(
+        accountCreateTransaction,
+        client,
+      );
+    const accountId = receipt.accountId.toString();
+    // save account and attach user and key
+    const account = this.accountRepository.create({
+      id: accountId,
+      keys: [key],
+      alias: accountCreateDto.alias ?? accountId,
+      user: user,
+    });
+    await this.accountRepository.save(account);
+    return accountId;
   }
 
   // associates tokens to a user

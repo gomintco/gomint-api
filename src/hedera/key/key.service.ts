@@ -15,7 +15,7 @@ export class HederaKeyService {
     return PrivateKey.generateECDSA();
   }
 
-  generatePrivateKey(type: KeyType) {
+generatePrivateKey(type: KeyType) {
     switch (type) {
       case KeyType.ED25519:
         return this.generateED25519();
@@ -33,10 +33,15 @@ export class HederaKeyService {
     return new KeyList(publicKeyList, threshold);
   }
 
-  generateGoMintKeyList(type: KeyType): KeyList {
-    return new KeyList(
-      [this.generatePrivateKey(type), this.configService.hedera.custodialKey],
+  generateGoMintKeyList(type: KeyType): {keyList: KeyList, privateKey: PrivateKey} {
+    const privateKey = this.generatePrivateKey(type) 
+    const keyList = new KeyList(
+      [privateKey, this.configService.hedera.custodialKey],
       1,
     );
+    return {
+      keyList,
+      privateKey
+    }
   }
 }
