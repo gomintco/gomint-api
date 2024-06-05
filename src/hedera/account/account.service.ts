@@ -21,7 +21,7 @@ export class HederaAccountService {
         accountCreateDto.maxAutomaticTokenAssociations,
       )
       .setStakedAccountId(accountCreateDto.stakedAccountId)
-      .setStakedNodeId(accountCreateDto.stakedNodeId)
+      //.setStakedNodeId(accountCreateDto.stakedNodeId) // this causes an error when undefined
       .setDeclineStakingReward(accountCreateDto.declineStakingReward)
       .setAccountMemo(accountCreateDto.accountMemo);
     // .setAutoRenewPeriod(accountCreateDto.autoRenewPeriod)

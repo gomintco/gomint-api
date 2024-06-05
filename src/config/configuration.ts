@@ -13,7 +13,7 @@ export function configure(): Configuration {
     },
     db: getDBConfig(env),
     hedera: {
-      custodialKey: PrivateKey.fromStringECDSA(env.CUSTODIAL_KEY),
+      custodialKey: PrivateKey.fromStringED25519(env.CUSTODIAL_KEY),
       testnet: {
         id: env.TESTNET_ID,
         key: env.TESTNET_KEY,
