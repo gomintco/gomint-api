@@ -1,10 +1,9 @@
 import { AccountCreateTransaction, Key } from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
-import { AccountCreateInput } from './account.interface';
 import { AccountCreateDto } from 'src/account/dto/account-create.dto';
 
 @Injectable()
-export class HederaAccountService {
+export class HederaAccountApiService {
 
   createTransaction(
     accountCreateDto: AccountCreateDto,

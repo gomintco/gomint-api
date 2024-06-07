@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { TokenMirrornodeInfo } from './mirrornode.interface';
-import { Network } from 'src/hedera/network.enum';
+import { TokenMirrornodeInfo } from './hedera-mirrornode-api.interface';
+import { Network } from 'src/hedera-api/network.enum';
 import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
-export class MirrornodeService {
+export class HederaMirrornodeApiService {
   constructor(private readonly configService: AppConfigService) {}
 
   async getTokenMirrornodeInfo(

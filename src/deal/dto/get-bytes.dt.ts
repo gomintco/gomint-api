@@ -1,5 +1,5 @@
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
-import { Network } from 'src/hedera/network.enum';
+import { Network } from 'src/hedera-api/network.enum';
 
 export class GetBytesDto {
   @IsEnum(Network)

@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
-import { Network } from 'src/hedera/network.enum';
+import { Network } from 'src/hedera-api/network.enum';
 import { Version } from 'src/app.entity';
 
 import { Account } from 'src/account/account.entity';

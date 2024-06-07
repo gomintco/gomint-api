@@ -19,7 +19,7 @@ import {
 import { KeyService } from 'src/key/key.service';
 import { DealAlias } from 'src/deal/deal-alias.enum';
 import { KeyType } from 'src/key/key-type.enum';
-import { Network } from 'src/hedera/network.enum';
+import { Network } from 'src/hedera-api/network.enum';
 import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
