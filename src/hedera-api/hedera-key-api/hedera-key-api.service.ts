@@ -4,8 +4,8 @@ import { KeyType } from './key-type.enum';
 import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
-export class HederaKeyService {
-  constructor(private readonly configService: AppConfigService) {}
+export class HederaKeyApiService {
+  constructor(private readonly configService: AppConfigService) { }
 
   generateED25519(): PrivateKey {
     return PrivateKey.generateED25519();
@@ -15,7 +15,7 @@ export class HederaKeyService {
     return PrivateKey.generateECDSA();
   }
 
-generatePrivateKey(type: KeyType) {
+  generatePrivateKey(type: KeyType) {
     switch (type) {
       case KeyType.ED25519:
         return this.generateED25519();
@@ -33,15 +33,18 @@ generatePrivateKey(type: KeyType) {
     return new KeyList(publicKeyList, threshold);
   }
 
-  generateGoMintKeyList(type: KeyType): {keyList: KeyList, privateKey: PrivateKey} {
-    const privateKey = this.generatePrivateKey(type) 
+  generateGoMintKeyList(type: KeyType): {
+    keyList: KeyList;
+    privateKey: PrivateKey;
+  } {
+    const privateKey = this.generatePrivateKey(type);
     const keyList = new KeyList(
       [privateKey, this.configService.hedera.custodialKey],
       1,
     );
     return {
       keyList,
-      privateKey
-    }
+      privateKey,
+    };
   }
 }

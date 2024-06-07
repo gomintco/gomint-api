@@ -13,6 +13,10 @@ import {
   Hbar,
   TokenAssociateTransaction,
 } from '@hashgraph/sdk';
+
+// WHY DID I CREATE NEW DTOS HERE??
+// WHY DON'T I JUST USE THE SAME AS IN THE CONTROLLER...
+// LETS FIX LATER lol
 import {
   AssociateTokenDto,
   CreateTokenDto,
@@ -24,7 +28,7 @@ import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 
 @Injectable()
-export class TokenService {
+export class HederaTokenApiService {
   nDays = 90;
 
   createTransaction(

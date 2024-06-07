@@ -15,7 +15,7 @@ import { AccountCreateDto } from './dto/account-create.dto';
 @Controller('account')
 @UseGuards(ApiKeyGuard)
 export class AccountController {
-  constructor(private readonly accountService: AccountService) {}
+  constructor(private readonly accountService: AccountService) { }
 
   @Post('create')
   async create(

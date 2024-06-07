@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HederaKeyService } from './key.service';
+import { HederaKeyApiService } from './hedera-key-api.service';
 import { KeyType } from './key-type.enum';
 import { PrivateKey, KeyList } from '@hashgraph/sdk';
 
-describe('HederaKeyService', () => {
-  let service: HederaKeyService;
+describe('HederaKeyApiService', () => {
+  let service: HederaKeyApiService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [HederaKeyService],
+      providers: [HederaKeyApiService],
     }).compile();
 
-    service = module.get<HederaKeyService>(HederaKeyService);
+    service = module.get<HederaKeyApiService>(HederaKeyApiService);
   });
 
   it('should be defined', () => {

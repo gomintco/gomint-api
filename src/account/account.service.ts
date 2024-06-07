@@ -9,7 +9,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { AccountCreateInput } from './account.interface';
-import { Network } from 'src/hedera/network.enum';
+import { Network } from 'src/hedera-api/network.enum';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
@@ -17,12 +17,12 @@ import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
 import { KeyService } from 'src/key/key.service';
-import { CreateTokenDto } from 'src/hedera/token/token.interface';
-import { TokenService } from 'src/hedera/token/token.service';
-import { TransactionService } from 'src/hedera/transaction/transaction.service';
+import { CreateTokenDto } from 'src/hedera-api/hedera-token-api/token.interface';
+import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
+import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
 import { AccountCreateDto } from './dto/account-create.dto';
-import { HederaAccountService } from 'src/hedera/account/account.service';
-import { HederaKeyService } from 'src/hedera/key/key.service';
+import { HederaAccountApiService } from 'src/hedera-api/hedera-account-api/hedera-account-api.service';
+import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-api.service';
 
 @Injectable()
 export class AccountService {
@@ -31,10 +31,10 @@ export class AccountService {
     private readonly accountRepository: Repository<Account>,
     private readonly clientService: ClientService,
     private readonly keyService: KeyService,
-    private readonly hederaAccountService: HederaAccountService,
-    private readonly tokenService: TokenService,
-    private readonly transactionService: TransactionService,
-    private readonly hederaKeyService: HederaKeyService,
+    private readonly hederaAccountService: HederaAccountApiService,
+    private readonly tokenService: HederaTokenApiService,
+    private readonly transactionService: HederaTransactionApiService,
+    private readonly hederaKeyService: HederaKeyApiService,
   ) {}
 
   async accountCreateHandler(user: User, accountCreateDto: AccountCreateDto) {
@@ -43,7 +43,7 @@ export class AccountService {
       user,
       accountCreateDto.encryptionKey,
     );
-    // check if alias already exists
+   // check if alias already exists
     const accountAliasExists = await this.accountAliasExists(
       user.id,
       accountCreateDto.alias,
