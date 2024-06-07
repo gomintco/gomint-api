@@ -1,4 +1,4 @@
-import { Injectable }  from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TokenType } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';

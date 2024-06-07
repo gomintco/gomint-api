@@ -5,7 +5,7 @@ import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class HederaKeyApiService {
-  constructor(private readonly configService: AppConfigService) { }
+  constructor(private readonly configService: AppConfigService) {}
 
   generateED25519(): PrivateKey {
     return PrivateKey.generateED25519();
