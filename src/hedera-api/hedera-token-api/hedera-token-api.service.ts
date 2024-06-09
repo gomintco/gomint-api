@@ -30,6 +30,10 @@ import { TokenMintDto } from 'src/token/dto/mint-token.dto';
 export class HederaTokenApiService {
   nDays = 90;
 
+  constructor(
+    private readonly ipfsService: IpfsService
+  ) {}
+
   createTransaction(tokenCreateDto: TokenCreateDto, defaultKey?: string) {
     // parses input data into correct format
     const createTokenTransaction = this.parseCreateTransactionDto(
@@ -70,10 +74,15 @@ export class HederaTokenApiService {
       .setAmount(tokenMintDto.amount);
   }
 
-  mintNftTransaction(tokenMintDto: TokenMintDto) {
+  async mintNftTransaction(tokenMintDto: TokenMintDto) {
     // metadata can either be a string or HIP-412 metadata
     // if a string, we can mint straight away
     // if HIP-412 we need to upload to ipfs and use CID for 
+
+    console.log("Token metadata", tokenMintDto.metadata)
+
+    const cid = await this.ipfsService.uploadHip412Metadata(tokenMintDto.metadata as TokenMetadata)
+   console.log("CID", cid) 
     
     const metatdatas: Buffer[] = tokenMintDto.metadatas.length // handle both metdata formats
           ? tokenMintDto.metadatas.map((metadata) => Buffer.from(typeof metadata == 'string' ? metadata : 'temp'))

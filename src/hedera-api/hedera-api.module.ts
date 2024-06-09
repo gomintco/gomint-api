@@ -5,6 +5,7 @@ import { HederaTransactionApiService } from './hedera-transaction-api/hedera-tra
 import { HederaMirrornodeApiService } from './hedera-mirrornode-api/hedera-mirrornode-api.service';
 import { KeyModule } from 'src/key/key.module';
 import { HederaKeyApiService } from './hedera-key-api/hedera-key-api.service';
+import { IpfsModule } from 'src/ipfs/ipfs.module';
 
 @Module({
   providers: [
@@ -21,6 +22,6 @@ import { HederaKeyApiService } from './hedera-key-api/hedera-key-api.service';
     HederaMirrornodeApiService,
     HederaKeyApiService,
   ],
-  imports: [KeyModule],
+  imports: [KeyModule, IpfsModule],
 })
 export class HederaModule { }
