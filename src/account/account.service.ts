@@ -16,8 +16,8 @@ import { Account } from './account.entity';
 import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
+import { TokenCreateDto} from 'src/token/dto/create-token.dto'
 import { KeyService } from 'src/key/key.service';
-import { CreateTokenDto } from 'src/hedera-api/hedera-token-api/token.interface';
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
 import { AccountCreateDto } from './dto/account-create.dto';
@@ -149,7 +149,7 @@ export class AccountService {
     return !!account;
   }
 
-  async parseCustomFeeAliases(userId: string, createTokenDto: CreateTokenDto) {
+  async parseCustomFeeAliases(userId: string, createTokenDto: TokenCreateDto) {
     // doesn't feel like this function belongs here...
     const parseFees = async (fees, feeProcessor) => {
       return await Promise.all(fees.map(feeProcessor));
