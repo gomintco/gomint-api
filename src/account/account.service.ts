@@ -1,11 +1,15 @@
-import { AccountCreateTransaction, PublicKey } from '@hashgraph/sdk';
+import {
+  AccountCreateTransaction,
+  PrivateKey,
+  PublicKey,
+} from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { AccountCreateInput } from './account.interface';
-import { Network } from 'src/hedera/network.enum';
+import { Network } from 'src/hedera-api/network.enum';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
@@ -13,9 +17,12 @@ import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
 import { KeyService } from 'src/key/key.service';
-import { CreateTokenDto } from 'src/hedera/token/token.interface';
-import { TokenService } from 'src/hedera/token/token.service';
-import { TransactionService } from 'src/hedera/transaction/transaction.service';
+import { CreateTokenDto } from 'src/hedera-api/hedera-token-api/token.interface';
+import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
+import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
+import { AccountCreateDto } from './dto/account-create.dto';
+import { HederaAccountApiService } from 'src/hedera-api/hedera-account-api/hedera-account-api.service';
+import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-api.service';
 
 @Injectable()
 export class AccountService {
@@ -24,9 +31,61 @@ export class AccountService {
     private readonly accountRepository: Repository<Account>,
     private readonly clientService: ClientService,
     private readonly keyService: KeyService,
-    private readonly tokenService: TokenService,
-    private readonly transactionService: TransactionService,
+    private readonly hederaAccountService: HederaAccountApiService,
+    private readonly tokenService: HederaTokenApiService,
+    private readonly transactionService: HederaTransactionApiService,
+    private readonly hederaKeyService: HederaKeyApiService,
   ) {}
+
+  async accountCreateHandler(user: User, accountCreateDto: AccountCreateDto) {
+    // decrypt user escrow key
+    const escrowKey = this.keyService.decryptUserEscrowKey(
+      user,
+      accountCreateDto.encryptionKey,
+    );
+   // check if alias already exists
+    const accountAliasExists = await this.accountAliasExists(
+      user.id,
+      accountCreateDto.alias,
+    );
+    if (accountAliasExists) throw new Error('Account alias already exists');
+
+    // here we should handle the user has account logic
+    // ie. if user has no accounts, create first for free
+    // .getClient method uses the GoMint account as payer
+    const client = this.clientService.getClient(user.network);
+    // create the threshold key with GoMint account for management if anything goes wrong
+    const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
+      accountCreateDto.type,
+    );
+    // encrypt and attach user to key
+    const key = await this.keyService.attachKeyToUser(
+      accountCreateDto.type,
+      privateKey,
+      escrowKey,
+      user,
+    );
+
+    // create account transaction
+    const accountCreateTransaction =
+      this.hederaAccountService.createTransaction(accountCreateDto, keyList);
+    // execute tx
+    const receipt =
+      await this.transactionService.freezeSignExecuteAndGetReceipt(
+        accountCreateTransaction,
+        client,
+      );
+    const accountId = receipt.accountId.toString();
+    // save account and attach user and key
+    const account = this.accountRepository.create({
+      id: accountId,
+      keys: [key],
+      alias: accountCreateDto.alias ?? accountId,
+      user: user,
+    });
+    await this.accountRepository.save(account);
+    return accountId;
+  }
 
   // associates tokens to a user
   async associate(user: User, associateDto: AssociateDto) {

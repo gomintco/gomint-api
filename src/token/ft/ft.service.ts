@@ -6,10 +6,11 @@ import { User } from 'src/user/user.entity';
 import { CreateFtDto } from 'src/token/ft/dto/create-ft.dto';
 import { AccountService } from 'src/account/account.service';
 import { MintFtDto } from './dto/mint-ft.dto';
-import { TransactionService } from 'src/hedera/transaction/transaction.service';
-import { TokenService } from 'src/hedera/token/token.service';
+import { AppConfigService } from 'src/config/app-config.service';
+import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
+import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { Account } from 'src/account/account.entity';
-import { MirrornodeService } from 'src/hedera/mirrornode/mirrornode.service';
+import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
 
 @Injectable()
 export class FtService {
@@ -17,9 +18,10 @@ export class FtService {
     private readonly keyService: KeyService,
     private readonly clientService: ClientService,
     private readonly accountService: AccountService,
-    private readonly tokenService: TokenService,
-    private readonly transactionService: TransactionService,
-    private readonly mirrornodeService: MirrornodeService,
+    private readonly configService: AppConfigService,
+    private readonly tokenService: HederaTokenApiService,
+    private readonly transactionService: HederaTransactionApiService,
+    private readonly mirrornodeService: HederaMirrornodeApiService,
   ) {}
 
   async createTokenHandler(user: User, createFtDto: CreateFtDto) {
