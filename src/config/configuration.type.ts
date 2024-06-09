@@ -16,8 +16,7 @@ export interface AppConfiguration {
   jwtSecret: string;
 }
 
-export interface HederaConfiguration {
-  custodialKey: PrivateKey;
+export interface HederaConfiguration { 
   testnet: HederaNetworkConfiguration;
   mainnet: HederaNetworkConfiguration;
 }
@@ -26,4 +25,5 @@ export interface HederaNetworkConfiguration {
   id: string;
   key: string;
   mirrornodeUrl: string;
+  custodialKey: PrivateKey;
 }

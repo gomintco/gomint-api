@@ -13,16 +13,17 @@ export function configure(): Configuration {
     },
     db: getDBConfig(env),
     hedera: {
-      custodialKey: PrivateKey.fromStringED25519(env.CUSTODIAL_KEY),
       testnet: {
         id: env.TESTNET_ID,
         key: env.TESTNET_KEY,
         mirrornodeUrl: env.TESTNET_MIRRORNODE_URL,
+        custodialKey: PrivateKey.fromStringED25519(env.TESTNET_CUSTODIAL_KEY),
       },
       mainnet: {
         id: env.MAINNET_ID,
         key: env.MAINNET_KEY,
         mirrornodeUrl: env.MAINNET_MIRRORNODE_URL,
+        custodialKey: PrivateKey.fromStringED25519(env.MAINNET_CUSTODIAL_KEY),
       },
     },
   };
