@@ -3,13 +3,13 @@ import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { User } from 'src/user/user.entity';
 import { AccountService } from 'src/account/account.service';
-import { MintFtDto } from './dto/mint-ft.dto';
 import { AppConfigService } from 'src/config/app-config.service';
 import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { Account } from 'src/account/account.entity';
 import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
 import { TokenCreateDto } from '../dto/create-token.dto';
+import { TokenMintDto } from '../dto/mint-token.dto';
 
 @Injectable()
 export class FtService {
@@ -20,7 +20,7 @@ export class FtService {
     private readonly configService: AppConfigService,
     private readonly tokenService: HederaTokenApiService,
     private readonly hederaTransactionApiService: HederaTransactionApiService,
-    private readonly mirrornodeService: HederaMirrornodeApiService,
+    private readonly hederaMirrornodeApiService: HederaMirrornodeApiService,
   ) { }
 
   async tokenCreateHandler(user: User, tokenCreateDto: TokenCreateDto) {
@@ -71,19 +71,19 @@ export class FtService {
     return receipt.tokenId.toString();
   }
 
-  async tokenMintHandler(user: User, mintFtDto: MintFtDto): Promise<string> {
+  async tokenMintHandler(user: User, tokenMintDto: TokenMintDto): Promise<string> {
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,
-      mintFtDto.encryptionKey,
+      tokenMintDto.encryptionKey,
     );
     // get supply key from mirrornode
-    const supplyKey = await this.mirrornodeService
-      .getTokenMirrornodeInfo(user.network, mintFtDto.tokenId)
+    const supplyKey = await this.hederaMirrornodeApiService
+      .getTokenMirrornodeInfo(user.network, tokenMintDto.tokenId)
       .then((info) => info.supply_key.key)
       .catch(() => {
         throw new Error(
-          `Token ${mintFtDto.tokenId} does not have a supply key`,
+          `Token ${tokenMintDto.tokenId} does not have a supply key`,
         );
       });
     // get and decrypt private keys for supply key
@@ -94,10 +94,10 @@ export class FtService {
       });
     // handle case if payer is separate
     let payerAccount: Account;
-    if (mintFtDto.payerId)
+    if (tokenMintDto.payerId)
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
-        mintFtDto.payerId,
+        tokenMintDto.payerId,
       );
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
@@ -107,7 +107,7 @@ export class FtService {
       payerAccount,
     );
     // create mint transaction
-    const mintTransaction = this.tokenService.mintFtTransaction(mintFtDto);
+    const mintTransaction = this.tokenService.mintFtTransaction(tokenMintDto);
     const receipt =
       await this.hederaTransactionApiService.freezeSignExecuteAndGetReceipt(
         mintTransaction,

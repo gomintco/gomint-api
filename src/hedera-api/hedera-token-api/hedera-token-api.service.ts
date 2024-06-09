@@ -19,14 +19,12 @@ import {
 // LETS FIX LATER lol
 import {
   AssociateTokenDto,
-  //TokenCreateDto,
   TokenCreateTransactionInput,
-  MintFtDto,
-  MintNftDto,
 } from './token.interface';
 import { TokenCreateKeys, TokenCreateKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 import { TokenCreateDto } from 'src/token/dto/create-token.dto';
+import { TokenMintDto } from 'src/token/dto/mint-token.dto';
 
 @Injectable()
 export class HederaTokenApiService {
@@ -66,19 +64,19 @@ export class HederaTokenApiService {
     return transaction;
   }
 
-  mintFtTransaction(mintTokenDto: MintFtDto) {
+  mintFtTransaction(tokenMintDto: TokenMintDto) {
     return new TokenMintTransaction()
-      .setTokenId(mintTokenDto.tokenId)
-      .setAmount(mintTokenDto.amount);
+      .setTokenId(tokenMintDto.tokenId)
+      .setAmount(tokenMintDto.amount);
   }
 
-  mintNftTransaction(mintNftDto: MintNftDto) {
+  mintNftTransaction(tokenMintDto: TokenMintDto) {
     return new TokenMintTransaction()
-      .setTokenId(mintNftDto.tokenId)
+      .setTokenId(tokenMintDto.tokenId)
       .setMetadata(
-        mintNftDto.metadatas.length // handle both metdata formats
-          ? mintNftDto.metadatas.map((metadata) => Buffer.from(metadata))
-          : Array(mintNftDto.amount).fill(Buffer.from(mintNftDto.metadata)),
+        tokenMintDto.metadatas.length // handle both metdata formats
+          ? tokenMintDto.metadatas.map((metadata) => Buffer.from(metadata))
+          : Array(tokenMintDto.amount).fill(Buffer.from(tokenMintDto.metadata)),
       );
   }
 
