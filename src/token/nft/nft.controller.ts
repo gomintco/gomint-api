@@ -18,25 +18,6 @@ import { Request } from 'express';
 export class NftController {
   constructor(private readonly nftService: NftService) {}
 
-  // Should be able to mint as well
-  @Post('create')
-  async create(@Req() req: Request, @Body() createNftDto: CreateNftDto) {
-    const user = req.user;
-
-    try {
-      const token = await this.nftService.createTokenHandler(
-        user,
-        createNftDto,
-      );
-      return { token };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error creating token', {
-        cause: err,
-        description: err.message,
-      });
-    }
-  }
-
   @Post('mint')
   async mint(@Req() req: Request, @Body() mintNftDto: MintNftDto) {
     if (
@@ -56,7 +37,7 @@ export class NftController {
     }
     const user = req.user;
     try {
-      const status = await this.nftService.mintTokenHandler(user, mintNftDto);
+      const status = await this.nftService.tokenMintHandler(user, mintNftDto);
       return { status };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error minting token', {

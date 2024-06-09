@@ -1,6 +1,6 @@
 import { PublicKey } from '@hashgraph/sdk';
 
-export interface CreateTokenKeysDto {
+export interface TokenCreateKeysDto {
   adminKey?: string;
   kycKey?: string;
   freezeKey?: string;
@@ -10,7 +10,7 @@ export interface CreateTokenKeysDto {
   feeScheduleKey?: string;
 }
 
-export interface CreateTokenKeys {
+export interface TokenCreateKeys {
   adminKey?: PublicKey;
   kycKey?: PublicKey;
   freezeKey?: PublicKey;

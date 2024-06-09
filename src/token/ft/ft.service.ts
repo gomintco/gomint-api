@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { TokenType } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { User } from 'src/user/user.entity';
-import { CreateFtDto } from 'src/token/ft/dto/create-ft.dto';
 import { AccountService } from 'src/account/account.service';
 import { MintFtDto } from './dto/mint-ft.dto';
 import { AppConfigService } from 'src/config/app-config.service';
@@ -11,6 +9,7 @@ import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-a
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { Account } from 'src/account/account.entity';
 import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
+import { TokenCreateDto } from '../dto/create-token.dto';
 
 @Injectable()
 export class FtService {
@@ -20,28 +19,31 @@ export class FtService {
     private readonly accountService: AccountService,
     private readonly configService: AppConfigService,
     private readonly tokenService: HederaTokenApiService,
-    private readonly transactionService: HederaTransactionApiService,
+    private readonly hederaTransactionApiService: HederaTransactionApiService,
     private readonly mirrornodeService: HederaMirrornodeApiService,
-  ) {}
+  ) { }
 
-  async createTokenHandler(user: User, createFtDto: CreateFtDto) {
+  async tokenCreateHandler(user: User, tokenCreateDto: TokenCreateDto) {
+    console.log('user', user);
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,
-      createFtDto.encryptionKey,
+      tokenCreateDto.encryptionKey,
     );
+
     // get and set treasury account
-    const treasuryAccount = await this.accountService.getUserAccountByAlias(
-      user.id,
-      createFtDto.treasuryAccountId,
-    );
-    createFtDto.treasuryAccountId = treasuryAccount.id;
+    const treasuryAccount = await this.accountService
+      .getUserAccountByAlias(user.id, tokenCreateDto.treasuryAccountId)
+      .catch(() => { // should handle this inside the .getUserByAccountAlias function
+        throw new Error('No accounts with alias: ' + tokenCreateDto.treasuryAccountId);
+      });
+    tokenCreateDto.treasuryAccountId = treasuryAccount.id;
     // handle case if payer is separate
     let payerAccount: Account;
-    if (createFtDto.payerId)
+    if (tokenCreateDto.payerId)
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
-        createFtDto.payerId,
+        tokenCreateDto.payerId,
       );
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
@@ -52,17 +54,16 @@ export class FtService {
     );
     // parse any alias ids in custom fees to account ids
     const { fixedFees, fractionalFees } =
-      await this.accountService.parseCustomFeeAliases(user.id, createFtDto);
-    createFtDto.fixedFees = fixedFees;
-    createFtDto.fractionalFees = fractionalFees;
+      await this.accountService.parseCustomFeeAliases(user.id, tokenCreateDto);
+    tokenCreateDto.fixedFees = fixedFees;
+    tokenCreateDto.fractionalFees = fractionalFees;
     // create token transaction
     const createTokenTransaction = this.tokenService.createTransaction(
-      createFtDto,
-      TokenType.FungibleCommon,
+      tokenCreateDto,
       treasuryAccount.keys[0].publicKey, // treasury account is the default key
     );
     const receipt =
-      await this.transactionService.freezeSignExecuteAndGetReceipt(
+      await this.hederaTransactionApiService.freezeSignExecuteAndGetReceipt(
         createTokenTransaction,
         client,
         signers,
@@ -70,7 +71,7 @@ export class FtService {
     return receipt.tokenId.toString();
   }
 
-  async mintTokenHandler(user: User, mintFtDto: MintFtDto): Promise<string> {
+  async tokenMintHandler(user: User, mintFtDto: MintFtDto): Promise<string> {
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,
@@ -108,7 +109,7 @@ export class FtService {
     // create mint transaction
     const mintTransaction = this.tokenService.mintFtTransaction(mintFtDto);
     const receipt =
-      await this.transactionService.freezeSignExecuteAndGetReceipt(
+      await this.hederaTransactionApiService.freezeSignExecuteAndGetReceipt(
         mintTransaction,
         client,
         signers,

@@ -19,26 +19,23 @@ import {
 // LETS FIX LATER lol
 import {
   AssociateTokenDto,
-  CreateTokenDto,
-  CreateTokenTransaction,
+  //TokenCreateDto,
+  TokenCreateTransactionInput,
   MintFtDto,
   MintNftDto,
 } from './token.interface';
-import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
+import { TokenCreateKeys, TokenCreateKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
+import { TokenCreateDto } from 'src/token/dto/create-token.dto';
 
 @Injectable()
 export class HederaTokenApiService {
   nDays = 90;
 
-  createTransaction(
-    tokenCreateInput: CreateTokenDto,
-    tokenType: TokenType,
-    defaultKey?: string,
-  ) {
+  createTransaction(tokenCreateDto: TokenCreateDto, defaultKey?: string) {
     // parses input data into correct format
     const createTokenTransaction = this.parseCreateTransactionDto(
-      tokenCreateInput,
+      tokenCreateDto,
       defaultKey,
     );
     const transaction = new TokenCreateTransaction()
@@ -47,7 +44,7 @@ export class HederaTokenApiService {
       .setDecimals(createTokenTransaction.decimals)
       .setInitialSupply(createTokenTransaction.initialSupply)
       .setTreasuryAccountId(createTokenTransaction.treasuryAccountId)
-      .setTokenType(tokenType)
+      .setTokenType(createTokenTransaction.tokenType)
       .setAdminKey(createTokenTransaction.adminKey)
       .setKycKey(createTokenTransaction.kycKey)
       .setFreezeKey(createTokenTransaction.freezeKey)
@@ -92,39 +89,52 @@ export class HederaTokenApiService {
   }
 
   private parseCreateTransactionDto(
-    tokenCreateInput: CreateTokenDto,
+    tokenCreateDto: TokenCreateDto,
     defaultKey?: string,
-  ): CreateTokenTransaction {
-    const tokenPubKeys = this.parsePublicKeys(tokenCreateInput, defaultKey);
+  ): TokenCreateTransactionInput {
+    const tokenPubKeys = this.parsePublicKeys(tokenCreateDto, defaultKey);
     // MAY STILL BE BITS TO FILL OUT
-    const createTokenTransaction: CreateTokenTransaction = {
-      tokenName: tokenCreateInput.tokenName,
-      tokenSymbol: tokenCreateInput.tokenSymbol,
-      treasuryAccountId: tokenCreateInput.treasuryAccountId,
-      decimals: tokenCreateInput.decimals ?? 0,
-      initialSupply: tokenCreateInput.initialSupply ?? 0,
+    let tokenType: TokenType;
+    switch (tokenCreateDto.tokenType) {
+      case 'ft':
+        tokenType = TokenType.FungibleCommon;
+        break;
+      case 'nft':
+        tokenType = TokenType.NonFungibleUnique;
+        break;
+      default:
+        throw new Error("Token type must be 'ft' or 'nft'");
+    }
+
+    const createTokenTransactionInput: TokenCreateTransactionInput = {
+      tokenName: tokenCreateDto.tokenName,
+      tokenSymbol: tokenCreateDto.tokenSymbol,
+      tokenType,
+      treasuryAccountId: tokenCreateDto.treasuryAccountId,
+      decimals: tokenCreateDto.decimals ?? 0,
+      initialSupply: tokenCreateDto.initialSupply ?? 0,
       maxSupply:
         // hedera needs max supply if finite
         // if user sets finite with no max supply, max supply is set to initial supply
-        tokenCreateInput.finite && !tokenCreateInput.maxSupply
-          ? tokenCreateInput.initialSupply
-          : tokenCreateInput.maxSupply,
-      expirationTime: tokenCreateInput.expirationTime ?? this.todayPlusNDays(),
+        tokenCreateDto.finite && !tokenCreateDto.maxSupply
+          ? tokenCreateDto.initialSupply
+          : tokenCreateDto.maxSupply,
+      expirationTime: new Date(tokenCreateDto.expirationTime) ?? this.todayPlusNDays(),
       autoRenewAccountId:
-        tokenCreateInput.autoRenewAccountId ||
-        tokenCreateInput.treasuryAccountId,
+        tokenCreateDto.autoRenewAccountId ||
+        tokenCreateDto.treasuryAccountId,
       supplyType:
-        tokenCreateInput.finite || tokenCreateInput.maxSupply
+        tokenCreateDto.finite || tokenCreateDto.maxSupply
           ? TokenSupplyType.Finite
           : TokenSupplyType.Infinite,
-      customFees: this.parseCustomFees(tokenCreateInput),
+      customFees: this.parseCustomFees(tokenCreateDto),
       ...tokenPubKeys,
     };
-    return createTokenTransaction;
+    return createTokenTransactionInput;
   }
 
   private parsePublicKeys(
-    createTokenInput: CreateTokenKeysDto,
+    createTokenInput: TokenCreateKeysDto,
     defaultKey?: string,
   ) {
     const keys = {
@@ -136,10 +146,10 @@ export class HederaTokenApiService {
       wipeKey: createTokenInput.wipeKey,
       feeScheduleKey: createTokenInput.feeScheduleKey,
     };
-    const tokenPublicKeys: CreateTokenKeys = {};
+    const tokenPublicKeys: TokenCreateKeys = {};
     Object.entries(keys).forEach(([keyType, keyValue]) => {
       if (keyValue) {
-        tokenPublicKeys[keyType as keyof CreateTokenKeys] =
+        tokenPublicKeys[keyType as keyof TokenCreateKeys] =
           keyValue === 'default'
             ? PublicKey.fromString(defaultKey)
             : PublicKey.fromString(keyValue);
@@ -148,9 +158,9 @@ export class HederaTokenApiService {
     return tokenPublicKeys;
   }
 
-  private parseCustomFees(tokenCreateInput: CreateTokenDto): CustomFee[] {
+  private parseCustomFees(tokenCreateDto: TokenCreateDto): CustomFee[] {
     // custom fee ids need to have been parsed before this
-    const { fixedFees, fractionalFees, royaltyFees } = tokenCreateInput;
+    const { fixedFees, fractionalFees, royaltyFees } = tokenCreateDto;
     if (!fixedFees && !fractionalFees && !royaltyFees) return [];
     // ensure all fee aliases are parsed correctly before returnin
     this.validateFeeCollectorAccountIds(fixedFees, fractionalFees, royaltyFees);

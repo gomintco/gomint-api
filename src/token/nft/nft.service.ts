@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TokenType } from '@hashgraph/sdk';
 import { User } from 'src/user/user.entity';
-import { CreateNftDto } from './dto/create-nft.dto';
+import { TokenCreateDto } from '../dto/create-token.dto';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { AccountService } from 'src/account/account.service';
@@ -24,7 +24,7 @@ export class NftService {
     private readonly configService: AppConfigService,
   ) {}
 
-  async createTokenHandler(user: User, createNftDto: CreateNftDto) {
+  async tokenCreateHandler(user: User, createNftDto: TokenCreateDto) {
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,
@@ -58,7 +58,6 @@ export class NftService {
     // create token transaction
     const createTokenTransaction = this.tokenService.createTransaction(
       createNftDto,
-      TokenType.NonFungibleUnique,
       treasuryAccount.keys[0].publicKey, // treasury account is the default key
     );
     const receipt =
@@ -70,7 +69,7 @@ export class NftService {
     return receipt.tokenId.toString();
   }
 
-  async mintTokenHandler(user: User, mintNftDto: MintNftDto): Promise<string> {
+  async tokenMintHandler(user: User, mintNftDto: MintNftDto): Promise<string> {
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,

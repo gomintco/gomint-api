@@ -1,5 +1,5 @@
-import { CustomFee, TokenSupplyType } from '@hashgraph/sdk';
-import { CreateTokenKeys, CreateTokenKeysDto } from './pubKey.interface';
+import { CustomFee, TokenSupplyType, TokenType } from '@hashgraph/sdk';
+import { TokenCreateKeys, TokenCreateKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 
 export interface AssociateTokenDto {
@@ -7,25 +7,27 @@ export interface AssociateTokenDto {
   tokenIds: string[];
 }
 
-export interface CreateTokenDto extends CreateTokenKeysDto {
-  tokenName: string;
-  tokenSymbol: string;
-  treasuryAccountId: string;
-  decimals?: number;
-  payerId?: string;
-  initialSupply?: number;
-  maxSupply?: number;
-  finite?: boolean;
-  expirationTime?: Date;
-  autoRenewAccountId?: string;
-  fixedFees?: FixedFeeDto[];
-  royaltyFees?: RoyaltyFeeDto[];
-  fractionalFees?: FractionalFeeDto[];
-}
+//export interface TokenCreateDto extends TokenCreateKeysDto {
+//  tokenName: string;
+//  tokenSymbol: string;
+//  tokenType: 'ft' | 'nft';
+//  treasuryAccountId: string;
+//  decimals?: number;
+//  payerId?: string;
+//  initialSupply?: number;
+//  maxSupply?: number;
+//  finite?: boolean;
+//  expirationTime?: Date;
+//  autoRenewAccountId?: string;
+//  fixedFees?: FixedFeeDto[];
+//  royaltyFees?: RoyaltyFeeDto[];
+//  fractionalFees?: FractionalFeeDto[];
+//}
 
-export interface CreateTokenTransaction extends CreateTokenKeys {
+export interface TokenCreateTransactionInput extends TokenCreateKeys {
   tokenName: string;
   tokenSymbol: string;
+  tokenType: TokenType;
   decimals?: number;
   treasuryAccountId: string;
   initialSupply?: number;
