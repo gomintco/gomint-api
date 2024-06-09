@@ -30,5 +30,6 @@ export interface HederaNetworkConfiguration {
 }
 
 export interface IpfsConfiguration {
-  nftStorageApiKey: string
+  web3StorageKey: string,
+  web3StorageProof: string
 }

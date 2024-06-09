@@ -57,6 +57,7 @@ export class AccountService {
     // create the threshold key with GoMint account for management if anything goes wrong
     const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
       accountCreateDto.type,
+      user.network
     );
     // encrypt and attach user to key
     const key = await this.keyService.attachKeyToUser(
