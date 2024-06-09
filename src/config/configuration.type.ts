@@ -6,6 +6,7 @@ export interface Configuration {
   app: AppConfiguration;
   db: DbConfiguration;
   hedera: HederaConfiguration;
+  ipfs: IpfsConfiguration
 }
 
 export type DbConfiguration = MysqlConnectionOptions;
@@ -26,4 +27,8 @@ export interface HederaNetworkConfiguration {
   key: string;
   mirrornodeUrl: string;
   custodialKey: PrivateKey;
+}
+
+export interface IpfsConfiguration {
+  nftStorageApiKey: string
 }

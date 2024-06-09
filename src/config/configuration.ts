@@ -26,5 +26,8 @@ export function configure(): Configuration {
         custodialKey: PrivateKey.fromStringED25519(env.MAINNET_CUSTODIAL_KEY),
       },
     },
+    ipfs: {
+      nftStorageApiKey: env.NFT_STORAGE_API_KEY
+    }
   };
 }
