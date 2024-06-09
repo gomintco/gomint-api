@@ -22,7 +22,7 @@ export class NftService {
     private transactionService: HederaTransactionApiService,
     private mirrornodeService: HederaMirrornodeApiService,
     private readonly configService: AppConfigService,
-  ) { }
+  ) {}
 
   async tokenCreateHandler(user: User, createNftDto: TokenCreateDto) {
     // get required accounts, keys, and clients

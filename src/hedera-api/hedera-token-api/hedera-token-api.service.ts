@@ -71,12 +71,18 @@ export class HederaTokenApiService {
   }
 
   mintNftTransaction(tokenMintDto: TokenMintDto) {
+    // metadata can either be a string or HIP-412 metadata
+    // if a string, we can mint straight away
+    // if HIP-412 we need to upload to ipfs and use CID for 
+    
+    const metatdatas: Buffer[] = tokenMintDto.metadatas.length // handle both metdata formats
+          ? tokenMintDto.metadatas.map((metadata) => Buffer.from(typeof metadata == 'string' ? metadata : 'temp'))
+          : Array(tokenMintDto.amount).fill(Buffer.from(typeof tokenMintDto.metadata == 'string' ? tokenMintDto.metadata : 'temp'))
+
     return new TokenMintTransaction()
       .setTokenId(tokenMintDto.tokenId)
       .setMetadata(
-        tokenMintDto.metadatas.length // handle both metdata formats
-          ? tokenMintDto.metadatas.map((metadata) => Buffer.from(metadata))
-          : Array(tokenMintDto.amount).fill(Buffer.from(tokenMintDto.metadata)),
+       metatdatas 
       );
   }
 
