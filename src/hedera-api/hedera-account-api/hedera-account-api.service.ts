@@ -26,8 +26,4 @@ export class HederaAccountApiService {
     // .setAutoRenewPeriod(accountCreateDto.autoRenewPeriod)
     return transaction;
   }
-
-  //private parseCreateTransaction(accountCreateDto: AccountCreateDto): AccountCreateInput {
-  //
-  //}
 }
