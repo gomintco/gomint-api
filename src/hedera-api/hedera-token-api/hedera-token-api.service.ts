@@ -14,9 +14,6 @@ import {
   TokenAssociateTransaction,
 } from '@hashgraph/sdk';
 
-// WHY DID I CREATE NEW DTOS HERE??
-// WHY DON'T I JUST USE THE SAME AS IN THE CONTROLLER...
-// LETS FIX LATER lol
 import {
   AssociateTokenDto,
   TokenCreateTransactionInput,
@@ -25,14 +22,14 @@ import { TokenCreateKeys, TokenCreateKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 import { TokenCreateDto } from 'src/token/dto/create-token.dto';
 import { TokenMintDto } from 'src/token/dto/mint-token.dto';
+import { IpfsService } from 'src/ipfs/ipfs.service';
+import { TokenMetadata } from 'src/token/dto/hip412-metadata.dto';
 
 @Injectable()
 export class HederaTokenApiService {
   nDays = 90;
 
-  constructor(
-    private readonly ipfsService: IpfsService
-  ) {}
+  constructor(private readonly ipfsService: IpfsService) { }
 
   createTransaction(tokenCreateDto: TokenCreateDto, defaultKey?: string) {
     // parses input data into correct format
@@ -77,22 +74,34 @@ export class HederaTokenApiService {
   async mintNftTransaction(tokenMintDto: TokenMintDto) {
     // metadata can either be a string or HIP-412 metadata
     // if a string, we can mint straight away
-    // if HIP-412 we need to upload to ipfs and use CID for 
+    // if HIP-412 we need to upload to ipfs and use CID for
 
-    console.log("Token metadata", tokenMintDto.metadata)
-
-    const cid = await this.ipfsService.uploadHip412Metadata(tokenMintDto.metadata as TokenMetadata)
-   console.log("CID", cid) 
-    
-    const metatdatas: Buffer[] = tokenMintDto.metadatas.length // handle both metdata formats
-          ? tokenMintDto.metadatas.map((metadata) => Buffer.from(typeof metadata == 'string' ? metadata : 'temp'))
-          : Array(tokenMintDto.amount).fill(Buffer.from(typeof tokenMintDto.metadata == 'string' ? tokenMintDto.metadata : 'temp'))
+    let metadatas: Uint8Array[];
+    const createBuffersFromMetadata = async (
+      metadata: string | TokenMetadata,
+    ): Promise<Uint8Array> => {
+      if (typeof metadata === 'string') {
+        return Buffer.from(metadata);
+      } else {
+        const cid = await this.ipfsService.uploadHip412Metadata(metadata);
+        return Buffer.from(cid);
+      }
+    };
+    await this.ipfsService.initClient()
+    if (tokenMintDto.amount) {
+      const metadata = tokenMintDto.metadata;
+      const buffer = await createBuffersFromMetadata(metadata);
+      metadatas = Array(tokenMintDto.amount).fill(buffer);
+    } else {
+      const metadatasPromises = tokenMintDto.metadatas.map(
+        createBuffersFromMetadata,
+      );
+      metadatas = await Promise.all(metadatasPromises);
+    }
 
     return new TokenMintTransaction()
       .setTokenId(tokenMintDto.tokenId)
-      .setMetadata(
-       metatdatas 
-      );
+      .setMetadata(metadatas);
   }
 
   associateTransaction(tokenAssociateInput: AssociateTokenDto) {
@@ -132,10 +141,10 @@ export class HederaTokenApiService {
         tokenCreateDto.finite && !tokenCreateDto.maxSupply
           ? tokenCreateDto.initialSupply
           : tokenCreateDto.maxSupply,
-      expirationTime: new Date(tokenCreateDto.expirationTime) ?? this.todayPlusNDays(),
+      expirationTime:
+        new Date(tokenCreateDto.expirationTime) ?? this.todayPlusNDays(),
       autoRenewAccountId:
-        tokenCreateDto.autoRenewAccountId ||
-        tokenCreateDto.treasuryAccountId,
+        tokenCreateDto.autoRenewAccountId || tokenCreateDto.treasuryAccountId,
       supplyType:
         tokenCreateDto.finite || tokenCreateDto.maxSupply
           ? TokenSupplyType.Finite
