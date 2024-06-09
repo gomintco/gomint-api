@@ -5,12 +5,12 @@ import { TokenCreateDto } from '../dto/create-token.dto';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { AccountService } from 'src/account/account.service';
-import { MintNftDto } from './dto/mint-nft.dto';
 import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { Account } from 'src/account/account.entity';
 import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
 import { AppConfigService } from 'src/config/app-config.service';
+import { TokenMintDto } from '../dto/mint-token.dto';
 
 @Injectable()
 export class NftService {
@@ -22,7 +22,7 @@ export class NftService {
     private transactionService: HederaTransactionApiService,
     private mirrornodeService: HederaMirrornodeApiService,
     private readonly configService: AppConfigService,
-  ) {}
+  ) { }
 
   async tokenCreateHandler(user: User, createNftDto: TokenCreateDto) {
     // get required accounts, keys, and clients
@@ -69,19 +69,22 @@ export class NftService {
     return receipt.tokenId.toString();
   }
 
-  async tokenMintHandler(user: User, mintNftDto: MintNftDto): Promise<string> {
+  async tokenMintHandler(
+    user: User,
+    tokenMintDto: TokenMintDto,
+  ): Promise<string> {
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,
-      mintNftDto.encryptionKey,
+      tokenMintDto.encryptionKey,
     );
     // get supply key from mirrornode
     const supplyKey = await this.mirrornodeService
-      .getTokenMirrornodeInfo(user.network, mintNftDto.tokenId)
+      .getTokenMirrornodeInfo(user.network, tokenMintDto.tokenId)
       .then((info) => info.supply_key.key)
       .catch(() => {
         throw new Error(
-          `Token ${mintNftDto.tokenId} does not have a supply key`,
+          `Token ${tokenMintDto.tokenId} does not have a supply key`,
         );
       });
     // get and decrypt private keys for supply key
@@ -92,10 +95,10 @@ export class NftService {
       });
     // handle case if payer is separate
     let payerAccount: Account;
-    if (mintNftDto.payerId)
+    if (tokenMintDto.payerId)
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
-        mintNftDto.payerId,
+        tokenMintDto.payerId,
       );
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
@@ -105,7 +108,7 @@ export class NftService {
       payerAccount,
     );
     // create mint transaction
-    const mintTransaction = this.tokenService.mintNftTransaction(mintNftDto);
+    const mintTransaction = this.tokenService.mintNftTransaction(tokenMintDto);
     const receipt =
       await this.transactionService.freezeSignExecuteAndGetReceipt(
         mintTransaction,

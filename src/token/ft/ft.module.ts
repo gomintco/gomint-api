@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { FtService } from './ft.service';
-import { FtController } from './ft.controller';
 import { ClientModule } from '../../client/client.module';
 import { KeyModule } from 'src/key/key.module';
 import { AuthModule } from 'src/auth/auth.module';
@@ -10,6 +9,6 @@ import { HederaModule } from 'src/hedera-api/hedera-api.module';
 @Module({
   imports: [ClientModule, KeyModule, AuthModule, AccountModule, HederaModule],
   providers: [FtService],
-  controllers: [FtController],
+  controllers: [],
 })
 export class FtModule {}
