@@ -27,7 +27,8 @@ export function configure(): Configuration {
       },
     },
     ipfs: {
-      nftStorageApiKey: env.NFT_STORAGE_API_KEY
-    }
+      web3StorageKey: env.WEB3_STORAGE_KEY,
+      web3StorageProof: env.WEB3_STORAGE_PROOF,
+    },
   };
 }
