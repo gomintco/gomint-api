@@ -16,9 +16,10 @@ export const envSchema = z.object({
   DB_NAME: z.string().min(1),
 
   // HEDERA
-  CUSTODIAL_KEY: z.string().min(1),
+  TESTNET_CUSTODIAL_KEY: z.string().min(1),
   TESTNET_ID: z.string().min(1),
   TESTNET_KEY: z.string().min(1),
+  MAINNET_CUSTODIAL_KEY: z.string().min(1),
   MAINNET_ID: z.string().min(1),
   MAINNET_KEY: z.string().min(1),
   TESTNET_MIRRORNODE_URL: z.string().url(),
