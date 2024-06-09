@@ -5,7 +5,7 @@ import { TokenModule } from './token/token.module';
 import { DealModule } from './deal/deal.module';
 import { AppConfigModule } from './config/app-config.module';
 import { AppConfigService } from './config/app-config.service';
-import { HederaModule } from './hedera/hedera.module';
+import { HederaModule } from './hedera-api/hedera-api.module';
 
 @Module({
   imports: [

@@ -10,7 +10,7 @@ import {
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class TransactionService {
+export class HederaTransactionApiService {
   async executeTransaction(
     transaction: Transaction,
     client: Client,

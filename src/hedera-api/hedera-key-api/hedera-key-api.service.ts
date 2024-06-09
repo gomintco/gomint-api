@@ -1,9 +1,12 @@
 import { KeyList, PrivateKey } from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
 import { KeyType } from './key-type.enum';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
-export class KeyService {
+export class HederaKeyApiService {
+  constructor(private readonly configService: AppConfigService) {}
+
   generateED25519(): PrivateKey {
     return PrivateKey.generateED25519();
   }
@@ -24,9 +27,24 @@ export class KeyService {
   }
 
   generateKeyList(n: number, type: KeyType, threshold?: number): KeyList {
-    const publicKeyList = new Array(n).map(
+    const publicKeyList = Array.from({ length: n }).map(
       () => this.generatePrivateKey(type).publicKey,
     );
     return new KeyList(publicKeyList, threshold);
+  }
+
+  generateGoMintKeyList(type: KeyType): {
+    keyList: KeyList;
+    privateKey: PrivateKey;
+  } {
+    const privateKey = this.generatePrivateKey(type);
+    const keyList = new KeyList(
+      [privateKey, this.configService.hedera.custodialKey],
+      1,
+    );
+    return {
+      keyList,
+      privateKey,
+    };
   }
 }

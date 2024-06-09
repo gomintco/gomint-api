@@ -6,10 +6,10 @@ import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { AccountService } from 'src/account/account.service';
 import { MintNftDto } from './dto/mint-nft.dto';
-import { TransactionService } from 'src/hedera/transaction/transaction.service';
-import { TokenService } from 'src/hedera/token/token.service';
+import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
+import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { Account } from 'src/account/account.entity';
-import { MirrornodeService } from 'src/hedera/mirrornode/mirrornode.service';
+import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
 import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
@@ -18,9 +18,9 @@ export class NftService {
     private keyService: KeyService,
     private clientService: ClientService,
     private accountService: AccountService,
-    private tokenService: TokenService,
-    private transactionService: TransactionService,
-    private mirrornodeService: MirrornodeService,
+    private tokenService: HederaTokenApiService,
+    private transactionService: HederaTransactionApiService,
+    private mirrornodeService: HederaMirrornodeApiService,
     private readonly configService: AppConfigService,
   ) {}
 
