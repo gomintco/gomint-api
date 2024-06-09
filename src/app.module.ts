@@ -6,6 +6,7 @@ import { DealModule } from './deal/deal.module';
 import { AppConfigModule } from './config/app-config.module';
 import { AppConfigService } from './config/app-config.service';
 import { HederaModule } from './hedera-api/hedera-api.module';
+import { IpfsModule } from './ipfs/ipfs.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { HederaModule } from './hedera-api/hedera-api.module';
     UserModule,
     DealModule,
     HederaModule,
+    IpfsModule,
   ],
   controllers: [],
   providers: [],
