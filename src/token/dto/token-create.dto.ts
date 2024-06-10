@@ -5,9 +5,9 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  Min,
   ValidateNested,
 } from 'class-validator';
+import { FixedFee, FractionalFee, RoyaltyFee } from './custom-fees.dto';
 
 export class TokenCreateDto {
   @IsString()
@@ -97,72 +97,3 @@ export class TokenCreateDto {
   encryptionKey: string;
 }
 
-class FixedFee {
-  @IsString()
-  feeCollectorAccountId: string;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  hbarAmount?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  ftAmount?: number;
-
-  @IsOptional()
-  @IsString()
-  ftId?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  allCollectorsAreExempt?: boolean;
-}
-
-class FractionalFee {
-  @IsString()
-  feeCollectorAccountId: string;
-
-  @IsNumber()
-  numerator: number;
-
-  @IsNumber()
-  denominator: number;
-
-  @IsOptional()
-  @IsNumber()
-  max?: number;
-
-  @IsOptional()
-  @IsNumber()
-  min?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  senderPaysFees?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  allCollectorsAreExempt?: boolean;
-}
-
-class RoyaltyFee {
-  @IsString()
-  feeCollectorAccountId: string;
-
-  @IsNumber()
-  numerator: number;
-
-  @IsNumber()
-  denominator: number;
-
-  @IsOptional()
-  @Type(() => FixedFee)
-  @ValidateNested()
-  fallbackFee?: FixedFee;
-
-  @IsOptional()
-  @IsBoolean()
-  allCollectorsAreExempt?: boolean;
-}

@@ -2,6 +2,7 @@ import { KeyList, PrivateKey } from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
 import { KeyType } from './key-type.enum';
 import { AppConfigService } from 'src/config/app-config.service';
+import { Network } from '../network.enum';
 
 @Injectable()
 export class HederaKeyApiService {
@@ -33,13 +34,18 @@ export class HederaKeyApiService {
     return new KeyList(publicKeyList, threshold);
   }
 
-  generateGoMintKeyList(type: KeyType): {
+  generateGoMintKeyList(type: KeyType, network: Network): {
     keyList: KeyList;
     privateKey: PrivateKey;
   } {
     const privateKey = this.generatePrivateKey(type);
+    
+    const custodialKey = network === Network.MAINNET
+      ? this.configService.hedera.mainnet.custodialKey
+      : this.configService.hedera.testnet.custodialKey
+
     const keyList = new KeyList(
-      [privateKey, this.configService.hedera.custodialKey],
+      [privateKey, custodialKey],
       1,
     );
     return {

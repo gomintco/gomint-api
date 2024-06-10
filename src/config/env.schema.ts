@@ -16,14 +16,19 @@ export const envSchema = z.object({
   DB_NAME: z.string().min(1),
 
   // HEDERA
-  CUSTODIAL_KEY: z.string().min(1),
+  TESTNET_CUSTODIAL_KEY: z.string().min(1),
   TESTNET_ID: z.string().min(1),
   TESTNET_KEY: z.string().min(1),
+  MAINNET_CUSTODIAL_KEY: z.string().min(1),
   MAINNET_ID: z.string().min(1),
   MAINNET_KEY: z.string().min(1),
   TESTNET_MIRRORNODE_URL: z.string().url(),
   MAINNET_MIRRORNODE_URL: z.string().url(),
   PREVIEWNET_MIRRORNODE_URL: z.string().url(),
+
+  // IPFS
+  WEB3_STORAGE_KEY: z.string().min(1),
+  WEB3_STORAGE_PROOF: z.string().min(1)
 });
 
 export type Env = z.infer<typeof envSchema>;
