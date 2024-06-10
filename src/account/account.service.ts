@@ -221,6 +221,8 @@ export class AccountService {
     userId: string,
     alias: string,
   ): Promise<string> {
+    // if alias is already in account ID format, just return alias
+    if (alias.startsWith("0.0.")) return alias
     const account = await this.accountRepository.findOne({
       where: { user: { id: userId }, alias },
     });
