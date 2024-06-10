@@ -14,8 +14,6 @@ import { TokenMetadata } from './hip412-metadata.dto';
 @ValidatorConstraint({ name: 'isStringOrTokenMetadata', async: false })
 class IsStringOrTokenMetadata implements ValidatorConstraintInterface {
   validate(value: any, args: ValidationArguments) {
-
-    console.log("VALUE", value)
     // valid if string
     if (typeof value === 'string') {
       return true;
