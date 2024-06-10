@@ -31,7 +31,7 @@ export class IpfsService {
     await this.initClient();
     const blob = new Blob([JSON.stringify(metadata)]);
     const res = await this.client.uploadFile(blob);
-    return res.toString();
+    return 'ipfs://' + res.toString();
   }
 
   private async parseProof(data: string) {
