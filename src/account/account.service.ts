@@ -16,7 +16,7 @@ import { Account } from './account.entity';
 import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
-import { TokenCreateDto} from 'src/token/dto/create-token.dto'
+import { TokenCreateDto } from 'src/token/dto/token-create.dto';
 import { KeyService } from 'src/key/key.service';
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
@@ -43,7 +43,7 @@ export class AccountService {
       user,
       accountCreateDto.encryptionKey,
     );
-   // check if alias already exists
+    // check if alias already exists
     const accountAliasExists = await this.accountAliasExists(
       user.id,
       accountCreateDto.alias,
@@ -57,9 +57,10 @@ export class AccountService {
     // create the threshold key with GoMint account for management if anything goes wrong
     const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
       accountCreateDto.type,
+      user.network,
     );
     // encrypt and attach user to key
-    const key = await this.keyService.attachKeyToUser(
+    const key = await this.keyService.attachUserToKey(
       accountCreateDto.type,
       privateKey,
       escrowKey,

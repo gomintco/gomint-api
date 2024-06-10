@@ -23,7 +23,7 @@ export class DealController {
   constructor(private readonly dealService: DealService) {}
 
   @UseGuards(ApiKeyGuard)
-  @Post('create')
+  @Post('')
   async create(@Req() req: Request, @Body() createDealDto: CreateDealDto) {
     const user = req.user;
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TokenType } from '@hashgraph/sdk';
 import { User } from 'src/user/user.entity';
-import { TokenCreateDto } from '../dto/create-token.dto';
+import { TokenCreateDto } from '../dto/token-create.dto';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { AccountService } from 'src/account/account.service';
@@ -10,7 +10,7 @@ import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-to
 import { Account } from 'src/account/account.entity';
 import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
 import { AppConfigService } from 'src/config/app-config.service';
-import { TokenMintDto } from '../dto/mint-token.dto';
+import { TokenMintDto } from '../dto/token-mint.dto';
 
 @Injectable()
 export class NftService {
@@ -22,7 +22,7 @@ export class NftService {
     private transactionService: HederaTransactionApiService,
     private mirrornodeService: HederaMirrornodeApiService,
     private readonly configService: AppConfigService,
-  ) { }
+  ) {}
 
   async tokenCreateHandler(user: User, createNftDto: TokenCreateDto) {
     // get required accounts, keys, and clients
@@ -108,7 +108,7 @@ export class NftService {
       payerAccount,
     );
     // create mint transaction
-    const mintTransaction = this.tokenService.mintNftTransaction(tokenMintDto);
+    const mintTransaction = await this.tokenService.mintNftTransaction(tokenMintDto);
     const receipt =
       await this.transactionService.freezeSignExecuteAndGetReceipt(
         mintTransaction,
