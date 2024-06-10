@@ -20,8 +20,8 @@ import {
 } from './token.interface';
 import { TokenCreateKeys, TokenCreateKeysDto } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
-import { TokenCreateDto } from 'src/token/dto/create-token.dto';
-import { TokenMintDto } from 'src/token/dto/mint-token.dto';
+import { TokenCreateDto } from 'src/token/dto/token-create.dto';
+import { TokenMintDto } from 'src/token/dto/token-mint.dto';
 import { IpfsService } from 'src/ipfs/ipfs.service';
 import { TokenMetadata } from 'src/token/dto/hip412-metadata.dto';
 

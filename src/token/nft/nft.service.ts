@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TokenType } from '@hashgraph/sdk';
 import { User } from 'src/user/user.entity';
-import { TokenCreateDto } from '../dto/create-token.dto';
+import { TokenCreateDto } from '../dto/token-create.dto';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { AccountService } from 'src/account/account.service';
@@ -10,7 +10,7 @@ import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-to
 import { Account } from 'src/account/account.entity';
 import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
 import { AppConfigService } from 'src/config/app-config.service';
-import { TokenMintDto } from '../dto/mint-token.dto';
+import { TokenMintDto } from '../dto/token-mint.dto';
 
 @Injectable()
 export class NftService {
