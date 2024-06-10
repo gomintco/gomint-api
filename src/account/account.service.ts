@@ -60,7 +60,7 @@ export class AccountService {
       user.network,
     );
     // encrypt and attach user to key
-    const key = await this.keyService.attachKeyToUser(
+    const key = await this.keyService.attachUserToKey(
       accountCreateDto.type,
       privateKey,
       escrowKey,
