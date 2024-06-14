@@ -1,4 +1,5 @@
 import {
+  Logger,
   BadRequestException,
   Injectable,
   ServiceUnavailableException,
@@ -24,6 +25,8 @@ import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class DealService {
+  private readonly logger = new Logger(DealService.name);
+
   constructor(
     @InjectRepository(Deal)
     private readonly dealRepository: Repository<Deal>,
@@ -46,7 +49,9 @@ export class DealService {
       createDealDto,
       user.id,
     ).catch((err) => {
-      console.error('Error swapping aliases for account ids: ' + err.message);
+      this.logger.error(
+        'Error swapping aliases for account ids: ' + err.message,
+      );
       throw new Error(
         'Error swapping aliases for account ids. Ensure all aliases are valid',
       );
@@ -63,7 +68,7 @@ export class DealService {
     try {
       await this.dealRepository.save(deal);
     } catch (err: any) {
-      console.log('Error saving deal: ' + err.code);
+      this.logger.log('Error saving deal: ' + err.code);
     }
 
     return dealId;
@@ -82,7 +87,7 @@ export class DealService {
         where: { dealId },
       })
       .catch((err) => {
-        console.error('Error fetching deal: ' + err.message);
+        this.logger.error('Error fetching deal: ' + err.message);
         throw new BadRequestException('Unable to find deal', {
           description: "The dealId doesn't exist or is invalid",
         });
@@ -353,7 +358,7 @@ export class DealService {
       const randomSerialNumber = nfts[randomIndex].serial_number;
       return randomSerialNumber;
     } catch (err: any) {
-      console.error(err);
+      this.logger.error(err);
       throw new ServiceUnavailableException('Error setting NFT serial', {
         description: err.message,
         cause: err,

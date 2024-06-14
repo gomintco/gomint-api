@@ -6,6 +6,7 @@ import {
   Post,
   UseGuards,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,7 +19,9 @@ import { KeyResponse } from './response/key.response';
 import { Request } from 'express';
 
 @Controller('user')
-export class UserController {
+export class UserController { 
+  private readonly logger = new Logger(UserController.name);
+
   constructor(private readonly userService: UserService) {}
 
   @Post('create')
@@ -36,7 +39,7 @@ export class UserController {
       return { username, id, network };
     } catch (err: any) {
       // if more errors may occur, handle them separately per their status code (exception type)
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error creating user', {
         cause: err,
         description: err.message,
@@ -86,7 +89,7 @@ export class UserController {
       );
       return { type, publicKey };
     } catch (err: any) {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error creating key', {
         cause: err,
         description: err.message,
@@ -109,7 +112,7 @@ export class UserController {
       const { id } = account;
       return { id };
     } catch (err: any) {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error creating account', {
         cause: err,
         description: err.message,

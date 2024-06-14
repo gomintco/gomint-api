@@ -1,11 +1,11 @@
 import {
   AccountCreateTransaction,
-  PrivateKey,
   PublicKey,
 } from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { AccountCreateInput } from './account.interface';
@@ -16,7 +16,7 @@ import { Account } from './account.entity';
 import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
-import { TokenCreateDto} from 'src/token/dto/create-token.dto'
+import { TokenCreateDto } from 'src/token/dto/create-token.dto';
 import { KeyService } from 'src/key/key.service';
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
@@ -26,6 +26,8 @@ import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-ap
 
 @Injectable()
 export class AccountService {
+  private readonly logger = new Logger(AccountService.name);
+
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
@@ -43,7 +45,7 @@ export class AccountService {
       user,
       accountCreateDto.encryptionKey,
     );
-   // check if alias already exists
+    // check if alias already exists
     const accountAliasExists = await this.accountAliasExists(
       user.id,
       accountCreateDto.alias,
@@ -287,7 +289,7 @@ export class AccountService {
 
   async save(account: Account): Promise<Account> {
     return this.accountRepository.save(account).catch((err) => {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error saving account', {
         cause: err,
         description: err.code || err.message,
@@ -325,7 +327,7 @@ export class AccountService {
       });
       return new AccountBuilder(this, account);
     } catch (err: any) {
-      console.error(err);
+      this.logger.error(err);
       throw new ServiceUnavailableException("Couldn't create Hedera account", {
         cause: err,
         description: err.message,
