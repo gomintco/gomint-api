@@ -19,12 +19,12 @@ import { KeyResponse } from './response/key.response';
 import { Request } from 'express';
 
 @Controller('user')
-export class UserController { 
+export class UserController {
   private readonly logger = new Logger(UserController.name);
 
   constructor(private readonly userService: UserService) {}
 
-  @Post('create')
+  @Post('')
   async create(@Body() createUserDto: CreateUserDto) {
     try {
       // create user model
@@ -56,7 +56,7 @@ export class UserController {
   }
 
   @UseGuards(ApiKeyGuard)
-  @Get('accounts')
+  @Get('account')
   async getUserAccounts(
     @Req() req: Request,
   ): Promise<{ id: string; accounts: AccountResponse[] }> {
@@ -69,7 +69,7 @@ export class UserController {
   }
 
   @UseGuards(ApiKeyGuard)
-  @Get('keys')
+  @Get('key')
   async getUserKeys(
     @Req() req: Request,
   ): Promise<{ id: string; keys: KeyResponse[] }> {
@@ -79,7 +79,7 @@ export class UserController {
   }
 
   @UseGuards(ApiKeyGuard)
-  @Post('create/key')
+  @Post('key')
   async createKey(@Req() req: Request, @Body() createKey: CreateKeyDto) {
     const user = req.user;
     try {
@@ -98,7 +98,7 @@ export class UserController {
   }
 
   @UseGuards(ApiKeyGuard)
-  @Post('create/account')
+  @Post('account')
   async createAccount(
     @Req() req: Request,
     @Body() createAccountDto: CreateAccountDto,

@@ -36,7 +36,7 @@ export class TokenService {
             tokenAssociateDto.associatingId,
         );
       });
-    tokenAssociateDto.associatingId = associatingAccount.id
+    tokenAssociateDto.associatingId = associatingAccount.id;
     // handle case if payerId is separate
     let payerAccount: Account;
     if (tokenAssociateDto.payerId)
