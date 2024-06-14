@@ -14,7 +14,7 @@ import {
 import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { DealService } from './deal.service';
 import { CreateDealDto } from './dto/create-deal.dto';
-import { GetBytesDto } from './dto/get-bytes.dt';
+import { GetBytesDto } from './dto/get-bytes.dto';
 import { Network } from 'src/hedera-api/network.enum';
 import { Request } from 'express';
 
