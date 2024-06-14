@@ -27,7 +27,7 @@ export class KeyService {
     });
   }
 
-  async attachKeyToUser(
+  async attachUserToKey(
     type: KeyType,
     privateKey: PrivateKey,
     escrowKey: string,
