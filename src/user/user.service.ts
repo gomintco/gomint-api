@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -14,6 +14,8 @@ import { FailedUserSaveError } from './error/failed-user-save.error';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
@@ -109,6 +111,7 @@ export class UserService {
    * @returns The created user entity.
    */
   create(createUserDto: CreateUserDto): User {
+    this.logger.log({ createUserDto, location: 'user service' });
     return this.usersRepository.create({
       network: createUserDto.network,
       username: createUserDto.username,
@@ -131,7 +134,7 @@ export class UserService {
   // async handleKeyOrAccountCreation(user: User, createUserDto: CreateUserDto) {
   //   if (!createUserDto.withAccount && !createUserDto.withKey) {
   //     // logging for data tracking in future
-  //     return console.log('Only creating user');
+  //     return this.logger.log('Only creating user');
   //   }
 
   //   const key = await this.keyService.create(user.escrowKey).save();
@@ -184,7 +187,7 @@ export class UserService {
       // await is needed to catch errors here
       return await this.usersRepository.save(user);
     } catch (err: any) {
-      console.error(err);
+      this.logger.error(err);
       throw new FailedUserSaveError(err.code || err.message);
     }
   }

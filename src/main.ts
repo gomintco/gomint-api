@@ -5,9 +5,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { NodeEnv } from './config/node-env.enum';
 import { AppConfigService } from './config/app-config.service';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
+  app.useLogger(app.get(Logger));
   const configService = app.get(AppConfigService);
   app.useGlobalPipes(
     new ValidationPipe({
