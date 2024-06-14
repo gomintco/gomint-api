@@ -4,6 +4,7 @@ import {
   Configuration,
   DbConfiguration,
   HederaConfiguration,
+  IpfsConfiguration,
 } from './configuration.type';
 import { Injectable } from '@nestjs/common';
 
@@ -21,5 +22,9 @@ export class AppConfigService {
 
   public get db(): DbConfiguration {
     return this.configService.get<DbConfiguration>('db');
+  }
+
+  public get ipfs(): IpfsConfiguration {
+    return this.configService.get<IpfsConfiguration>('ipfs');
   }
 }

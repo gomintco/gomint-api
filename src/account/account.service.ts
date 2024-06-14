@@ -1,7 +1,4 @@
-import {
-  AccountCreateTransaction,
-  PublicKey,
-} from '@hashgraph/sdk';
+import { AccountCreateTransaction, PublicKey } from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
@@ -16,7 +13,7 @@ import { Account } from './account.entity';
 import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
-import { TokenCreateDto } from 'src/token/dto/create-token.dto';
+import { TokenCreateDto } from 'src/token/dto/token-create.dto';
 import { KeyService } from 'src/key/key.service';
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
@@ -37,7 +34,7 @@ export class AccountService {
     private readonly tokenService: HederaTokenApiService,
     private readonly transactionService: HederaTransactionApiService,
     private readonly hederaKeyService: HederaKeyApiService,
-  ) {}
+  ) { }
 
   async accountCreateHandler(user: User, accountCreateDto: AccountCreateDto) {
     // decrypt user escrow key
@@ -59,9 +56,10 @@ export class AccountService {
     // create the threshold key with GoMint account for management if anything goes wrong
     const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
       accountCreateDto.type,
+      user.network,
     );
     // encrypt and attach user to key
-    const key = await this.keyService.attachKeyToUser(
+    const key = await this.keyService.attachUserToKey(
       accountCreateDto.type,
       privateKey,
       escrowKey,
@@ -101,7 +99,7 @@ export class AccountService {
     ).catch(() => {
       throw new Error(
         'Unable to find account with associatingId: ' +
-          associateDto.associatingId,
+        associateDto.associatingId,
       );
     });
     // handle case if payerId is separate
@@ -222,6 +220,8 @@ export class AccountService {
     userId: string,
     alias: string,
   ): Promise<string> {
+    // if alias is already in account ID format, just return alias
+    if (alias.startsWith('0.0.')) return alias;
     const account = await this.accountRepository.findOne({
       where: { user: { id: userId }, alias },
     });
@@ -339,11 +339,10 @@ export class AccountService {
    * This function creates a transaction.
    * It takes an account creation input as a parameter.
    * It returns a new AccountCreateTransaction object.
-   *
-   * @param {AccountCreateInput} accountCreateInput - The input for account creation.
-   * @returns {AccountCreateTransaction} A new AccountCreateTransaction object.
    */
-  private createTransaction(accountCreateInput: AccountCreateInput) {
+  private createTransaction(
+    accountCreateInput: AccountCreateInput,
+  ): AccountCreateTransaction {
     return (
       new AccountCreateTransaction()
         .setKey(PublicKey.fromString(accountCreateInput.key.publicKey))
@@ -368,7 +367,7 @@ class AccountBuilder {
   constructor(
     private readonly accountService: AccountService,
     private readonly account: Account,
-  ) {}
+  ) { }
 
   async addUser(user: User) {
     // TODO: check if user already exists

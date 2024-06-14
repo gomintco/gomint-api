@@ -9,11 +9,12 @@ import {
 } from '@nestjs/common';
 import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { TokenService } from './token.service';
-import { TokenCreateDto } from './dto/create-token.dto';
+import { TokenCreateDto } from './dto/token-create.dto';
 import { Request } from 'express';
 import { FtService } from './ft/ft.service';
 import { NftService } from './nft/nft.service';
-import { TokenMintDto } from './dto/mint-token.dto';
+import { TokenMintDto } from './dto/token-mint.dto';
+import { TokenAssociateDto } from './dto/token-associate.dto';
 
 @Controller('token')
 @UseGuards(ApiKeyGuard)
@@ -21,6 +22,7 @@ export class TokenController {
   constructor(
     private readonly ftService: FtService,
     private readonly nftService: NftService,
+    private readonly tokenService: TokenService
   ) {}
 
   @Post('')
@@ -69,7 +71,7 @@ export class TokenController {
           );
         }
         status = await this.nftService.tokenMintHandler(user, tokenMintDto);
-      }
+    }
       return { status };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error creating token', {
@@ -77,5 +79,21 @@ export class TokenController {
         description: err.message,
       });
     }
+  }
+
+  @Post('associate')
+  async associate(@Req() req: Request, @Body() tokenAssociateDto: TokenAssociateDto) {
+    const user = req.user;
+
+    try {
+      const status = await this.tokenService.tokenAssociateHandler(user, tokenAssociateDto);
+      return { status };
+    } catch (err: any) {
+      throw new ServiceUnavailableException('Error associating account', {
+        cause: err,
+        description: err.message,
+      });
+    }
+
   }
 }
