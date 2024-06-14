@@ -34,7 +34,7 @@ export class AccountService {
     private readonly tokenService: HederaTokenApiService,
     private readonly transactionService: HederaTransactionApiService,
     private readonly hederaKeyService: HederaKeyApiService,
-  ) { }
+  ) {}
 
   async accountCreateHandler(user: User, accountCreateDto: AccountCreateDto) {
     // decrypt user escrow key
@@ -99,7 +99,7 @@ export class AccountService {
     ).catch(() => {
       throw new Error(
         'Unable to find account with associatingId: ' +
-        associateDto.associatingId,
+          associateDto.associatingId,
       );
     });
     // handle case if payerId is separate
@@ -367,7 +367,7 @@ class AccountBuilder {
   constructor(
     private readonly accountService: AccountService,
     private readonly account: Account,
-  ) { }
+  ) {}
 
   async addUser(user: User) {
     // TODO: check if user already exists

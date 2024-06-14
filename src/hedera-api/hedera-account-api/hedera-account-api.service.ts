@@ -4,18 +4,15 @@ import { AccountCreateDto } from 'src/account/dto/account-create.dto';
 
 @Injectable()
 export class HederaAccountApiService {
-
   createTransaction(
     accountCreateDto: AccountCreateDto,
-    key: Key
+    key: Key,
   ): AccountCreateTransaction {
     //const accountCreateDto = this.parseCreateTransaction(accountCreateDto)
     const transaction = new AccountCreateTransaction()
       .setKey(key)
       .setInitialBalance(accountCreateDto.initialBalance)
-      .setReceiverSignatureRequired(
-        accountCreateDto.receiverSignatureRequired,
-      )
+      .setReceiverSignatureRequired(accountCreateDto.receiverSignatureRequired)
       .setMaxAutomaticTokenAssociations(
         accountCreateDto.maxAutomaticTokenAssociations,
       )

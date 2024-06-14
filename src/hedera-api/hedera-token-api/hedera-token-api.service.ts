@@ -29,7 +29,7 @@ import { TokenMetadata } from 'src/token/dto/hip412-metadata.dto';
 export class HederaTokenApiService {
   nDays = 90;
 
-  constructor(private readonly ipfsService: IpfsService) { }
+  constructor(private readonly ipfsService: IpfsService) {}
 
   createTransaction(tokenCreateDto: TokenCreateDto, defaultKey?: string) {
     // parses input data into correct format
@@ -87,7 +87,7 @@ export class HederaTokenApiService {
         return Buffer.from(cid);
       }
     };
-    await this.ipfsService.initClient()
+    await this.ipfsService.initClient();
     if (tokenMintDto.amount) {
       const metadata = tokenMintDto.metadata;
       const buffer = await createBuffersFromMetadata(metadata);
