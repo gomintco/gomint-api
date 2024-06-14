@@ -28,7 +28,7 @@ export const envSchema = z.object({
 
   // IPFS
   WEB3_STORAGE_KEY: z.string().min(1),
-  WEB3_STORAGE_PROOF: z.string().min(1)
+  WEB3_STORAGE_PROOF: z.string().min(1),
 });
 
 export type Env = z.infer<typeof envSchema>;

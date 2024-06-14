@@ -24,4 +24,4 @@ import { NftService } from './nft/nft.service';
   controllers: [TokenController],
   providers: [TokenService, FtService, NftService],
 })
-export class TokenModule { }
+export class TokenModule {}
