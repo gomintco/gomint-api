@@ -22,7 +22,7 @@ export class TokenController {
   constructor(
     private readonly ftService: FtService,
     private readonly nftService: NftService,
-    private readonly tokenService: TokenService
+    private readonly tokenService: TokenService,
   ) {}
 
   @Post('')
@@ -71,7 +71,7 @@ export class TokenController {
           );
         }
         status = await this.nftService.tokenMintHandler(user, tokenMintDto);
-    }
+      }
       return { status };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error creating token', {
@@ -81,12 +81,18 @@ export class TokenController {
     }
   }
 
-  @Post('associate')
-  async associate(@Req() req: Request, @Body() tokenAssociateDto: TokenAssociateDto) {
+  @Post('association')
+  async associate(
+    @Req() req: Request,
+    @Body() tokenAssociateDto: TokenAssociateDto,
+  ) {
     const user = req.user;
 
     try {
-      const status = await this.tokenService.tokenAssociateHandler(user, tokenAssociateDto);
+      const status = await this.tokenService.tokenAssociateHandler(
+        user,
+        tokenAssociateDto,
+      );
       return { status };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error associating account', {
@@ -94,6 +100,5 @@ export class TokenController {
         description: err.message,
       });
     }
-
   }
 }
