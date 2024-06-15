@@ -6,14 +6,21 @@ import { DealModule } from './deal/deal.module';
 import { AppConfigModule } from './config/app-config.module';
 import { AppConfigService } from './config/app-config.service';
 import { HederaModule } from './hedera-api/hedera-api.module';
+import { DbLogger } from './db/db-logger.service';
+import { AppLoggerModule } from './core/app-logger.module';
 import { IpfsModule } from './ipfs/ipfs.module';
 
 @Module({
   imports: [
     AppConfigModule,
+    AppLoggerModule,
     TypeOrmModule.forRootAsync({
-      useFactory: async (configService: AppConfigService) => configService.db,
-      inject: [AppConfigService],
+      useFactory: async (
+        configService: AppConfigService,
+        logger: DbLogger,
+      ) => ({ ...configService.db, logger }),
+      extraProviders: [DbLogger],
+      inject: [AppConfigService, DbLogger],
     }),
     TokenModule,
     UserModule,

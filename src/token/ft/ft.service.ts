@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { KeyService } from 'src/key/key.service';
 import { ClientService } from 'src/client/client.service';
 import { User } from 'src/user/user.entity';
 import { AccountService } from 'src/account/account.service';
-import { AppConfigService } from 'src/config/app-config.service';
 import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { Account } from 'src/account/account.entity';
@@ -13,18 +12,19 @@ import { TokenMintDto } from '../dto/token-mint.dto';
 
 @Injectable()
 export class FtService {
+  private readonly logger = new Logger(FtService.name);
+
   constructor(
     private readonly keyService: KeyService,
     private readonly clientService: ClientService,
     private readonly accountService: AccountService,
-    private readonly configService: AppConfigService,
     private readonly tokenService: HederaTokenApiService,
     private readonly hederaTransactionApiService: HederaTransactionApiService,
     private readonly hederaMirrornodeApiService: HederaMirrornodeApiService,
-  ) { }
+  ) {}
 
   async tokenCreateHandler(user: User, tokenCreateDto: TokenCreateDto) {
-    console.log('user', user);
+    this.logger.log('user', user);
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,
@@ -34,8 +34,11 @@ export class FtService {
     // get and set treasury account
     const treasuryAccount = await this.accountService
       .getUserAccountByAlias(user.id, tokenCreateDto.treasuryAccountId)
-      .catch(() => { // should handle this inside the .getUserByAccountAlias function
-        throw new Error('No accounts with alias: ' + tokenCreateDto.treasuryAccountId);
+      .catch(() => {
+        // should handle this inside the .getUserByAccountAlias function
+        throw new Error(
+          'No accounts with alias: ' + tokenCreateDto.treasuryAccountId,
+        );
       });
     tokenCreateDto.treasuryAccountId = treasuryAccount.id;
     // handle case if payer is separate
@@ -71,7 +74,10 @@ export class FtService {
     return receipt.tokenId.toString();
   }
 
-  async tokenMintHandler(user: User, tokenMintDto: TokenMintDto): Promise<string> {
+  async tokenMintHandler(
+    user: User,
+    tokenMintDto: TokenMintDto,
+  ): Promise<string> {
     // get required accounts, keys, and clients
     const escrowKey = this.keyService.decryptUserEscrowKey(
       user,

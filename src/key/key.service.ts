@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Logger,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { EncryptedKeyPair } from './key.interface';
 import { PrivateKey } from '@hashgraph/sdk';
 import { KeyType } from 'src/key/key-type.enum';
@@ -10,6 +14,8 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class KeyService {
+  private readonly logger = new Logger(KeyService.name);
+
   constructor(
     @InjectRepository(Key)
     private readonly keysRepository: Repository<Key>,
@@ -81,7 +87,7 @@ export class KeyService {
    */
   async save(key: Key): Promise<Key> {
     return this.keysRepository.save(key).catch((err) => {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error saving key', {
         cause: err,
         description: err.code || err.message,
@@ -216,7 +222,7 @@ export class KeyService {
       decrypted = Buffer.concat([decrypted, decipher.final()]);
       return decrypted.toString();
     } catch (err: any) {
-      console.log('Error decrypting string', err);
+      this.logger.log('Error decrypting string', err);
       throw new InternalServerErrorException('Unable to decrypt private key', {
         cause: err,
         description: err.code || err.message,
