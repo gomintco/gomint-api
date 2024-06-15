@@ -31,4 +31,4 @@ import { IpfsModule } from './ipfs/ipfs.module';
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

@@ -24,4 +24,4 @@ import { IpfsModule } from 'src/ipfs/ipfs.module';
   ],
   imports: [KeyModule, IpfsModule],
 })
-export class HederaModule { }
+export class HederaModule {}

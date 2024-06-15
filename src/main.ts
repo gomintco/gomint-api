@@ -27,8 +27,8 @@ async function bootstrap() {
       .setTitle('GoMint API')
       .setDescription(
         'API for interacting with the Hedera Hashgraph network,' +
-        ' including custodial key control, token creation,' +
-        ' and transaction handling.',
+          ' including custodial key control, token creation,' +
+          ' and transaction handling.',
       )
       .setVersion('1.0')
       .addTag('gomint')

@@ -15,7 +15,7 @@ import { AccountCreateDto } from './dto/account-create.dto';
 @Controller('account')
 @UseGuards(ApiKeyGuard)
 export class AccountController {
-  constructor(private readonly accountService: AccountService) { }
+  constructor(private readonly accountService: AccountService) {}
 
   @Post('')
   async create(
@@ -38,7 +38,7 @@ export class AccountController {
     }
   }
 
-  @Post('associate')
+  @Post('association')
   async associate(@Req() req: Request, @Body() associateDto: AssociateDto) {
     const user = req.user;
 

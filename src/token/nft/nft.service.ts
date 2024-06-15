@@ -108,7 +108,8 @@ export class NftService {
       payerAccount,
     );
     // create mint transaction
-    const mintTransaction = await this.tokenService.mintNftTransaction(tokenMintDto);
+    const mintTransaction =
+      await this.tokenService.mintNftTransaction(tokenMintDto);
     const receipt =
       await this.transactionService.freezeSignExecuteAndGetReceipt(
         mintTransaction,

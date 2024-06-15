@@ -6,7 +6,7 @@ export interface Configuration {
   app: AppConfiguration;
   db: DbConfiguration;
   hedera: HederaConfiguration;
-  ipfs: IpfsConfiguration
+  ipfs: IpfsConfiguration;
 }
 
 export type DbConfiguration = MysqlConnectionOptions;
@@ -17,7 +17,7 @@ export interface AppConfiguration {
   jwtSecret: string;
 }
 
-export interface HederaConfiguration { 
+export interface HederaConfiguration {
   testnet: HederaNetworkConfiguration;
   mainnet: HederaNetworkConfiguration;
 }
@@ -30,6 +30,6 @@ export interface HederaNetworkConfiguration {
 }
 
 export interface IpfsConfiguration {
-  web3StorageKey: string,
-  web3StorageProof: string
+  web3StorageKey: string;
+  web3StorageProof: string;
 }
