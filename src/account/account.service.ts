@@ -1,11 +1,8 @@
-import {
-  AccountCreateTransaction,
-  PrivateKey,
-  PublicKey,
-} from '@hashgraph/sdk';
+import { AccountCreateTransaction, PublicKey } from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { AccountCreateInput } from './account.interface';
@@ -26,6 +23,8 @@ import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-ap
 
 @Injectable()
 export class AccountService {
+  private readonly logger = new Logger(AccountService.name);
+
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
@@ -222,7 +221,7 @@ export class AccountService {
     alias: string,
   ): Promise<string> {
     // if alias is already in account ID format, just return alias
-    if (alias.startsWith("0.0.")) return alias
+    if (alias.startsWith('0.0.')) return alias;
     const account = await this.accountRepository.findOne({
       where: { user: { id: userId }, alias },
     });
@@ -290,7 +289,7 @@ export class AccountService {
 
   async save(account: Account): Promise<Account> {
     return this.accountRepository.save(account).catch((err) => {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error saving account', {
         cause: err,
         description: err.code || err.message,
@@ -328,7 +327,7 @@ export class AccountService {
       });
       return new AccountBuilder(this, account);
     } catch (err: any) {
-      console.error(err);
+      this.logger.error(err);
       throw new ServiceUnavailableException("Couldn't create Hedera account", {
         cause: err,
         description: err.message,
@@ -340,11 +339,10 @@ export class AccountService {
    * This function creates a transaction.
    * It takes an account creation input as a parameter.
    * It returns a new AccountCreateTransaction object.
-   *
-   * @param {AccountCreateInput} accountCreateInput - The input for account creation.
-   * @returns {AccountCreateTransaction} A new AccountCreateTransaction object.
    */
-  private createTransaction(accountCreateInput: AccountCreateInput) {
+  private createTransaction(
+    accountCreateInput: AccountCreateInput,
+  ): AccountCreateTransaction {
     return (
       new AccountCreateTransaction()
         .setKey(PublicKey.fromString(accountCreateInput.key.publicKey))

@@ -9,7 +9,9 @@ describe('HederaMirrornodeApiService', () => {
       providers: [HederaMirrornodeApiService],
     }).compile();
 
-    service = module.get<HederaMirrornodeApiService>(HederaMirrornodeApiService);
+    service = module.get<HederaMirrornodeApiService>(
+      HederaMirrornodeApiService,
+    );
   });
 
   it('should be defined', () => {

@@ -6,6 +6,7 @@ import {
   Post,
   UseGuards,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,9 +20,11 @@ import { Request } from 'express';
 
 @Controller('user')
 export class UserController {
+  private readonly logger = new Logger(UserController.name);
+
   constructor(private readonly userService: UserService) {}
 
-  @Post('create')
+  @Post('')
   async create(@Body() createUserDto: CreateUserDto) {
     try {
       // create user model
@@ -36,7 +39,7 @@ export class UserController {
       return { username, id, network };
     } catch (err: any) {
       // if more errors may occur, handle them separately per their status code (exception type)
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error creating user', {
         cause: err,
         description: err.message,
@@ -53,7 +56,7 @@ export class UserController {
   }
 
   @UseGuards(ApiKeyGuard)
-  @Get('accounts')
+  @Get('account')
   async getUserAccounts(
     @Req() req: Request,
   ): Promise<{ id: string; accounts: AccountResponse[] }> {
@@ -66,7 +69,7 @@ export class UserController {
   }
 
   @UseGuards(ApiKeyGuard)
-  @Get('keys')
+  @Get('key')
   async getUserKeys(
     @Req() req: Request,
   ): Promise<{ id: string; keys: KeyResponse[] }> {
@@ -76,7 +79,7 @@ export class UserController {
   }
 
   @UseGuards(ApiKeyGuard)
-  @Post('create/key')
+  @Post('key')
   async createKey(@Req() req: Request, @Body() createKey: CreateKeyDto) {
     const user = req.user;
     try {
@@ -86,7 +89,7 @@ export class UserController {
       );
       return { type, publicKey };
     } catch (err: any) {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error creating key', {
         cause: err,
         description: err.message,
@@ -95,7 +98,7 @@ export class UserController {
   }
 
   @UseGuards(ApiKeyGuard)
-  @Post('create/account')
+  @Post('account')
   async createAccount(
     @Req() req: Request,
     @Body() createAccountDto: CreateAccountDto,
@@ -109,7 +112,7 @@ export class UserController {
       const { id } = account;
       return { id };
     } catch (err: any) {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error creating account', {
         cause: err,
         description: err.message,

@@ -10,6 +10,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
@@ -21,6 +22,8 @@ import { JwtPayload } from 'jsonwebtoken';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @HttpCode(HttpStatus.OK)
@@ -40,7 +43,7 @@ export class AuthController {
         case err instanceof UserNotFoundError:
           throw new NotFoundException(err.message, err.options);
         default:
-          console.error(err);
+          this.logger.error(err);
           throw new InternalServerErrorException();
       }
     }

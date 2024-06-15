@@ -9,7 +9,9 @@ describe('HederaTransactionApiService', () => {
       providers: [HederaTransactionApiService],
     }).compile();
 
-    service = module.get<HederaTransactionApiService>(HederaTransactionApiService);
+    service = module.get<HederaTransactionApiService>(
+      HederaTransactionApiService,
+    );
   });
 
   it('should be defined', () => {
