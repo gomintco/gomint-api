@@ -34,20 +34,21 @@ export class HederaKeyApiService {
     return new KeyList(publicKeyList, threshold);
   }
 
-  generateGoMintKeyList(type: KeyType, network: Network): {
+  generateGoMintKeyList(
+    type: KeyType,
+    network: Network,
+  ): {
     keyList: KeyList;
     privateKey: PrivateKey;
   } {
     const privateKey = this.generatePrivateKey(type);
-    
-    const custodialKey = network === Network.MAINNET
-      ? this.configService.hedera.mainnet.custodialKey
-      : this.configService.hedera.testnet.custodialKey
 
-    const keyList = new KeyList(
-      [privateKey, custodialKey],
-      1,
-    );
+    const custodialKey =
+      network === Network.MAINNET
+        ? this.configService.hedera.mainnet.custodialKey
+        : this.configService.hedera.testnet.custodialKey;
+
+    const keyList = new KeyList([privateKey, custodialKey], 1);
     return {
       keyList,
       privateKey,

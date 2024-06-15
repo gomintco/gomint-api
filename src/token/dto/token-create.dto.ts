@@ -96,4 +96,3 @@ export class TokenCreateDto {
   @IsString()
   encryptionKey: string;
 }
-

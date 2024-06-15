@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common/index.js';
 import { TokenMetadata } from 'src/token/dto/hip412-metadata.dto';
 import { AppConfigService } from 'src/config/app-config.service';
-import type {Client} from '@web3-storage/w3up-client' 
+import type { Client } from '@web3-storage/w3up-client';
 
 @Injectable()
 export class IpfsService {
   private client?: Client;
 
-  constructor(private readonly configService: AppConfigService) { }
+  constructor(private readonly configService: AppConfigService) {}
 
   async initClient(): Promise<void> {
     if (this.client) return;
