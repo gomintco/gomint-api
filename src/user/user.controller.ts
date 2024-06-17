@@ -24,7 +24,7 @@ export class UserController {
 
   constructor(private readonly userService: UserService) {}
 
-  @Post('')
+  @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     try {
       // create user model
@@ -34,8 +34,7 @@ export class UserController {
 
       // encrypt escrow key if password is provided
       this.userService.encryptEscrowKey(user, createUserDto);
-      const savedUser = await this.userService.save(user);
-      const { username, id, network } = savedUser;
+      const { username, id, network } = await this.userService.save(user);
       return { username, id, network };
     } catch (err: any) {
       // if more errors may occur, handle them separately per their status code (exception type)

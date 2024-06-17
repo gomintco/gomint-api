@@ -25,7 +25,7 @@ export class TokenController {
     private readonly tokenService: TokenService,
   ) {}
 
-  @Post('')
+  @Post()
   async create(@Req() req: Request, @Body() tokenCreateDto: TokenCreateDto) {
     const user = req.user;
 
