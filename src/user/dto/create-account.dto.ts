@@ -10,8 +10,4 @@ export class CreateAccountDto {
   @IsString()
   @IsNotIn([DealAlias.PAYER, DealAlias.RECEIVER])
   alias: string;
-
-  @IsOptional()
-  @IsString()
-  encryptionKey: string;
 }

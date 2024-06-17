@@ -7,6 +7,7 @@ import {
   UseGuards,
   Req,
   Logger,
+  Headers,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,6 +18,7 @@ import { UserResponse } from './response/user.response';
 import { AccountResponse } from './response/account.response';
 import { KeyResponse } from './response/key.response';
 import { Request } from 'express';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 
 @Controller('user')
 export class UserController {
@@ -101,12 +103,14 @@ export class UserController {
   async createAccount(
     @Req() req: Request,
     @Body() createAccountDto: CreateAccountDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
     const { user } = req;
     try {
       const account = await this.userService.createAndSaveAccount(
         user,
         createAccountDto,
+        encryptionKey,
       );
       const { id } = account;
       return { id };
