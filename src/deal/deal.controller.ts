@@ -4,8 +4,6 @@ import {
   Controller,
   Get,
   Headers,
-  HttpException,
-  InternalServerErrorException,
   Logger,
   Param,
   Post,
@@ -24,6 +22,7 @@ import { EncryptionKeyNotProvidedError } from './error/encryption-key-not-provid
 import { NotNftOwnerError } from './error/not-nft-owner.error';
 import { InvalidKeyType } from './error/invalid-key-type.error';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
+import { endpointErrorHandler } from 'src/core/endpoint-error-handler';
 
 @Controller('deal')
 export class DealController {
@@ -63,20 +62,18 @@ export class DealController {
         serial,
         encryptionKey,
       );
-    } catch (error) {
-      this.logger.error(error);
-      switch (true) {
-        case error instanceof HttpException:
-          throw error;
-        case error instanceof DealNotFoundError:
-        case error instanceof EncryptionKeyNotProvidedError:
-        case error instanceof NotNftOwnerError:
-        case error instanceof EncryptionKeyNotProvidedError:
-        case error instanceof InvalidKeyType:
-          throw new BadRequestException();
-        default:
-          throw new InternalServerErrorException();
-      }
+    } catch (error: any) {
+      endpointErrorHandler(this.logger, error, [
+        {
+          errorTypes: [
+            DealNotFoundError,
+            NotNftOwnerError,
+            EncryptionKeyNotProvidedError,
+            InvalidKeyType,
+          ],
+          toThrow: BadRequestException,
+        },
+      ]);
     }
   }
 }

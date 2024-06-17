@@ -12,6 +12,7 @@ import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import * as crypto from 'crypto';
 import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
+import { DecryptionFailedError } from './error/decryption-failed.error';
 
 @Injectable()
 export class KeyService {
@@ -226,11 +227,10 @@ export class KeyService {
       decrypted = Buffer.concat([decrypted, decipher.final()]);
       return decrypted.toString();
     } catch (err: any) {
-      this.logger.log('Error decrypting string', err);
-      throw new InternalServerErrorException('Unable to decrypt private key', {
-        cause: err,
-        description: err.code || err.message,
-      });
+      this.logger.error('Error decrypting string', err);
+      throw new DecryptionFailedError(
+        'Decryption failed, check encryption key',
+      );
     }
   }
 }

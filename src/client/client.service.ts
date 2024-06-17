@@ -3,24 +3,30 @@ import { Injectable } from '@nestjs/common';
 import { Network } from 'src/hedera-api/network.enum';
 import { Account } from 'src/account/account.entity';
 import { KeyService } from 'src/key/key.service';
+import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
+import { AppConfigService } from 'src/config/app-config.service';
 
 @Injectable()
 export class ClientService {
-  constructor(private keyService: KeyService) {}
+  constructor(
+    private readonly configService: AppConfigService,
+    private readonly keyService: KeyService,
+  ) {}
+
   getClient(network: Network) {
     switch (network) {
       case Network.MAINNET:
         return Client.forMainnet().setOperator(
-          process.env.MAINNET_ID,
-          process.env.MAINNET_KEY,
+          this.configService.hedera.mainnet.id,
+          this.configService.hedera.mainnet.key,
         );
       case Network.TESTNET:
         return Client.forTestnet().setOperator(
-          process.env.TESTNET_ID,
-          process.env.TESTNET_KEY,
+          this.configService.hedera.testnet.id,
+          this.configService.hedera.testnet.key,
         );
       default:
-        throw new Error('Invalid network');
+        throw new InvalidNetworkError();
     }
   }
 

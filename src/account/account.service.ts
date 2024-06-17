@@ -20,6 +20,7 @@ import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-a
 import { AccountCreateDto } from './dto/account-create.dto';
 import { HederaAccountApiService } from 'src/hedera-api/hedera-account-api/hedera-account-api.service';
 import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-api.service';
+import { AccountAliasAlreadyExists } from './error/account-alias-already-exists.error';
 
 @Injectable()
 export class AccountService {
@@ -36,7 +37,7 @@ export class AccountService {
     private readonly hederaKeyService: HederaKeyApiService,
   ) {}
 
-  async accountCreateHandler(
+  async createAccount(
     user: User,
     accountCreateDto: AccountCreateDto,
     encryptionKey?: string,
@@ -48,7 +49,9 @@ export class AccountService {
       user.id,
       accountCreateDto.alias,
     );
-    if (accountAliasExists) throw new Error('Account alias already exists');
+    if (accountAliasExists) {
+      throw new AccountAliasAlreadyExists();
+    }
 
     // here we should handle the user has account logic
     // ie. if user has no accounts, create first for free
