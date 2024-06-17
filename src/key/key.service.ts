@@ -11,6 +11,7 @@ import { Key } from './key.entity';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import * as crypto from 'crypto';
+import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
 
 @Injectable()
 export class KeyService {
@@ -203,7 +204,10 @@ export class KeyService {
    * @returns The decrypted string.
    */
   decryptString(encryptedValue: string, encryptionKey: string): string {
-    if (!encryptionKey) throw new Error('No encryption key provided');
+    if (!encryptionKey) {
+      // user will need to use proxy server if they want to use their escrow key
+      throw new EncryptionKeyNotProvidedError();
+    }
     try {
       const components = encryptedValue.split(':');
       const iv = Buffer.from(components.shift(), 'hex');
