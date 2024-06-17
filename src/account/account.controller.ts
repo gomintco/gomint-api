@@ -43,11 +43,19 @@ export class AccountController {
   }
 
   @Post('association')
-  async associate(@Req() req: Request, @Body() associateDto: AssociateDto) {
+  async associate(
+    @Req() req: Request,
+    @Body() associateDto: AssociateDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
+  ) {
     const { user } = req;
 
     try {
-      const status = await this.accountService.associate(user, associateDto);
+      const status = await this.accountService.associate(
+        user,
+        associateDto,
+        encryptionKey,
+      );
       return { status };
     } catch (err: any) {
       throw new ServiceUnavailableException('Error associating account', {

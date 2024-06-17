@@ -89,11 +89,12 @@ export class AccountService {
   }
 
   // associates tokens to a user
-  async associate(user: User, associateDto: AssociateDto) {
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      associateDto.encryptionKey,
-    );
+  async associate(
+    user: User,
+    associateDto: AssociateDto,
+    encryptionKey?: string,
+  ) {
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     const associatingAccount = await this.getUserAccountByAlias(
       user.id,
       associateDto.associatingId,
