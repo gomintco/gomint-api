@@ -30,22 +30,23 @@ export class ClientService {
     }
   }
 
+  /**
+   * @param {Account} actionAccount - account which the transcaction will be applied to.
+   *  e.g. actionAccount will have a token associated to it, but the payerAccount may pay
+   */
   buildClientAndSigningKeys(
     network: Network,
     escrowKey: string,
-    actionAccount: Account, // here the action account is the account which the transcaction will be applied to
-    // e.g. actionAccount will have a token associated to it, but the payerAccount may pay
+    actionAccount: Account,
     payerAccount?: Account,
   ) {
     let client: Client;
     let signers: PrivateKey[] = [];
-    // Decrypt action account keys
     const decryptedActionAccountKeys = this.keyService.decryptAccountKeys(
       actionAccount.keys,
       escrowKey,
     );
     if (payerAccount) {
-      // Decrypt payer account keys
       const decryptedPayerAccountKeys = this.keyService.decryptAccountKeys(
         payerAccount.keys,
         escrowKey,
@@ -87,7 +88,7 @@ export class ClientService {
           .setOperator(accountId, privateKey)
           .setDefaultMaxTransactionFee(new Hbar(50));
       default:
-        throw new Error('Invalid network');
+        throw new InvalidNetworkError();
     }
   }
 }
