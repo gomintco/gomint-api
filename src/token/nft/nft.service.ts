@@ -24,12 +24,13 @@ export class NftService {
     private readonly configService: AppConfigService,
   ) {}
 
-  async tokenCreateHandler(user: User, createNftDto: TokenCreateDto) {
+  async tokenCreateHandler(
+    user: User,
+    createNftDto: TokenCreateDto,
+    encryptionKey?: string,
+  ) {
     // get required accounts, keys, and clients
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      createNftDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     // get and set treasury account
     const treasuryAccount = await this.accountService.getUserAccountByAlias(
       user.id,

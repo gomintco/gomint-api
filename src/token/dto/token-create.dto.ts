@@ -91,8 +91,4 @@ export class TokenCreateDto {
   @ValidateNested({ each: true })
   @Type(() => RoyaltyFee)
   royaltyFees: RoyaltyFee[];
-
-  @IsOptional()
-  @IsString()
-  encryptionKey: string;
 }
