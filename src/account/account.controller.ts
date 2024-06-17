@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Headers,
   Post,
   Req,
   ServiceUnavailableException,
@@ -11,6 +12,7 @@ import { AssociateDto } from './dto/associate.dto';
 import { AccountService } from './account.service';
 import { Request } from 'express';
 import { AccountCreateDto } from './dto/account-create.dto';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 
 @Controller('account')
 @UseGuards(ApiKeyGuard)
@@ -21,6 +23,7 @@ export class AccountController {
   async create(
     @Req() req: Request,
     @Body() accountCreateDto: AccountCreateDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
     const user = req.user;
 
@@ -28,6 +31,7 @@ export class AccountController {
       const accountId = await this.accountService.accountCreateHandler(
         user,
         accountCreateDto,
+        encryptionKey,
       );
       return { accountId };
     } catch (err: any) {

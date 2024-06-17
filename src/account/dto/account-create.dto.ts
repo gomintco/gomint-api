@@ -45,8 +45,4 @@ export class AccountCreateDto {
   @IsOptional()
   @IsString()
   accountMemo?: string;
-
-  @IsOptional()
-  @IsString()
-  encryptionKey?: string;
 }
