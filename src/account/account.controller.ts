@@ -16,7 +16,7 @@ import { Request } from 'express';
 import { AccountCreateDto } from './dto/account-create.dto';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { AccountAliasAlreadyExists } from './error/account-alias-already-exists.error';
-import { endpointErrorHandler } from 'src/core/endpoint-error-handler';
+import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
 import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
 import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
@@ -44,7 +44,7 @@ export class AccountController {
       );
       return { accountId };
     } catch (error: any) {
-      endpointErrorHandler(
+      handleEndpointErrors(
         this.logger,
         error,
         [
