@@ -27,19 +27,19 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
+  async create(
+    @Body() createUserDto: CreateUserDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
+  ) {
     try {
       // create user model
-      const user = this.userService.create(createUserDto);
-      // handle key/account creation if required
-      // await this.userService.handleKeyOrAccountCreation(user, createUserDto);
+      const { username, id, network } = await this.userService.create(
+        createUserDto,
+        encryptionKey,
+      );
 
-      // encrypt escrow key if password is provided
-      this.userService.encryptEscrowKey(user, createUserDto);
-      const { username, id, network } = await this.userService.save(user);
       return { username, id, network };
     } catch (err: any) {
-      // if more errors may occur, handle them separately per their status code (exception type)
       this.logger.error(err);
       throw new InternalServerErrorException('Error creating user', {
         cause: err,
