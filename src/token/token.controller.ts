@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Headers,
   Post,
   Req,
   ServiceUnavailableException,
@@ -15,6 +16,7 @@ import { FtService } from './ft/ft.service';
 import { NftService } from './nft/nft.service';
 import { TokenMintDto } from './dto/token-mint.dto';
 import { TokenAssociateDto } from './dto/token-associate.dto';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 
 @Controller('token')
 @UseGuards(ApiKeyGuard)
@@ -27,7 +29,7 @@ export class TokenController {
 
   @Post()
   async create(@Req() req: Request, @Body() tokenCreateDto: TokenCreateDto) {
-    const user = req.user;
+    const { user } = req;
 
     try {
       const token =
@@ -46,7 +48,7 @@ export class TokenController {
 
   @Post('mint')
   async mint(@Req() req: Request, @Body() tokenMintDto: TokenMintDto) {
-    const user = req.user;
+    const { user } = req;
 
     try {
       let status: string;
@@ -85,13 +87,15 @@ export class TokenController {
   async associate(
     @Req() req: Request,
     @Body() tokenAssociateDto: TokenAssociateDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
-    const user = req.user;
+    const { user } = req;
 
     try {
       const status = await this.tokenService.tokenAssociateHandler(
         user,
         tokenAssociateDto,
+        encryptionKey,
       );
       return { status };
     } catch (err: any) {

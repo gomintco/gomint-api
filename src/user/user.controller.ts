@@ -80,7 +80,7 @@ export class UserController {
   @UseGuards(ApiKeyGuard)
   @Post('key')
   async createKey(@Req() req: Request, @Body() createKey: CreateKeyDto) {
-    const user = req.user;
+    const { user } = req;
     try {
       const { type, publicKey } = await this.userService.createAndSaveKey(
         user,
@@ -102,7 +102,7 @@ export class UserController {
     @Req() req: Request,
     @Body() createAccountDto: CreateAccountDto,
   ) {
-    const user = req.user;
+    const { user } = req;
     try {
       const account = await this.userService.createAndSaveAccount(
         user,
