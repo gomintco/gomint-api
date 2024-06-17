@@ -23,13 +23,14 @@ export class FtService {
     private readonly hederaMirrornodeApiService: HederaMirrornodeApiService,
   ) {}
 
-  async tokenCreateHandler(user: User, tokenCreateDto: TokenCreateDto) {
+  async tokenCreateHandler(
+    user: User,
+    tokenCreateDto: TokenCreateDto,
+    encryptionKey?: string,
+  ) {
     this.logger.log('user', user);
     // get required accounts, keys, and clients
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      tokenCreateDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
 
     // get and set treasury account
     const treasuryAccount = await this.accountService

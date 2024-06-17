@@ -28,14 +28,26 @@ export class TokenController {
   ) {}
 
   @Post()
-  async create(@Req() req: Request, @Body() tokenCreateDto: TokenCreateDto) {
+  async create(
+    @Req() req: Request,
+    @Body() tokenCreateDto: TokenCreateDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
+  ) {
     const { user } = req;
 
     try {
       const token =
         tokenCreateDto.tokenType === 'ft'
-          ? await this.ftService.tokenCreateHandler(user, tokenCreateDto)
-          : await this.nftService.tokenCreateHandler(user, tokenCreateDto);
+          ? await this.ftService.tokenCreateHandler(
+              user,
+              tokenCreateDto,
+              encryptionKey,
+            )
+          : await this.nftService.tokenCreateHandler(
+              user,
+              tokenCreateDto,
+              encryptionKey,
+            );
 
       return { token };
     } catch (err: any) {
