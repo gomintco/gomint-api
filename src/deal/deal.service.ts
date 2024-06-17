@@ -1,8 +1,4 @@
-import {
-  Logger,
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { createHash } from 'crypto';
 import { User } from 'src/user/user.entity';
@@ -24,7 +20,6 @@ import { AppConfigService } from 'src/config/app-config.service';
 import { DealNotFoundError } from './error/deal-not-found.error';
 import { InvalidNetworkError } from './error/invalid-network.error';
 import { NotNftOwnerError } from './error/not-nft-owner.error';
-import { EncryptionKeyNotProvidedError } from './error/encryption-key-not-provided.error';
 import { InvalidKeyType } from './error/invalid-key-type.error';
 import { SettingNftSerialError } from './error/setting-nft-serial.error';
 
