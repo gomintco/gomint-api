@@ -4,7 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 
-export function endpointErrorHandler(
+export function handleEndpointErrors(
   logger: Logger,
   error: any,
   errorMap: {

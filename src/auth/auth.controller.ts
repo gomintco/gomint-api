@@ -18,7 +18,7 @@ import { WrongPasswordError } from './error/wrong-password.error';
 import { UserNotFoundError } from './error/user-not-found.error';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
-import { endpointErrorHandler } from 'src/core/endpoint-error-handler';
+import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 
 @Controller('auth')
 export class AuthController {
@@ -37,7 +37,7 @@ export class AuthController {
         signInDto.hashedPassword,
       );
     } catch (error: any) {
-      endpointErrorHandler(this.logger, error, [
+      handleEndpointErrors(this.logger, error, [
         { errorTypes: [WrongPasswordError], toThrow: UnauthorizedException },
         { errorTypes: [UserNotFoundError], toThrow: NotFoundException },
       ]);

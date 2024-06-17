@@ -22,7 +22,7 @@ import { EncryptionKeyNotProvidedError } from './error/encryption-key-not-provid
 import { NotNftOwnerError } from './error/not-nft-owner.error';
 import { InvalidKeyType } from './error/invalid-key-type.error';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
-import { endpointErrorHandler } from 'src/core/endpoint-error-handler';
+import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 
 @Controller('deal')
 export class DealController {
@@ -63,7 +63,7 @@ export class DealController {
         encryptionKey,
       );
     } catch (error: any) {
-      endpointErrorHandler(this.logger, error, [
+      handleEndpointErrors(this.logger, error, [
         {
           errorTypes: [
             DealNotFoundError,
