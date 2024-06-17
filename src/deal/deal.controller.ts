@@ -52,7 +52,7 @@ export class DealController {
   async getDealBytes(
     @Param('dealId') dealId: string,
     @Query() { receiverId, network, payerId, serial }: GetBytesDto,
-    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey: string,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
     try {
       return await this.dealService.getDealBytes(

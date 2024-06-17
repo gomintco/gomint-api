@@ -36,12 +36,13 @@ export class AccountService {
     private readonly hederaKeyService: HederaKeyApiService,
   ) {}
 
-  async accountCreateHandler(user: User, accountCreateDto: AccountCreateDto) {
+  async accountCreateHandler(
+    user: User,
+    accountCreateDto: AccountCreateDto,
+    encryptionKey?: string,
+  ) {
     // decrypt user escrow key
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      accountCreateDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     // check if alias already exists
     const accountAliasExists = await this.accountAliasExists(
       user.id,
