@@ -107,21 +107,25 @@ export class UserService {
   /**
    * This function creates a new user entity with the provided details.
    * It generates a random escrow key for the user and sets the hasPassword field based on whether a password was provided.
-   * The created user entity is not saved to the database.
    *
    * @param createUserDto - The data transfer object containing the user's details.
    * @returns The created user entity.
    */
-  create(createUserDto: CreateUserDto): User {
-    this.logger.log({ createUserDto, location: 'user service' });
-    return this.usersRepository.create({
+  async create(
+    createUserDto: CreateUserDto,
+    encryptionKey?: string,
+  ): Promise<User> {
+    const user = this.usersRepository.create({
       network: createUserDto.network,
       username: createUserDto.username,
       hashedPassword: createUserDto.hashedPassword,
       escrowKey: crypto.randomBytes(16).toString('hex'),
-      hasEncryptionKey: Boolean(createUserDto.encryptionKey),
+      hasEncryptionKey: Boolean(encryptionKey),
       email: createUserDto.email,
     });
+    this.encryptEscrowKey(user, encryptionKey);
+
+    return await this.save(user);
   }
 
   /**
@@ -166,11 +170,11 @@ export class UserService {
    * @param user - The user whose escrow key is to be encrypted.
    * @param createUserDto - The data transfer object containing the user's details.
    */
-  encryptEscrowKey(user: User, createUserDto: CreateUserDto) {
-    if (createUserDto.encryptionKey) {
+  encryptEscrowKey(user: User, encryptionKey?: string) {
+    if (encryptionKey) {
       user.escrowKey = this.keyService.encryptString(
         user.escrowKey,
-        createUserDto.encryptionKey,
+        encryptionKey,
       );
     }
   }
