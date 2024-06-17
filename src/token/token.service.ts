@@ -23,11 +23,9 @@ export class TokenService {
   async tokenAssociateHandler(
     user: User,
     tokenAssociateDto: TokenAssociateDto,
+    encryptionKey?: string,
   ) {
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      tokenAssociateDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     const associatingAccount = await this.accountService
       .getUserAccountByAlias(user.id, tokenAssociateDto.associatingId)
       .catch(() => {

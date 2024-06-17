@@ -25,7 +25,7 @@ export class AccountController {
     @Body() accountCreateDto: AccountCreateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
-    const user = req.user;
+    const { user } = req;
 
     try {
       const accountId = await this.accountService.accountCreateHandler(
@@ -44,7 +44,7 @@ export class AccountController {
 
   @Post('association')
   async associate(@Req() req: Request, @Body() associateDto: AssociateDto) {
-    const user = req.user;
+    const { user } = req;
 
     try {
       const status = await this.accountService.associate(user, associateDto);

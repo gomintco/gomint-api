@@ -34,7 +34,7 @@ export class DealController {
   @UseGuards(ApiKeyGuard)
   @Post()
   async create(@Req() req: Request, @Body() createDealDto: CreateDealDto) {
-    const user = req.user;
+    const { user } = req;
 
     try {
       const dealId = await this.dealService.createDeal(user, createDealDto);
