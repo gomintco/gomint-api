@@ -1,7 +1,9 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Headers,
+  Logger,
   Post,
   Req,
   ServiceUnavailableException,
@@ -13,10 +15,17 @@ import { AccountService } from './account.service';
 import { Request } from 'express';
 import { AccountCreateDto } from './dto/account-create.dto';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
+import { AccountAliasAlreadyExists } from './error/account-alias-already-exists.error';
+import { endpointErrorHandler } from 'src/core/endpoint-error-handler';
+import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
+import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
+import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
 
 @Controller('account')
 @UseGuards(ApiKeyGuard)
 export class AccountController {
+  private readonly logger = new Logger(AccountController.name);
+
   constructor(private readonly accountService: AccountService) {}
 
   @Post()
@@ -28,17 +37,29 @@ export class AccountController {
     const { user } = req;
 
     try {
-      const accountId = await this.accountService.accountCreateHandler(
+      const accountId = await this.accountService.createAccount(
         user,
         accountCreateDto,
         encryptionKey,
       );
       return { accountId };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error creating account', {
-        cause: err,
-        description: err.message,
-      });
+    } catch (error: any) {
+      endpointErrorHandler(
+        this.logger,
+        error,
+        [
+          {
+            errorTypes: [
+              AccountAliasAlreadyExists,
+              EncryptionKeyNotProvidedError,
+              InvalidNetworkError,
+              DecryptionFailedError,
+            ],
+            toThrow: BadRequestException,
+          },
+        ],
+        ServiceUnavailableException,
+      );
     }
   }
 
