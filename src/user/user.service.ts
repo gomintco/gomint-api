@@ -74,7 +74,11 @@ export class UserService {
     return key;
   }
 
-  async createAndSaveAccount(user: User, createAccountDto: CreateAccountDto) {
+  async createAndSaveAccount(
+    user: User,
+    createAccountDto: CreateAccountDto,
+    encryptionKey?: string,
+  ) {
     // check if alias is unique
     const accountAliasExists = await this.accountService.accountAliasExists(
       user.id,
@@ -82,10 +86,7 @@ export class UserService {
     );
     if (accountAliasExists) throw new Error('Account alias already exists');
 
-    const escrowKey = this.handleDecryptEscrowKey(
-      user,
-      createAccountDto.encryptionKey,
-    );
+    const escrowKey = this.handleDecryptEscrowKey(user, encryptionKey);
     // create key and add to user
     const key = await this.keyService
       .create(escrowKey, createAccountDto.type)
