@@ -78,12 +78,10 @@ export class FtService {
   async tokenMintHandler(
     user: User,
     tokenMintDto: TokenMintDto,
+    encryptionKey?: string,
   ): Promise<string> {
     // get required accounts, keys, and clients
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      tokenMintDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     // get supply key from mirrornode
     const supplyKey = await this.hederaMirrornodeApiService
       .getTokenMirrornodeInfo(user.network, tokenMintDto.tokenId)

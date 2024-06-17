@@ -13,7 +13,7 @@ import { TokenMetadata } from './hip412-metadata.dto';
 
 @ValidatorConstraint({ name: 'isStringOrTokenMetadata', async: false })
 class IsStringOrTokenMetadata implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
+  validate(value: any, _args: ValidationArguments) {
     // valid if string
     if (typeof value === 'string') {
       return true;
@@ -51,7 +51,7 @@ class IsStringOrTokenMetadata implements ValidatorConstraintInterface {
     return false;
   }
 
-  defaultMessage(args: ValidationArguments) {
+  defaultMessage(_args: ValidationArguments) {
     return 'Value must be either a string or a HIP-412 compliant object';
   }
 }
@@ -73,10 +73,6 @@ export class TokenMintDto {
   @IsOptional()
   @IsString()
   payerId: string;
-
-  @IsOptional()
-  @IsString()
-  encryptionKey: string;
 
   @IsOptional()
   @IsArray()
