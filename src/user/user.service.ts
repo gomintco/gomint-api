@@ -62,11 +62,12 @@ export class UserService {
     return escrowKey;
   }
 
-  async createAndSaveKey(user: User, createKeyDto: CreateKeyDto) {
-    const escrowKey = this.handleDecryptEscrowKey(
-      user,
-      createKeyDto.encryptionKey,
-    );
+  async createAndSaveKey(
+    user: User,
+    createKeyDto: CreateKeyDto,
+    encryptionKey?: string,
+  ) {
+    const escrowKey = this.handleDecryptEscrowKey(user, encryptionKey);
     const key = await this.keyService
       .create(escrowKey, createKeyDto.type)
       .addUser(user)

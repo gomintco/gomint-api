@@ -203,7 +203,7 @@ export class KeyService {
    * @param encryptionKey - The key to be used for decryption.
    * @returns The decrypted string.
    */
-  decryptString(encryptedValue: string, encryptionKey: string): string {
+  decryptString(encryptedValue: string, encryptionKey?: string): string {
     if (!encryptionKey) {
       // user will need to use proxy server if they want to use their escrow key
       throw new EncryptionKeyNotProvidedError();
