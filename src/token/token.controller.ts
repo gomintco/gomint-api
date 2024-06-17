@@ -59,7 +59,11 @@ export class TokenController {
   }
 
   @Post('mint')
-  async mint(@Req() req: Request, @Body() tokenMintDto: TokenMintDto) {
+  async mint(
+    @Req() req: Request,
+    @Body() tokenMintDto: TokenMintDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
+  ) {
     const { user } = req;
 
     try {
@@ -67,7 +71,11 @@ export class TokenController {
       if (tokenMintDto.tokenType === 'ft') {
         if (!tokenMintDto.amount)
           throw new BadRequestException('For ft mints you must include amount');
-        status = await this.ftService.tokenMintHandler(user, tokenMintDto);
+        status = await this.ftService.tokenMintHandler(
+          user,
+          tokenMintDto,
+          encryptionKey,
+        );
       } else {
         if (
           !tokenMintDto.metadata &&
@@ -84,7 +92,11 @@ export class TokenController {
             'Both amount and metadata must be provided if metadatas array is empty',
           );
         }
-        status = await this.nftService.tokenMintHandler(user, tokenMintDto);
+        status = await this.nftService.tokenMintHandler(
+          user,
+          tokenMintDto,
+          encryptionKey,
+        );
       }
       return { status };
     } catch (err: any) {

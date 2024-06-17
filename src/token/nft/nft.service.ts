@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { TokenType } from '@hashgraph/sdk';
 import { User } from 'src/user/user.entity';
 import { TokenCreateDto } from '../dto/token-create.dto';
 import { KeyService } from 'src/key/key.service';
@@ -73,12 +72,10 @@ export class NftService {
   async tokenMintHandler(
     user: User,
     tokenMintDto: TokenMintDto,
+    encryptionKey?: string,
   ): Promise<string> {
     // get required accounts, keys, and clients
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      tokenMintDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     // get supply key from mirrornode
     const supplyKey = await this.mirrornodeService
       .getTokenMirrornodeInfo(user.network, tokenMintDto.tokenId)
