@@ -17,7 +17,7 @@ import { AccountCreateDto } from './dto/account-create.dto';
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
-  @Post('')
+  @Post()
   async create(
     @Req() req: Request,
     @Body() accountCreateDto: AccountCreateDto,
