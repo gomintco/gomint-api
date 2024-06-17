@@ -1,5 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-// auth.service.ts
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ApiKey } from './api-key.entity';
@@ -12,6 +11,7 @@ import { JwtPayload } from './jwt-payload.type';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     @InjectRepository(ApiKey)
     private readonly apiKeyRepository: Repository<ApiKey>,
@@ -35,11 +35,9 @@ export class AuthService {
       return {
         access_token: await this.jwtService.signAsync(payload),
       };
-    } catch (e: any) {
-      throw new UserNotFoundError("User doesn't exist", {
-        cause: e,
-        description: e.message,
-      });
+    } catch (err: any) {
+      this.logger.error(err);
+      throw new UserNotFoundError();
     }
   }
 

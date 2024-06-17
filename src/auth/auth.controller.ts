@@ -37,13 +37,13 @@ export class AuthController {
         signInDto.hashedPassword,
       );
     } catch (err) {
+      this.logger.error(err);
       switch (true) {
         case err instanceof WrongPasswordError:
           throw new UnauthorizedException();
         case err instanceof UserNotFoundError:
-          throw new NotFoundException(err.message, err.options);
+          throw new NotFoundException();
         default:
-          this.logger.error(err);
           throw new InternalServerErrorException();
       }
     }
