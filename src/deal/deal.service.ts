@@ -20,7 +20,7 @@ import { AppConfigService } from 'src/config/app-config.service';
 import { DealNotFoundError } from './error/deal-not-found.error';
 import { InvalidNetworkError } from './error/invalid-network.error';
 import { NotNftOwnerError } from './error/not-nft-owner.error';
-import { InvalidKeyType } from './error/invalid-key-type.error';
+import { InvalidKeyTypeError } from './error/invalid-key-type.error';
 import { SettingNftSerialError } from './error/setting-nft-serial.error';
 
 @Injectable()
@@ -141,7 +141,7 @@ export class DealService {
           case KeyType.ECDSA:
             return transaction.sign(PrivateKey.fromStringECDSA(privateKey));
           default:
-            throw new InvalidKeyType();
+            throw new InvalidKeyTypeError();
         }
       }),
     );

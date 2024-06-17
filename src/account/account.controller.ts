@@ -3,7 +3,9 @@ import {
   Body,
   Controller,
   Headers,
+  InternalServerErrorException,
   Logger,
+  NotFoundException,
   Post,
   Req,
   ServiceUnavailableException,
@@ -15,11 +17,13 @@ import { AccountService } from './account.service';
 import { Request } from 'express';
 import { AccountCreateDto } from './dto/account-create.dto';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
-import { AccountAliasAlreadyExists } from './error/account-alias-already-exists.error';
+import { AccountAliasAlreadyExistsError } from './error/account-alias-already-exists.error';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
 import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
 import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
+import { AccountNotFoundError } from './error/account-not-found.error';
+import { InvalidKeyTypeError } from 'src/deal/error/invalid-key-type.error';
 
 @Controller('account')
 @UseGuards(ApiKeyGuard)
@@ -50,7 +54,7 @@ export class AccountController {
         [
           {
             errorTypes: [
-              AccountAliasAlreadyExists,
+              AccountAliasAlreadyExistsError,
               EncryptionKeyNotProvidedError,
               InvalidNetworkError,
               DecryptionFailedError,
@@ -78,11 +82,23 @@ export class AccountController {
         encryptionKey,
       );
       return { status };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error associating account', {
-        cause: err,
-        description: err.message,
-      });
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        {
+          errorTypes: [
+            EncryptionKeyNotProvidedError,
+            DecryptionFailedError,
+            InvalidKeyTypeError,
+            InvalidNetworkError,
+          ],
+          toThrow: BadRequestException,
+        },
+        {
+          errorTypes: [InvalidKeyTypeError, InvalidNetworkError],
+          toThrow: InternalServerErrorException,
+        },
+        { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
+      ]);
     }
   }
 }

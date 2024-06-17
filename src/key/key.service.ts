@@ -13,6 +13,7 @@ import { User } from '../user/user.entity';
 import * as crypto from 'crypto';
 import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
 import { DecryptionFailedError } from './error/decryption-failed.error';
+import { InvalidKeyTypeError } from 'src/deal/error/invalid-key-type.error';
 
 @Injectable()
 export class KeyService {
@@ -183,14 +184,14 @@ export class KeyService {
         key.encryptedPrivateKey,
         escrowKey,
       );
-      // return as PrivateKey type
+
       switch (key.type) {
         case KeyType.ED25519:
           return PrivateKey.fromStringED25519(decryptedKey);
         case KeyType.ECDSA:
           return PrivateKey.fromStringECDSA(decryptedKey);
         default:
-          throw new Error('Invalid key type in treasury account');
+          throw new InvalidKeyTypeError();
       }
     });
   }

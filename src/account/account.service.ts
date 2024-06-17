@@ -20,7 +20,8 @@ import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-a
 import { AccountCreateDto } from './dto/account-create.dto';
 import { HederaAccountApiService } from 'src/hedera-api/hedera-account-api/hedera-account-api.service';
 import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-api.service';
-import { AccountAliasAlreadyExists } from './error/account-alias-already-exists.error';
+import { AccountAliasAlreadyExistsError } from './error/account-alias-already-exists.error';
+import { AccountNotFoundError } from './error/account-not-found.error';
 
 @Injectable()
 export class AccountService {
@@ -50,7 +51,7 @@ export class AccountService {
       accountCreateDto.alias,
     );
     if (accountAliasExists) {
-      throw new AccountAliasAlreadyExists();
+      throw new AccountAliasAlreadyExistsError();
     }
 
     // here we should handle the user has account logic
@@ -91,33 +92,55 @@ export class AccountService {
     return accountId;
   }
 
-  // associates tokens to a user
+  private async getUserAccountByAssociatingId(
+    userId: string,
+    associatingId: string,
+  ) {
+    try {
+      return await this.getUserAccountByAlias(userId, associatingId);
+    } catch (error) {
+      if (error instanceof AccountNotFoundError) {
+        throw new AccountNotFoundError(
+          `Account associated with ${associatingId} association ID is not found`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async getUserAccountByPayerId(userId: string, payerId: string) {
+    try {
+      return await this.getUserAccountByAlias(userId, payerId);
+    } catch (error) {
+      if (error instanceof AccountNotFoundError) {
+        throw new AccountNotFoundError(
+          `Account associated with ${payerId} payer ID is not found`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Associates tokens to a user
+   */
   async associate(
     user: User,
     associateDto: AssociateDto,
     encryptionKey?: string,
   ) {
     const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
-    const associatingAccount = await this.getUserAccountByAlias(
+    const associatingAccount = await this.getUserAccountByAssociatingId(
       user.id,
       associateDto.associatingId,
-    ).catch(() => {
-      throw new Error(
-        'Unable to find account with associatingId: ' +
-          associateDto.associatingId,
-      );
-    });
+    );
     // handle case if payerId is separate
     let payerAccount: Account;
-    if (associateDto.payerId)
-      payerAccount = await this.getUserAccountByAlias(
+    if (associateDto.payerId) {
+      payerAccount = await this.getUserAccountByPayerId(
         user.id,
         associateDto.payerId,
-      ).catch(() => {
-        throw new Error(
-          'Unable to find account with payerId: ' + associateDto.payerId,
-        );
-      });
+      );
+    }
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,
@@ -248,17 +271,23 @@ export class AccountService {
    * @returns {Promise<Account>} A Promise that resolves to the Account object with its relevant keys.
    */
   async getUserAccountByAlias(userId: string, alias: string): Promise<Account> {
+    let account: Account;
     if (alias.startsWith('0.0.')) {
-      return this.accountRepository.findOneOrFail({
+      account = await this.accountRepository.findOne({
         where: { id: alias },
         relations: { keys: true },
       });
+    } else {
+      // can search by alias because if no alias, account ID is used as alias
+      account = await this.accountRepository.findOne({
+        where: { user: { id: userId }, alias },
+        relations: { keys: true },
+      });
     }
-    // can search by alias because if no alias, account ID is used as alias
-    return this.accountRepository.findOneOrFail({
-      where: { user: { id: userId }, alias },
-      relations: { keys: true },
-    });
+    if (!account) {
+      throw new AccountNotFoundError();
+    }
+    return account;
   }
 
   async getUserAccountByPublicKey(
