@@ -126,10 +126,6 @@ export class DealService {
     const decryptedKeys = signerAccounts.flatMap((account) => {
       let { escrowKey } = account.user;
       if (account.user.hasEncryptionKey) {
-        if (!encryptionKey) {
-          // user will need to use proxy server if they want to use their escrow key
-          throw new EncryptionKeyNotProvidedError();
-        }
         escrowKey = this.keyService.decryptString(escrowKey, encryptionKey);
       }
       return account.keys.map((key) => ({

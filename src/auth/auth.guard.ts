@@ -9,7 +9,7 @@ import { AuthService } from './auth.service';
 import { Request } from 'express';
 import { JwtPayload } from './jwt-payload.type';
 import { AppConfigService } from 'src/config/app-config.service';
-import { ENCRYPTION_KEY_HEADER } from 'src/core/encryption-key-header.const';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { API_KEY_HEADER, AUTHORIZATION_HEADER } from 'src/core/headers.const';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class JwtGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: AppConfigService,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -44,7 +44,7 @@ export class JwtGuard implements CanActivate {
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const apiKey = req.headers[API_KEY_HEADER];
@@ -58,7 +58,7 @@ export class ApiKeyGuard implements CanActivate {
 
 @Injectable()
 export class EncryptionKeyGuard implements CanActivate {
-  constructor() { }
+  constructor() {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const headers = ctx.switchToHttp().getRequest().headers;

@@ -23,13 +23,13 @@ import { DealNotFoundError } from './error/deal-not-found.error';
 import { EncryptionKeyNotProvidedError } from './error/encryption-key-not-provided.error';
 import { NotNftOwnerError } from './error/not-nft-owner.error';
 import { InvalidKeyType } from './error/invalid-key-type.error';
-import { ENCRYPTION_KEY_HEADER } from 'src/core/encryption-key-header.const';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 
 @Controller('deal')
 export class DealController {
   private readonly logger = new Logger(DealController.name);
 
-  constructor(private readonly dealService: DealService) { }
+  constructor(private readonly dealService: DealService) {}
 
   @UseGuards(ApiKeyGuard)
   @Post()
