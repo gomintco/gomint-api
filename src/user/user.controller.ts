@@ -81,12 +81,17 @@ export class UserController {
 
   @UseGuards(ApiKeyGuard)
   @Post('key')
-  async createKey(@Req() req: Request, @Body() createKey: CreateKeyDto) {
+  async createKey(
+    @Req() req: Request,
+    @Body() createKey: CreateKeyDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
+  ) {
     const { user } = req;
     try {
       const { type, publicKey } = await this.userService.createAndSaveKey(
         user,
         createKey,
+        encryptionKey,
       );
       return { type, publicKey };
     } catch (err: any) {
