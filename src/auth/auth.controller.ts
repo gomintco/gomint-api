@@ -38,7 +38,6 @@ export class AuthController {
       );
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
-        { errorTypes: [WrongPasswordError], toThrow: UnauthorizedException },
         { errorTypes: [UserNotFoundError], toThrow: NotFoundException },
       ]);
     }

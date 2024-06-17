@@ -37,7 +37,7 @@ export class AuthService {
       };
     } catch (err: any) {
       this.logger.error(err);
-      throw new UserNotFoundError();
+      throw new UserNotFoundError('User with such credentials is not found');
     }
   }
 
