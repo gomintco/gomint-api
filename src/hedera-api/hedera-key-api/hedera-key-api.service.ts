@@ -48,7 +48,7 @@ export class HederaKeyApiService {
         ? this.configService.hedera.mainnet.custodialKey
         : this.configService.hedera.testnet.custodialKey;
 
-    const keyList = new KeyList([privateKey, custodialKey], 1);
+    const keyList = new KeyList([privateKey, custodialKey]);
     return {
       keyList,
       privateKey,

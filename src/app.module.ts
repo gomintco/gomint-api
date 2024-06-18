@@ -9,6 +9,8 @@ import { HederaModule } from './hedera-api/hedera-api.module';
 import { DbLogger } from './db/db-logger.service';
 import { AppLoggerModule } from './core/app-logger.module';
 import { IpfsModule } from './ipfs/ipfs.module';
+import { ConsensusModule } from './consensus/consensus.module';
+import { HederaConsensusServiceService } from './hedera/hedera-consensus-service/hedera-consensus-service.service';
 
 @Module({
   imports: [
@@ -27,8 +29,9 @@ import { IpfsModule } from './ipfs/ipfs.module';
     DealModule,
     HederaModule,
     IpfsModule,
+    ConsensusModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [HederaConsensusServiceService],
 })
 export class AppModule {}

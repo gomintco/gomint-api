@@ -6,6 +6,7 @@ import { HederaMirrornodeApiService } from './hedera-mirrornode-api/hedera-mirro
 import { KeyModule } from 'src/key/key.module';
 import { HederaKeyApiService } from './hedera-key-api/hedera-key-api.service';
 import { IpfsModule } from 'src/ipfs/ipfs.module';
+import { HederaConsensusApiService } from './hedera-consensus-api/hedera-consensus-api.service';
 
 @Module({
   providers: [
@@ -14,6 +15,7 @@ import { IpfsModule } from 'src/ipfs/ipfs.module';
     HederaTransactionApiService,
     HederaMirrornodeApiService,
     HederaKeyApiService,
+    HederaConsensusApiService,
   ],
   exports: [
     HederaTokenApiService,
