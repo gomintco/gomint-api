@@ -10,7 +10,9 @@ export class IpfsService {
   constructor(private readonly configService: AppConfigService) {}
 
   async initClient(): Promise<void> {
-    if (this.client) return;
+    if (this.client) {
+      return;
+    }
     const { create } = await eval(`import('@web3-storage/w3up-client')`);
     const { parse } = await eval(`import('@ucanto/principal/ed25519')`);
     const { StoreMemory } = await eval(`import(

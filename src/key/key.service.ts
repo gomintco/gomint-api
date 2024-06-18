@@ -170,8 +170,9 @@ export class KeyService {
 
   decryptUserEscrowKey(user: User, encryptionKey?: string): string {
     let escrowKey = user.escrowKey;
-    if (user.hasEncryptionKey)
+    if (user.hasEncryptionKey) {
       escrowKey = this.decryptString(user.escrowKey, encryptionKey);
+    }
     return escrowKey;
   }
 

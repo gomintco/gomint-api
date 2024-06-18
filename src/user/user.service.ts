@@ -57,8 +57,9 @@ export class UserService {
 
   private handleDecryptEscrowKey(user: User, encryptionKey: string) {
     let escrowKey = user.escrowKey;
-    if (user.hasEncryptionKey)
+    if (user.hasEncryptionKey) {
       escrowKey = this.keyService.decryptString(user.escrowKey, encryptionKey);
+    }
     return escrowKey;
   }
 
@@ -85,7 +86,9 @@ export class UserService {
       user.id,
       createAccountDto.alias,
     );
-    if (accountAliasExists) throw new Error('Account alias already exists');
+    if (accountAliasExists) {
+      throw new Error('Account alias already exists');
+    }
 
     const escrowKey = this.handleDecryptEscrowKey(user, encryptionKey);
     // create key and add to user

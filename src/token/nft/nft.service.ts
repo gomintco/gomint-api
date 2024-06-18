@@ -38,11 +38,12 @@ export class NftService {
     createNftDto.treasuryAccountId = treasuryAccount.id;
     // handle case if payer is separate
     let payerAccount: Account;
-    if (createNftDto.payerId)
+    if (createNftDto.payerId) {
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
         createNftDto.payerId,
       );
+    }
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,
@@ -93,11 +94,12 @@ export class NftService {
       });
     // handle case if payer is separate
     let payerAccount: Account;
-    if (tokenMintDto.payerId)
+    if (tokenMintDto.payerId) {
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
         tokenMintDto.payerId,
       );
+    }
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,

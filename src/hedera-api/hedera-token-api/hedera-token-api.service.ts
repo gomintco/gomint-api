@@ -183,21 +183,26 @@ export class HederaTokenApiService {
   private parseCustomFees(tokenCreateDto: TokenCreateDto): CustomFee[] {
     // custom fee ids need to have been parsed before this
     const { fixedFees, fractionalFees, royaltyFees } = tokenCreateDto;
-    if (!fixedFees && !fractionalFees && !royaltyFees) return [];
+    if (!fixedFees && !fractionalFees && !royaltyFees) {
+      return [];
+    }
     // ensure all fee aliases are parsed correctly before returnin
     this.validateFeeCollectorAccountIds(fixedFees, fractionalFees, royaltyFees);
     const customFees: CustomFee[] = [];
     // set fixed fees
-    if (fixedFees)
+    if (fixedFees) {
       customFees.push(...fixedFees.map((fee) => this.parseFixedFee(fee)));
+    }
     // set fractional fees
-    if (fractionalFees)
+    if (fractionalFees) {
       customFees.push(
         ...fractionalFees.map((fee) => this.parseFractionalFee(fee)),
       );
+    }
     // set royalty fees
-    if (royaltyFees)
+    if (royaltyFees) {
       customFees.push(...royaltyFees.map((fee) => this.parseRoyaltyFee(fee)));
+    }
     return customFees;
   }
 
@@ -206,37 +211,46 @@ export class HederaTokenApiService {
     fractionalFees: FractionalFeeDto[],
     royaltyFees: RoyaltyFeeDto[],
   ) {
-    if (fixedFees)
+    if (fixedFees) {
       fixedFees.forEach((fee) => {
-        if (!fee.feeCollectorAccountId.startsWith('0.0.'))
+        if (!fee.feeCollectorAccountId.startsWith('0.0.')) {
           throw new Error(
             "Fixed fee collector account id must start with '0.0.'",
           );
+        }
       });
-    if (fractionalFees)
+    }
+    if (fractionalFees) {
       fractionalFees.forEach((fee) => {
-        if (!fee.feeCollectorAccountId.startsWith('0.0.'))
+        if (!fee.feeCollectorAccountId.startsWith('0.0.')) {
           throw new Error(
             "Fractional fee collector account id must start with '0.0.'",
           );
+        }
       });
-    if (royaltyFees)
+    }
+    if (royaltyFees) {
       royaltyFees.forEach((fee) => {
-        if (!fee.feeCollectorAccountId.startsWith('0.0.'))
+        if (!fee.feeCollectorAccountId.startsWith('0.0.')) {
           throw new Error(
             "Royalty fee collector account id must start with '0.0.'",
           );
+        }
       });
+    }
   }
 
   private parseFixedFee = (fee: FixedFeeDto): CustomFixedFee => {
     const customFee = new CustomFixedFee().setFeeCollectorAccountId(
       fee.feeCollectorAccountId,
     );
-    if (fee.hbarAmount) customFee.setHbarAmount(new Hbar(fee.hbarAmount));
+    if (fee.hbarAmount) {
+      customFee.setHbarAmount(new Hbar(fee.hbarAmount));
+    }
     if (fee.ftId) {
-      if (!fee.ftAmount)
+      if (!fee.ftAmount) {
         throw new Error('ftAmount is required when ftId is provided');
+      }
       customFee.setAmount(fee.ftAmount).setDenominatingTokenId(fee.ftId);
     }
     customFee.setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
@@ -249,8 +263,9 @@ export class HederaTokenApiService {
       .setNumerator(fee.numerator)
       .setDenominator(fee.denominator)
       .setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
-    if (fee.fallbackFee)
+    if (fee.fallbackFee) {
       royaltyFee.setFallbackFee(this.parseFixedFee(fee.fallbackFee));
+    }
     return royaltyFee;
   }
 

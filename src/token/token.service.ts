@@ -37,7 +37,7 @@ export class TokenService {
     tokenAssociateDto.associatingId = associatingAccount.id;
     // handle case if payerId is separate
     let payerAccount: Account;
-    if (tokenAssociateDto.payerId)
+    if (tokenAssociateDto.payerId) {
       payerAccount = await this.accountService
         .getUserAccountByAlias(user.id, tokenAssociateDto.payerId)
         .catch(() => {
@@ -45,6 +45,7 @@ export class TokenService {
             'Unable to find account with payerId: ' + tokenAssociateDto.payerId,
           );
         });
+    }
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,

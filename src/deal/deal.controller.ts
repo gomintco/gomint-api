@@ -23,6 +23,7 @@ import { NotNftOwnerError } from './error/not-nft-owner.error';
 import { InvalidKeyTypeError } from './error/invalid-key-type.error';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
 
 @Controller('deal')
 export class DealController {
@@ -69,6 +70,7 @@ export class DealController {
             DealNotFoundError,
             NotNftOwnerError,
             EncryptionKeyNotProvidedError,
+            DecryptionFailedError,
             InvalidKeyTypeError,
           ],
           toThrow: BadRequestException,
