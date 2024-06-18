@@ -17,11 +17,13 @@ import { DealAlias } from 'src/deal/deal-alias.enum';
 import { KeyType } from 'src/key/key-type.enum';
 import { Network } from 'src/hedera-api/network.enum';
 import { AppConfigService } from 'src/config/app-config.service';
-import { DealNotFoundError } from './error/deal-not-found.error';
-import { InvalidNetworkError } from './error/invalid-network.error';
-import { NotNftOwnerError } from './error/not-nft-owner.error';
-import { InvalidKeyTypeError } from './error/invalid-key-type.error';
-import { SettingNftSerialError } from './error/setting-nft-serial.error';
+import {
+  DealNotFoundError,
+  InvalidKeyTypeError,
+  InvalidNetworkError,
+  NotNftOwnerError,
+  SettingNftSerialError,
+} from 'src/core/error';
 
 @Injectable()
 export class DealService {

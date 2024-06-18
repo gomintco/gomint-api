@@ -10,7 +10,7 @@ import { CreateKeyDto } from './dto/create-key.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { Account } from 'src/account/account.entity';
 import { Key } from 'src/key/key.entity';
-import { FailedUserSaveError } from './error/failed-user-save.error';
+import { FailedUserSaveError } from 'src/core/error';
 
 @Injectable()
 export class UserService {

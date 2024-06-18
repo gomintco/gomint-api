@@ -13,10 +13,10 @@ import {
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { JwtGuard } from './auth.guard';
-import { UserNotFoundError } from './error/user-not-found.error';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { UserNotFoundError } from 'src/core/error';
 
 @Controller('auth')
 export class AuthController {
