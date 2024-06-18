@@ -323,7 +323,7 @@ export class DealService {
     network: Network,
     tokenId: string,
     sellerId: string,
-  ) {
+  ): Promise<number> {
     let mirrorNodeUrl = '';
     switch (network) {
       case Network.MAINNET:
@@ -335,13 +335,13 @@ export class DealService {
       default:
         throw new InvalidNetworkError();
     }
-    let res, nfts;
+    let res: Response, nfts: { serial_number: number }[];
     try {
       // fetch the nft
       res = await fetch(
         `${mirrorNodeUrl}/accounts/${sellerId}/nfts?token.id=${tokenId}`,
       );
-      nfts = await res.json().nfts;
+      nfts = (await res.json()).nfts;
     } catch (err: any) {
       this.logger.error(err);
       throw new SettingNftSerialError();
