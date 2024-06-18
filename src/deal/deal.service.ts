@@ -298,7 +298,9 @@ export class DealService {
     dto: CreateDealDto,
     serialNumber?: number,
   ) {
-    if (!dto.nftTransfers.length) return dto;
+    if (!dto.nftTransfers.length) {
+      return dto;
+    }
 
     // ONLY HANDLE ONE NFT TRANSFER FOR NOW
     if (!dto.nftTransfers[0].serialNumber && !serialNumber) {

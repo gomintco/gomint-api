@@ -92,34 +92,6 @@ export class AccountService {
     return accountId;
   }
 
-  private async getUserAccountByAssociatingId(
-    userId: string,
-    associatingId: string,
-  ) {
-    try {
-      return await this.getUserAccountByAlias(userId, associatingId);
-    } catch (error) {
-      if (error instanceof AccountNotFoundError) {
-        throw new AccountNotFoundError(
-          `Account associated with ${associatingId} association ID is not found`,
-        );
-      }
-      throw error;
-    }
-  }
-
-  private async getUserAccountByPayerId(userId: string, payerId: string) {
-    try {
-      return await this.getUserAccountByAlias(userId, payerId);
-    } catch (error) {
-      if (error instanceof AccountNotFoundError) {
-        throw new AccountNotFoundError(
-          `Account associated with ${payerId} payer ID is not found`,
-        );
-      }
-    }
-  }
-
   /**
    * Associates tokens to a user
    */
@@ -129,14 +101,14 @@ export class AccountService {
     encryptionKey?: string,
   ) {
     const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
-    const associatingAccount = await this.getUserAccountByAssociatingId(
+    const associatingAccount = await this.getUserAccountByAlias(
       user.id,
       associateDto.associatingId,
     );
     // handle case if payerId is separate
     let payerAccount: Account;
     if (associateDto.payerId) {
-      payerAccount = await this.getUserAccountByPayerId(
+      payerAccount = await this.getUserAccountByAlias(
         user.id,
         associateDto.payerId,
       );
@@ -249,7 +221,9 @@ export class AccountService {
     alias: string,
   ): Promise<string> {
     // if alias is already in account ID format, just return alias
-    if (alias.startsWith('0.0.')) return alias;
+    if (alias.startsWith('0.0.')) {
+      return alias;
+    }
     const account = await this.accountRepository.findOne({
       where: { user: { id: userId }, alias },
     });
@@ -285,7 +259,9 @@ export class AccountService {
       });
     }
     if (!account) {
-      throw new AccountNotFoundError();
+      throw new AccountNotFoundError(
+        `Account associated with ${alias} is not found`,
+      );
     }
     return account;
   }

@@ -6,7 +6,6 @@ import {
   HttpStatus,
   UseGuards,
   Get,
-  UnauthorizedException,
   NotFoundException,
   Req,
   Logger,
@@ -14,7 +13,6 @@ import {
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { JwtGuard } from './auth.guard';
-import { WrongPasswordError } from './error/wrong-password.error';
 import { UserNotFoundError } from './error/user-not-found.error';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';

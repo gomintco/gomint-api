@@ -63,8 +63,12 @@ export class AuthService {
         where: { key },
         relations: { user: true },
       });
-      if (!apiKey) throw new Error("API key doesn't exist");
-      if (!apiKey.user) throw new Error('No user associated with the API key');
+      if (!apiKey) {
+        throw new Error("API key doesn't exist");
+      }
+      if (!apiKey.user) {
+        throw new Error('No user associated with the API key');
+      }
       return apiKey.user;
     } catch (e: any) {
       throw new NotFoundException('Error validating API Key', {

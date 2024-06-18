@@ -28,5 +28,6 @@ module.exports = {
         destructuredArrayIgnorePattern: '^_',
       },
     ],
+    curly: 'error',
   },
 };

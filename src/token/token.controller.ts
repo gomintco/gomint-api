@@ -3,6 +3,9 @@ import {
   Body,
   Controller,
   Headers,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
   Post,
   Req,
   ServiceUnavailableException,
@@ -17,10 +20,17 @@ import { NftService } from './nft/nft.service';
 import { TokenMintDto } from './dto/token-mint.dto';
 import { TokenAssociateDto } from './dto/token-associate.dto';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
+import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
+import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
+import { AccountNotFoundError } from 'src/account/error/account-not-found.error';
+import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
 
 @Controller('token')
 @UseGuards(ApiKeyGuard)
 export class TokenController {
+  private readonly logger = new Logger(TokenController.name);
+
   constructor(
     private readonly ftService: FtService,
     private readonly nftService: NftService,
@@ -50,11 +60,18 @@ export class TokenController {
             );
 
       return { token };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error creating token', {
-        cause: err,
-        description: err.message,
-      });
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        {
+          errorTypes: [DecryptionFailedError, EncryptionKeyNotProvidedError],
+          toThrow: BadRequestException,
+        },
+        { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
+        {
+          errorTypes: [InvalidNetworkError],
+          toThrow: InternalServerErrorException,
+        },
+      ]);
     }
   }
 
@@ -69,8 +86,9 @@ export class TokenController {
     try {
       let status: string;
       if (tokenMintDto.tokenType === 'ft') {
-        if (!tokenMintDto.amount)
+        if (!tokenMintDto.amount) {
           throw new BadRequestException('For ft mints you must include amount');
+        }
         status = await this.ftService.tokenMintHandler(
           user,
           tokenMintDto,
