@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { Network } from 'src/hedera-api/network.enum';
 import { Account } from 'src/account/account.entity';
 import { KeyService } from 'src/key/key.service';
-import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
 import { AppConfigService } from 'src/config/app-config.service';
+import { InvalidNetworkError } from 'src/core/error';
 
 @Injectable()
 export class ClientService {

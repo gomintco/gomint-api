@@ -21,10 +21,12 @@ import { TokenMintDto } from './dto/token-mint.dto';
 import { TokenAssociateDto } from './dto/token-associate.dto';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
-import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
-import { AccountNotFoundError } from 'src/account/error/account-not-found.error';
-import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
+import {
+  AccountNotFoundError,
+  DecryptionFailedError,
+  EncryptionKeyNotProvidedError,
+  InvalidNetworkError,
+} from 'src/core/error';
 
 @Controller('token')
 @UseGuards(ApiKeyGuard)

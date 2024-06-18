@@ -20,8 +20,10 @@ import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-a
 import { AccountCreateDto } from './dto/account-create.dto';
 import { HederaAccountApiService } from 'src/hedera-api/hedera-account-api/hedera-account-api.service';
 import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-api.service';
-import { AccountAliasAlreadyExistsError } from './error/account-alias-already-exists.error';
-import { AccountNotFoundError } from './error/account-not-found.error';
+import {
+  AccountAliasAlreadyExistsError,
+  AccountNotFoundError,
+} from 'src/core/error';
 
 @Injectable()
 export class AccountService {
