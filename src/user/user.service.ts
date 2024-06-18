@@ -6,8 +6,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import * as crypto from 'crypto';
 import { KeyService } from 'src/key/key.service';
 import { AccountService } from '../account/account.service';
-import { CreateKeyDto } from './dto/create-key.dto';
-import { CreateAccountDto } from './dto/create-account.dto';
 import { Account } from 'src/account/account.entity';
 import { Key } from 'src/key/key.entity';
 import { FailedUserSaveError } from './error/failed-user-save.error';
@@ -21,7 +19,7 @@ export class UserService {
     private readonly usersRepository: Repository<User>,
     private readonly keyService: KeyService,
     private readonly accountService: AccountService,
-  ) {}
+  ) { }
   /**
    * This function returns all the users in the database.
    *
@@ -63,50 +61,6 @@ export class UserService {
     return escrowKey;
   }
 
-  async createAndSaveKey(
-    user: User,
-    createKeyDto: CreateKeyDto,
-    encryptionKey?: string,
-  ) {
-    const escrowKey = this.handleDecryptEscrowKey(user, encryptionKey);
-    const key = await this.keyService
-      .create(escrowKey, createKeyDto.type)
-      .addUser(user)
-      .save();
-    return key;
-  }
-
-  async createAndSaveAccount(
-    user: User,
-    createAccountDto: CreateAccountDto,
-    encryptionKey?: string,
-  ) {
-    // check if alias is unique
-    const accountAliasExists = await this.accountService.accountAliasExists(
-      user.id,
-      createAccountDto.alias,
-    );
-    if (accountAliasExists) {
-      throw new Error('Account alias already exists');
-    }
-
-    const escrowKey = this.handleDecryptEscrowKey(user, encryptionKey);
-    // create key and add to user
-    const key = await this.keyService
-      .create(escrowKey, createAccountDto.type)
-      .addUser(user)
-      .save();
-    // create account and add to user
-    const accountTransaction =
-      await this.accountService.createTransactionAndExecute(
-        { key, alias: createAccountDto.alias },
-        user.network,
-      );
-    const addUserToAccount = await accountTransaction.addUser(user);
-    const account = await addUserToAccount.save();
-    return account;
-  }
-
   /**
    * This function creates a new user entity with the provided details.
    * It generates a random escrow key for the user and sets the hasPassword field based on whether a password was provided.
@@ -114,19 +68,16 @@ export class UserService {
    * @param createUserDto - The data transfer object containing the user's details.
    * @returns The created user entity.
    */
-  async create(
-    createUserDto: CreateUserDto,
-    encryptionKey?: string,
-  ): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const user = this.usersRepository.create({
       network: createUserDto.network,
       username: createUserDto.username,
       hashedPassword: createUserDto.hashedPassword,
       escrowKey: crypto.randomBytes(16).toString('hex'),
-      hasEncryptionKey: Boolean(encryptionKey),
+      hasEncryptionKey: Boolean(createUserDto.encryptionKey),
       email: createUserDto.email,
     });
-    this.encryptEscrowKey(user, encryptionKey);
+    this.encryptEscrowKey(user, createUserDto.encryptionKey);
 
     return await this.save(user);
   }
