@@ -84,16 +84,12 @@ export class DealService {
     serialNumber?: number,
     encryptionKey?: string,
   ) {
-    let deal: Deal;
-    try {
-      deal = await this.dealRepository.findOneOrFail({
-        where: { dealId },
-      });
-    } catch (err) {
-      this.logger.error(err);
+    const deal = await this.dealRepository.findOneOrFail({
+      where: { dealId },
+    });
+    if (!deal) {
       throw new DealNotFoundError();
     }
-
     let dealData = JSON.parse(deal.dealJson) as CreateDealDto;
 
     // swap the receiver's account id
