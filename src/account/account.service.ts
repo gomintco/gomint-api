@@ -1,12 +1,8 @@
-import { AccountCreateTransaction, PublicKey } from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
   Logger,
-  ServiceUnavailableException,
 } from '@nestjs/common';
-import { AccountCreateInput } from './account.interface';
-import { Network } from 'src/hedera-api/network.enum';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
@@ -23,6 +19,7 @@ import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-ap
 import {
   AccountAliasAlreadyExistsError,
   AccountNotFoundError,
+  NoPayerIdError,
 } from 'src/core/error';
 
 @Injectable()
@@ -45,8 +42,19 @@ export class AccountService {
     accountCreateDto: AccountCreateDto,
     encryptionKey?: string,
   ) {
-    // decrypt user escrow key
-    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
+    // check if user has any accounts to handle if free or not
+    const accountCount = await this.accountRepository.count({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+    });
+
+    if (accountCount && !accountCreateDto.payerId) {
+      throw new NoPayerIdError();
+    }
+
     // check if alias already exists
     const accountAliasExists = await this.accountAliasExists(
       user.id,
@@ -56,10 +64,28 @@ export class AccountService {
       throw new AccountAliasAlreadyExistsError();
     }
 
-    // here we should handle the user has account logic
-    // ie. if user has no accounts, create first for free
-    // .getClient method uses the GoMint account as payer
-    const client = this.clientService.getClient(user.network);
+    // decrypt user escrow key
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
+
+    let payerAccount: Account;
+    if (accountCount) {
+      payerAccount = await this.getUserAccountByAlias(
+        user.id,
+        accountCreateDto.payerId,
+      );
+    }
+
+    // this can potentially be made into its own method here
+    const client = accountCount
+      ? // if has account, user payerAccount to execute
+        this.clientService.buildClientAndSigningKeys(
+          user.network,
+          escrowKey,
+          payerAccount,
+        ).client
+      : // if no accounts, GoMint will pay
+        this.clientService.getGoMintClient(user.network);
+
     // create the threshold key with GoMint account for management if anything goes wrong
     const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
       accountCreateDto.type,
@@ -72,7 +98,6 @@ export class AccountService {
       escrowKey,
       user,
     );
-
     // create account transaction
     const accountCreateTransaction =
       this.hederaAccountService.createTransaction(accountCreateDto, keyList);
@@ -82,6 +107,7 @@ export class AccountService {
         accountCreateTransaction,
         client,
       );
+    // .getClient method uses the GoMint account as payer
     const accountId = receipt.accountId.toString();
     // save account and attach user and key
     const account = this.accountRepository.create({
@@ -307,87 +333,5 @@ export class AccountService {
         description: err.code || err.message,
       });
     });
-  }
-
-  /**
-   * This method creates and executes a transaction.
-   * It accepts an account creation input and a network as parameters.
-   * It returns an AccountBuilder instance with the created account.
-   *
-   * @param {AccountCreateInput} accountCreateInput - The input data for account creation.
-   * @param {Network} network - The network on which the transaction will be executed.
-   * @returns {Promise<AccountBuilder>} An AccountBuilder instance with the created account.
-   */
-  async createTransactionAndExecute(
-    accountCreateInput: AccountCreateInput,
-    network: Network,
-  ): Promise<AccountBuilder> {
-    const transaction = this.createTransaction(accountCreateInput);
-    // ONLY FIRST ACCOUNT CREATION IS 'FREE'
-    const client = this.clientService.getClient(network);
-    // WHEN USER HAS ONE ACCOUNT THEY SHOULD USE THEIR ACCOUNT TO PAY FOR THE NEXT ACCOUNT
-
-    try {
-      const transactionResponse = await transaction.execute(client);
-      const receipt = await transactionResponse.getReceipt(client);
-      const accountId = receipt.accountId.toString();
-      const account = this.accountRepository.create({
-        id: accountId,
-        keys: [accountCreateInput.key],
-        alias: accountCreateInput.alias ?? accountId,
-        // userId: accountCreateInput.key.user.id, // set user ID - this is used for ensuring unique account alias's per user
-      });
-      return new AccountBuilder(this, account);
-    } catch (err: any) {
-      this.logger.error(err);
-      throw new ServiceUnavailableException("Couldn't create Hedera account", {
-        cause: err,
-        description: err.message,
-      });
-    }
-  }
-
-  /**
-   * This function creates a transaction.
-   * It takes an account creation input as a parameter.
-   * It returns a new AccountCreateTransaction object.
-   */
-  private createTransaction(
-    accountCreateInput: AccountCreateInput,
-  ): AccountCreateTransaction {
-    return (
-      new AccountCreateTransaction()
-        .setKey(PublicKey.fromString(accountCreateInput.key.publicKey))
-        // .setAlias(accountCreateInput.alias) // removed because this clashes with the account alias
-        .setInitialBalance(accountCreateInput.initialBalance)
-        .setReceiverSignatureRequired(
-          accountCreateInput.receiverSignatureRequired,
-        )
-        .setMaxAutomaticTokenAssociations(
-          accountCreateInput.maxAutomaticTokenAssociations,
-        )
-        .setStakedAccountId(accountCreateInput.stakedAccountId)
-        //   .setStakedNodeId(accountCreateInput.stakedNodeId)
-        .setDeclineStakingReward(accountCreateInput.declineStakingReward)
-        .setAccountMemo(accountCreateInput.accountMemo)
-    );
-    // .setAutoRenewPeriod() (disabled atm)
-  }
-}
-
-class AccountBuilder {
-  constructor(
-    private readonly accountService: AccountService,
-    private readonly account: Account,
-  ) {}
-
-  async addUser(user: User) {
-    // TODO: check if user already exists
-    this.account.user = user;
-    return this;
-  }
-
-  async save(): Promise<Account> {
-    return this.accountService.save(this.account);
   }
 }

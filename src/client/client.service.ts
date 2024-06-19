@@ -13,7 +13,7 @@ export class ClientService {
     private readonly keyService: KeyService,
   ) {}
 
-  getClient(network: Network) {
+  getGoMintClient(network: Network) {
     switch (network) {
       case Network.MAINNET:
         return Client.forMainnet().setOperator(
