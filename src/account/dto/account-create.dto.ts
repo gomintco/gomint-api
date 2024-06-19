@@ -19,6 +19,10 @@ export class AccountCreateDto {
   alias?: string;
 
   @IsOptional()
+  @IsString()
+  payerId?: string
+
+  @IsOptional()
   @IsNumber()
   initialBalance?: number;
 

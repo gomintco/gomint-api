@@ -10,3 +10,4 @@ export * from './not-nft-owner.error';
 export * from './setting-nft-serial.error';
 export * from './user-not-found.error';
 export * from './wrong-password.error';
+export * from './no-payer-id.error';
