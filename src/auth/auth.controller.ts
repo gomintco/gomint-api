@@ -6,8 +6,6 @@ import {
   HttpStatus,
   UseGuards,
   Get,
-  UnauthorizedException,
-  InternalServerErrorException,
   NotFoundException,
   Req,
   Logger,
@@ -15,10 +13,10 @@ import {
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { JwtGuard } from './auth.guard';
-import { WrongPasswordError } from './error/wrong-password.error';
 import { UserNotFoundError } from './error/user-not-found.error';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
+import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 
 @Controller('auth')
 export class AuthController {
@@ -36,16 +34,10 @@ export class AuthController {
         signInDto.username,
         signInDto.hashedPassword,
       );
-    } catch (err) {
-      this.logger.error(err);
-      switch (true) {
-        case err instanceof WrongPasswordError:
-          throw new UnauthorizedException();
-        case err instanceof UserNotFoundError:
-          throw new NotFoundException();
-        default:
-          throw new InternalServerErrorException();
-      }
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        { errorTypes: [UserNotFoundError], toThrow: NotFoundException },
+      ]);
     }
   }
 

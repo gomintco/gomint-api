@@ -11,9 +11,9 @@ export class CreateUserDto {
   @IsString()
   hashedPassword: string;
 
-  @IsOptional()
   @IsString()
-  encryptionKey: string = null;
+  @IsOptional()
+  encryptionKey?: string;
 
   @IsOptional()
   @IsEmail()

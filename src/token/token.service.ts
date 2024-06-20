@@ -23,11 +23,9 @@ export class TokenService {
   async tokenAssociateHandler(
     user: User,
     tokenAssociateDto: TokenAssociateDto,
+    encryptionKey?: string,
   ) {
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      tokenAssociateDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     const associatingAccount = await this.accountService
       .getUserAccountByAlias(user.id, tokenAssociateDto.associatingId)
       .catch(() => {
@@ -39,7 +37,7 @@ export class TokenService {
     tokenAssociateDto.associatingId = associatingAccount.id;
     // handle case if payerId is separate
     let payerAccount: Account;
-    if (tokenAssociateDto.payerId)
+    if (tokenAssociateDto.payerId) {
       payerAccount = await this.accountService
         .getUserAccountByAlias(user.id, tokenAssociateDto.payerId)
         .catch(() => {
@@ -47,6 +45,7 @@ export class TokenService {
             'Unable to find account with payerId: ' + tokenAssociateDto.payerId,
           );
         });
+    }
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,

@@ -11,9 +11,5 @@ export class AssociateDto {
 
   @IsOptional()
   @IsString()
-  encryptionKey: string;
-
-  @IsOptional()
-  @IsString()
   payerId: string;
 }

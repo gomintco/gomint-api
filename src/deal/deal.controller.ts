@@ -4,8 +4,6 @@ import {
   Controller,
   Get,
   Headers,
-  HttpException,
-  InternalServerErrorException,
   Logger,
   Param,
   Post,
@@ -22,19 +20,21 @@ import { Request } from 'express';
 import { DealNotFoundError } from './error/deal-not-found.error';
 import { EncryptionKeyNotProvidedError } from './error/encryption-key-not-provided.error';
 import { NotNftOwnerError } from './error/not-nft-owner.error';
-import { InvalidKeyType } from './error/invalid-key-type.error';
-import { ENCRYPTION_KEY_HEADER } from 'src/core/encryption-key-header.const';
+import { InvalidKeyTypeError } from './error/invalid-key-type.error';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
+import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
 
 @Controller('deal')
 export class DealController {
   private readonly logger = new Logger(DealController.name);
 
-  constructor(private readonly dealService: DealService) { }
+  constructor(private readonly dealService: DealService) {}
 
   @UseGuards(ApiKeyGuard)
   @Post()
   async create(@Req() req: Request, @Body() createDealDto: CreateDealDto) {
-    const user = req.user;
+    const { user } = req;
 
     try {
       const dealId = await this.dealService.createDeal(user, createDealDto);
@@ -52,7 +52,7 @@ export class DealController {
   async getDealBytes(
     @Param('dealId') dealId: string,
     @Query() { receiverId, network, payerId, serial }: GetBytesDto,
-    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey: string,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
     try {
       return await this.dealService.getDealBytes(
@@ -63,20 +63,19 @@ export class DealController {
         serial,
         encryptionKey,
       );
-    } catch (error) {
-      this.logger.error(error);
-      switch (true) {
-        case error instanceof HttpException:
-          throw error;
-        case error instanceof DealNotFoundError:
-        case error instanceof EncryptionKeyNotProvidedError:
-        case error instanceof NotNftOwnerError:
-        case error instanceof EncryptionKeyNotProvidedError:
-        case error instanceof InvalidKeyType:
-          throw new BadRequestException();
-        default:
-          throw new InternalServerErrorException();
-      }
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        {
+          errorTypes: [
+            DealNotFoundError,
+            NotNftOwnerError,
+            EncryptionKeyNotProvidedError,
+            DecryptionFailedError,
+            InvalidKeyTypeError,
+          ],
+          toThrow: BadRequestException,
+        },
+      ]);
     }
   }
 }

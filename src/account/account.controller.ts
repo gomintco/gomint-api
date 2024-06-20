@@ -1,6 +1,11 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Headers,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
   Post,
   Req,
   ServiceUnavailableException,
@@ -11,45 +16,89 @@ import { AssociateDto } from './dto/associate.dto';
 import { AccountService } from './account.service';
 import { Request } from 'express';
 import { AccountCreateDto } from './dto/account-create.dto';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
+import { AccountAliasAlreadyExistsError } from './error/account-alias-already-exists.error';
+import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
+import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
+import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
+import { AccountNotFoundError } from './error/account-not-found.error';
+import { InvalidKeyTypeError } from 'src/deal/error/invalid-key-type.error';
 
 @Controller('account')
 @UseGuards(ApiKeyGuard)
 export class AccountController {
+  private readonly logger = new Logger(AccountController.name);
+
   constructor(private readonly accountService: AccountService) {}
 
   @Post()
   async create(
     @Req() req: Request,
     @Body() accountCreateDto: AccountCreateDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
-    const user = req.user;
+    const { user } = req;
 
     try {
-      const accountId = await this.accountService.accountCreateHandler(
+      const accountId = await this.accountService.createAccount(
         user,
         accountCreateDto,
+        encryptionKey,
       );
       return { accountId };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error creating account', {
-        cause: err,
-        description: err.message,
-      });
+    } catch (error: any) {
+      handleEndpointErrors(
+        this.logger,
+        error,
+        [
+          {
+            errorTypes: [
+              AccountAliasAlreadyExistsError,
+              EncryptionKeyNotProvidedError,
+              InvalidNetworkError,
+              DecryptionFailedError,
+            ],
+            toThrow: BadRequestException,
+          },
+        ],
+        ServiceUnavailableException,
+      );
     }
   }
 
   @Post('association')
-  async associate(@Req() req: Request, @Body() associateDto: AssociateDto) {
-    const user = req.user;
+  async associate(
+    @Req() req: Request,
+    @Body() associateDto: AssociateDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
+  ) {
+    const { user } = req;
 
     try {
-      const status = await this.accountService.associate(user, associateDto);
+      const status = await this.accountService.associate(
+        user,
+        associateDto,
+        encryptionKey,
+      );
       return { status };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error associating account', {
-        cause: err,
-        description: err.message,
-      });
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        {
+          errorTypes: [
+            EncryptionKeyNotProvidedError,
+            DecryptionFailedError,
+            InvalidKeyTypeError,
+            InvalidNetworkError,
+          ],
+          toThrow: BadRequestException,
+        },
+        {
+          errorTypes: [InvalidKeyTypeError, InvalidNetworkError],
+          toThrow: InternalServerErrorException,
+        },
+        { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
+      ]);
     }
   }
 }

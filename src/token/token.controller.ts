@@ -2,6 +2,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Headers,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
   Post,
   Req,
   ServiceUnavailableException,
@@ -15,10 +19,18 @@ import { FtService } from './ft/ft.service';
 import { NftService } from './nft/nft.service';
 import { TokenMintDto } from './dto/token-mint.dto';
 import { TokenAssociateDto } from './dto/token-associate.dto';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
+import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
+import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
+import { AccountNotFoundError } from 'src/account/error/account-not-found.error';
+import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
 
 @Controller('token')
 @UseGuards(ApiKeyGuard)
 export class TokenController {
+  private readonly logger = new Logger(TokenController.name);
+
   constructor(
     private readonly ftService: FtService,
     private readonly nftService: NftService,
@@ -26,34 +38,62 @@ export class TokenController {
   ) {}
 
   @Post()
-  async create(@Req() req: Request, @Body() tokenCreateDto: TokenCreateDto) {
-    const user = req.user;
+  async create(
+    @Req() req: Request,
+    @Body() tokenCreateDto: TokenCreateDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
+  ) {
+    const { user } = req;
 
     try {
       const token =
         tokenCreateDto.tokenType === 'ft'
-          ? await this.ftService.tokenCreateHandler(user, tokenCreateDto)
-          : await this.nftService.tokenCreateHandler(user, tokenCreateDto);
+          ? await this.ftService.tokenCreateHandler(
+              user,
+              tokenCreateDto,
+              encryptionKey,
+            )
+          : await this.nftService.tokenCreateHandler(
+              user,
+              tokenCreateDto,
+              encryptionKey,
+            );
 
       return { token };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error creating token', {
-        cause: err,
-        description: err.message,
-      });
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        {
+          errorTypes: [DecryptionFailedError, EncryptionKeyNotProvidedError],
+          toThrow: BadRequestException,
+        },
+        { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
+        {
+          errorTypes: [InvalidNetworkError],
+          toThrow: InternalServerErrorException,
+        },
+      ]);
     }
   }
 
   @Post('mint')
-  async mint(@Req() req: Request, @Body() tokenMintDto: TokenMintDto) {
-    const user = req.user;
+  async mint(
+    @Req() req: Request,
+    @Body() tokenMintDto: TokenMintDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
+  ) {
+    const { user } = req;
 
     try {
       let status: string;
       if (tokenMintDto.tokenType === 'ft') {
-        if (!tokenMintDto.amount)
+        if (!tokenMintDto.amount) {
           throw new BadRequestException('For ft mints you must include amount');
-        status = await this.ftService.tokenMintHandler(user, tokenMintDto);
+        }
+        status = await this.ftService.tokenMintHandler(
+          user,
+          tokenMintDto,
+          encryptionKey,
+        );
       } else {
         if (
           !tokenMintDto.metadata &&
@@ -70,7 +110,11 @@ export class TokenController {
             'Both amount and metadata must be provided if metadatas array is empty',
           );
         }
-        status = await this.nftService.tokenMintHandler(user, tokenMintDto);
+        status = await this.nftService.tokenMintHandler(
+          user,
+          tokenMintDto,
+          encryptionKey,
+        );
       }
       return { status };
     } catch (err: any) {
@@ -85,13 +129,15 @@ export class TokenController {
   async associate(
     @Req() req: Request,
     @Body() tokenAssociateDto: TokenAssociateDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
-    const user = req.user;
+    const { user } = req;
 
     try {
       const status = await this.tokenService.tokenAssociateHandler(
         user,
         tokenAssociateDto,
+        encryptionKey,
       );
       return { status };
     } catch (err: any) {
