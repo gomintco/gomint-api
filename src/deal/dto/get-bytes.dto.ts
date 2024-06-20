@@ -1,24 +1,28 @@
-import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsNumber,
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNotEmpty,
+} from 'class-validator';
 import { Network } from 'src/hedera-api/network.enum';
 
 export class GetBytesDto {
   @IsEnum(Network)
+  @IsNotEmpty()
   network: Network;
 
   @IsString()
-  dealId: string;
-
-  @IsString()
+  @IsNotEmpty()
   receiverId: string;
 
   @IsString()
   @IsOptional()
-  payerId: string | undefined;
+  payerId?: string;
 
   @IsNumber()
   @IsOptional()
+  @Type(() => Number)
   serial: number;
-
-  @IsString()
-  encryptionKey: string;
 }

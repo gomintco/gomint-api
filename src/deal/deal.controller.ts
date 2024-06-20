@@ -3,7 +3,10 @@ import {
   Body,
   Controller,
   Get,
-  HttpCode,
+  Headers,
+  HttpException,
+  InternalServerErrorException,
+  Logger,
   Param,
   Post,
   Query,
@@ -14,16 +17,22 @@ import {
 import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { DealService } from './deal.service';
 import { CreateDealDto } from './dto/create-deal.dto';
-import { GetBytesDto } from './dto/get-bytes.dt';
-import { Network } from 'src/hedera-api/network.enum';
+import { GetBytesDto } from './dto/get-bytes.dto';
 import { Request } from 'express';
+import { DealNotFoundError } from './error/deal-not-found.error';
+import { EncryptionKeyNotProvidedError } from './error/encryption-key-not-provided.error';
+import { NotNftOwnerError } from './error/not-nft-owner.error';
+import { InvalidKeyType } from './error/invalid-key-type.error';
+import { ENCRYPTION_KEY_HEADER } from 'src/core/encryption-key-header.const';
 
 @Controller('deal')
 export class DealController {
-  constructor(private readonly dealService: DealService) {}
+  private readonly logger = new Logger(DealController.name);
+
+  constructor(private readonly dealService: DealService) { }
 
   @UseGuards(ApiKeyGuard)
-  @Post('')
+  @Post()
   async create(@Req() req: Request, @Body() createDealDto: CreateDealDto) {
     const user = req.user;
 
@@ -38,42 +47,36 @@ export class DealController {
     }
   }
 
-  // get deal bytes -> GET when account does not have an encryption key
+  @UseGuards(ApiKeyGuard)
   @Get('bytes/:dealId')
   async getDealBytes(
     @Param('dealId') dealId: string,
-    @Query('network') network: Network,
-    @Query('receiverId') receiverId: string,
-    @Query('payerId') payerId: string | undefined,
-    @Query('serial') serial: string | undefined,
+    @Query() { receiverId, network, payerId, serial }: GetBytesDto,
+    @Headers(ENCRYPTION_KEY_HEADER) encryptionKey: string,
   ) {
-    if (!receiverId) throw new BadRequestException('receiverId is required');
-    if (!network) throw new BadRequestException('network is required');
-    return this.dealService.getDealBytes(
-      network,
-      dealId,
-      receiverId,
-      payerId,
-      Number(serial),
-    );
-  }
-
-  // get deal bytes -> POST when account has an encryption key
-  // require API key guard? -> maybe good for tracking?
-  // IF USING API KEY GUARD... ENSURE IT MATCHES WITH THE DEAL CREATOR
-  @UseGuards(ApiKeyGuard)
-  @Post('bytes')
-  @HttpCode(200)
-  async getDealBytesPost(@Body() getBytesDto: GetBytesDto) {
-    const { network, dealId, receiverId, payerId, encryptionKey, serial } =
-      getBytesDto;
-    return this.dealService.getDealBytes(
-      network,
-      dealId,
-      receiverId,
-      payerId,
-      serial,
-      encryptionKey,
-    );
+    try {
+      return await this.dealService.getDealBytes(
+        network,
+        dealId,
+        receiverId,
+        payerId,
+        serial,
+        encryptionKey,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      switch (true) {
+        case error instanceof HttpException:
+          throw error;
+        case error instanceof DealNotFoundError:
+        case error instanceof EncryptionKeyNotProvidedError:
+        case error instanceof NotNftOwnerError:
+        case error instanceof EncryptionKeyNotProvidedError:
+        case error instanceof InvalidKeyType:
+          throw new BadRequestException();
+        default:
+          throw new InternalServerErrorException();
+      }
+    }
   }
 }
