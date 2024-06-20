@@ -5,9 +5,8 @@ import { ApiKey } from './api-key.entity';
 import { Repository } from 'typeorm';
 import { getRandomValues } from 'crypto';
 import { User } from 'src/user/user.entity';
-import { WrongPasswordError } from './error/wrong-password.error';
-import { UserNotFoundError } from './error/user-not-found.error';
 import { JwtPayload } from './jwt-payload.type';
+import { UserNotFoundError, WrongPasswordError } from 'src/core/error';
 
 @Injectable()
 export class AuthService {

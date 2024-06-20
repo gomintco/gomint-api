@@ -8,7 +8,7 @@ import { KeyService } from 'src/key/key.service';
 import { AccountService } from '../account/account.service';
 import { Account } from 'src/account/account.entity';
 import { Key } from 'src/key/key.entity';
-import { FailedUserSaveError } from './error/failed-user-save.error';
+import { FailedUserSaveError } from 'src/core/error';
 
 @Injectable()
 export class UserService {

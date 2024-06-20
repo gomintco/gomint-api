@@ -17,11 +17,13 @@ import { DealAlias } from 'src/deal/deal-alias.enum';
 import { KeyType } from 'src/key/key-type.enum';
 import { Network } from 'src/hedera-api/network.enum';
 import { AppConfigService } from 'src/config/app-config.service';
-import { DealNotFoundError } from './error/deal-not-found.error';
-import { InvalidNetworkError } from './error/invalid-network.error';
-import { NotNftOwnerError } from './error/not-nft-owner.error';
-import { InvalidKeyTypeError } from './error/invalid-key-type.error';
-import { SettingNftSerialError } from './error/setting-nft-serial.error';
+import {
+  DealNotFoundError,
+  InvalidKeyTypeError,
+  InvalidNetworkError,
+  NotNftOwnerError,
+  SettingNftSerialError,
+} from 'src/core/error';
 
 @Injectable()
 export class DealService {
@@ -82,16 +84,12 @@ export class DealService {
     serialNumber?: number,
     encryptionKey?: string,
   ) {
-    let deal: Deal;
-    try {
-      deal = await this.dealRepository.findOneOrFail({
-        where: { dealId },
-      });
-    } catch (err) {
-      this.logger.error(err);
+    const deal = await this.dealRepository.findOneOrFail({
+      where: { dealId },
+    });
+    if (!deal) {
       throw new DealNotFoundError();
     }
-
     let dealData = JSON.parse(deal.dealJson) as CreateDealDto;
 
     // swap the receiver's account id
@@ -321,7 +319,7 @@ export class DealService {
     network: Network,
     tokenId: string,
     sellerId: string,
-  ) {
+  ): Promise<number> {
     let mirrorNodeUrl = '';
     switch (network) {
       case Network.MAINNET:
@@ -333,13 +331,13 @@ export class DealService {
       default:
         throw new InvalidNetworkError();
     }
-    let res, nfts;
+    let res: Response, nfts: { serial_number: number }[];
     try {
       // fetch the nft
       res = await fetch(
         `${mirrorNodeUrl}/accounts/${sellerId}/nfts?token.id=${tokenId}`,
       );
-      nfts = await res.json().nfts;
+      nfts = (await res.json()).nfts;
     } catch (err: any) {
       this.logger.error(err);
       throw new SettingNftSerialError();
