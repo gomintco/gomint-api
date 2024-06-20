@@ -20,7 +20,7 @@ export class AccountCreateDto {
 
   @IsOptional()
   @IsString()
-  payerId?: string
+  payerId?: string;
 
   @IsOptional()
   @IsNumber()
