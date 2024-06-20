@@ -1,8 +1,4 @@
-import {
-  Logger,
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { createHash } from 'crypto';
 import { User } from 'src/user/user.entity';
@@ -24,8 +20,7 @@ import { AppConfigService } from 'src/config/app-config.service';
 import { DealNotFoundError } from './error/deal-not-found.error';
 import { InvalidNetworkError } from './error/invalid-network.error';
 import { NotNftOwnerError } from './error/not-nft-owner.error';
-import { EncryptionKeyNotProvidedError } from './error/encryption-key-not-provided.error';
-import { InvalidKeyType } from './error/invalid-key-type.error';
+import { InvalidKeyTypeError } from './error/invalid-key-type.error';
 import { SettingNftSerialError } from './error/setting-nft-serial.error';
 
 @Injectable()
@@ -126,10 +121,6 @@ export class DealService {
     const decryptedKeys = signerAccounts.flatMap((account) => {
       let { escrowKey } = account.user;
       if (account.user.hasEncryptionKey) {
-        if (!encryptionKey) {
-          // user will need to use proxy server if they want to use their escrow key
-          throw new EncryptionKeyNotProvidedError();
-        }
         escrowKey = this.keyService.decryptString(escrowKey, encryptionKey);
       }
       return account.keys.map((key) => ({
@@ -150,7 +141,7 @@ export class DealService {
           case KeyType.ECDSA:
             return transaction.sign(PrivateKey.fromStringECDSA(privateKey));
           default:
-            throw new InvalidKeyType();
+            throw new InvalidKeyTypeError();
         }
       }),
     );
@@ -307,7 +298,9 @@ export class DealService {
     dto: CreateDealDto,
     serialNumber?: number,
   ) {
-    if (!dto.nftTransfers.length) return dto;
+    if (!dto.nftTransfers.length) {
+      return dto;
+    }
 
     // ONLY HANDLE ONE NFT TRANSFER FOR NOW
     if (!dto.nftTransfers[0].serialNumber && !serialNumber) {

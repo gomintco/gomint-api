@@ -11,6 +11,9 @@ import { Key } from './key.entity';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import * as crypto from 'crypto';
+import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
+import { DecryptionFailedError } from './error/decryption-failed.error';
+import { InvalidKeyTypeError } from 'src/deal/error/invalid-key-type.error';
 
 @Injectable()
 export class KeyService {
@@ -167,8 +170,9 @@ export class KeyService {
 
   decryptUserEscrowKey(user: User, encryptionKey?: string): string {
     let escrowKey = user.escrowKey;
-    if (user.hasEncryptionKey)
+    if (user.hasEncryptionKey) {
       escrowKey = this.decryptString(user.escrowKey, encryptionKey);
+    }
     return escrowKey;
   }
 
@@ -181,14 +185,14 @@ export class KeyService {
         key.encryptedPrivateKey,
         escrowKey,
       );
-      // return as PrivateKey type
+
       switch (key.type) {
         case KeyType.ED25519:
           return PrivateKey.fromStringED25519(decryptedKey);
         case KeyType.ECDSA:
           return PrivateKey.fromStringECDSA(decryptedKey);
         default:
-          throw new Error('Invalid key type in treasury account');
+          throw new InvalidKeyTypeError();
       }
     });
   }
@@ -202,8 +206,11 @@ export class KeyService {
    * @param encryptionKey - The key to be used for decryption.
    * @returns The decrypted string.
    */
-  decryptString(encryptedValue: string, encryptionKey: string): string {
-    if (!encryptionKey) throw new Error('No encryption key provided');
+  decryptString(encryptedValue: string, encryptionKey?: string): string {
+    if (!encryptionKey) {
+      // user will need to use proxy server if they want to use their escrow key
+      throw new EncryptionKeyNotProvidedError();
+    }
     try {
       const components = encryptedValue.split(':');
       const iv = Buffer.from(components.shift(), 'hex');
@@ -222,11 +229,10 @@ export class KeyService {
       decrypted = Buffer.concat([decrypted, decipher.final()]);
       return decrypted.toString();
     } catch (err: any) {
-      this.logger.log('Error decrypting string', err);
-      throw new InternalServerErrorException('Unable to decrypt private key', {
-        cause: err,
-        description: err.code || err.message,
-      });
+      this.logger.error('Error decrypting string', err);
+      throw new DecryptionFailedError(
+        'Decryption failed, check encryption key',
+      );
     }
   }
 }

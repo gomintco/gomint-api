@@ -1,6 +1,5 @@
 import { CustomFee, TokenSupplyType, TokenType } from '@hashgraph/sdk';
-import { TokenCreateKeys, TokenCreateKeysDto } from './pubKey.interface';
-import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
+import { TokenCreateKeys } from './pubKey.interface';
 
 export interface AssociateTokenDto {
   associatingId: string;

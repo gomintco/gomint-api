@@ -16,7 +16,9 @@ export class HederaTransactionApiService {
     client: Client,
     signers?: PrivateKey[],
   ): Promise<TransactionResponse> {
-    if (signers) await this.addSigners(transaction, signers);
+    if (signers) {
+      await this.addSigners(transaction, signers);
+    }
     return transaction.execute(client);
   }
 
@@ -48,10 +50,11 @@ export class HederaTransactionApiService {
     transaction: Transaction,
     signers: PrivateKey[],
   ): Promise<void> {
-    if (!transaction.isFrozen())
+    if (!transaction.isFrozen()) {
       throw new Error(
         "Transaction is not frozen. You must freeze a transaction before calling 'addSigners'.",
       );
+    }
     await Promise.all(signers.map((signer) => transaction.sign(signer)));
   }
 }

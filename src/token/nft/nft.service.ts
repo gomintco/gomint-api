@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { TokenType } from '@hashgraph/sdk';
 import { User } from 'src/user/user.entity';
 import { TokenCreateDto } from '../dto/token-create.dto';
 import { KeyService } from 'src/key/key.service';
@@ -24,12 +23,13 @@ export class NftService {
     private readonly configService: AppConfigService,
   ) {}
 
-  async tokenCreateHandler(user: User, createNftDto: TokenCreateDto) {
+  async tokenCreateHandler(
+    user: User,
+    createNftDto: TokenCreateDto,
+    encryptionKey?: string,
+  ) {
     // get required accounts, keys, and clients
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      createNftDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     // get and set treasury account
     const treasuryAccount = await this.accountService.getUserAccountByAlias(
       user.id,
@@ -38,11 +38,12 @@ export class NftService {
     createNftDto.treasuryAccountId = treasuryAccount.id;
     // handle case if payer is separate
     let payerAccount: Account;
-    if (createNftDto.payerId)
+    if (createNftDto.payerId) {
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
         createNftDto.payerId,
       );
+    }
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,
@@ -72,12 +73,10 @@ export class NftService {
   async tokenMintHandler(
     user: User,
     tokenMintDto: TokenMintDto,
+    encryptionKey?: string,
   ): Promise<string> {
     // get required accounts, keys, and clients
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      tokenMintDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     // get supply key from mirrornode
     const supplyKey = await this.mirrornodeService
       .getTokenMirrornodeInfo(user.network, tokenMintDto.tokenId)
@@ -95,11 +94,12 @@ export class NftService {
       });
     // handle case if payer is separate
     let payerAccount: Account;
-    if (tokenMintDto.payerId)
+    if (tokenMintDto.payerId) {
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
         tokenMintDto.payerId,
       );
+    }
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,

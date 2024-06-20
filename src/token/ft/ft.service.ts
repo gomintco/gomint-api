@@ -23,31 +23,30 @@ export class FtService {
     private readonly hederaMirrornodeApiService: HederaMirrornodeApiService,
   ) {}
 
-  async tokenCreateHandler(user: User, tokenCreateDto: TokenCreateDto) {
-    this.logger.log('user', user);
+  async tokenCreateHandler(
+    user: User,
+    tokenCreateDto: TokenCreateDto,
+    encryptionKey?: string,
+  ) {
+    this.logger.log({ user });
     // get required accounts, keys, and clients
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      tokenCreateDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
 
     // get and set treasury account
-    const treasuryAccount = await this.accountService
-      .getUserAccountByAlias(user.id, tokenCreateDto.treasuryAccountId)
-      .catch(() => {
-        // should handle this inside the .getUserByAccountAlias function
-        throw new Error(
-          'No accounts with alias: ' + tokenCreateDto.treasuryAccountId,
-        );
-      });
+    const treasuryAccount = await this.accountService.getUserAccountByAlias(
+      user.id,
+      tokenCreateDto.treasuryAccountId,
+    );
     tokenCreateDto.treasuryAccountId = treasuryAccount.id;
     // handle case if payer is separate
     let payerAccount: Account;
-    if (tokenCreateDto.payerId)
+    if (tokenCreateDto.payerId) {
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
         tokenCreateDto.payerId,
       );
+    }
+
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,
@@ -77,12 +76,10 @@ export class FtService {
   async tokenMintHandler(
     user: User,
     tokenMintDto: TokenMintDto,
+    encryptionKey?: string,
   ): Promise<string> {
     // get required accounts, keys, and clients
-    const escrowKey = this.keyService.decryptUserEscrowKey(
-      user,
-      tokenMintDto.encryptionKey,
-    );
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     // get supply key from mirrornode
     const supplyKey = await this.hederaMirrornodeApiService
       .getTokenMirrornodeInfo(user.network, tokenMintDto.tokenId)
@@ -100,11 +97,12 @@ export class FtService {
       });
     // handle case if payer is separate
     let payerAccount: Account;
-    if (tokenMintDto.payerId)
+    if (tokenMintDto.payerId) {
       payerAccount = await this.accountService.getUserAccountByAlias(
         user.id,
         tokenMintDto.payerId,
       );
+    }
     // build client and signers
     const { client, signers } = this.clientService.buildClientAndSigningKeys(
       user.network,
