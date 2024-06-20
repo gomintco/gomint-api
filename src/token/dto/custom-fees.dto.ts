@@ -8,8 +8,6 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export type Fee = FixedFee | FractionalFee | RoyaltyFee;
-
 export class FixedFee {
   @IsString()
   feeCollectorAccountId: string;
