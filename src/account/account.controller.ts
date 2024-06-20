@@ -34,7 +34,7 @@ import { AccountResponse } from 'src/user/response/account.response';
 export class AccountController {
   private readonly logger = new Logger(AccountController.name);
 
-  constructor(private readonly service: AccountService) {}
+  constructor(private readonly accountService: AccountService) {}
 
   @Get()
   async getUserAccounts(
@@ -42,7 +42,7 @@ export class AccountController {
   ): Promise<{ id: string; accounts: AccountResponse[] }> {
     const userId = req.user.id;
 
-    const accounts = await this.service.findUserAccounts(userId);
+    const accounts = await this.accountService.findUserAccounts(userId);
 
     return {
       id: userId,
@@ -57,9 +57,8 @@ export class AccountController {
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
     const { user } = req;
-    console.log(user);
     try {
-      const accountId = await this.service.createAccount(
+      const accountId = await this.accountService.createAccount(
         user,
         accountCreateDto,
         encryptionKey,
@@ -94,7 +93,7 @@ export class AccountController {
     const { user } = req;
 
     try {
-      const status = await this.service.associate(
+      const status = await this.accountService.associate(
         user,
         associateDto,
         encryptionKey,

@@ -27,15 +27,16 @@ export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(
-    private readonly service: AuthService,
-    private readonly mediator: AuthMediator,
-  ) { }
+    private readonly authService: AuthService,
+    private readonly authMediator: AuthMediator,
+  ) {}
 
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')
   async signup(@Body() signUpDto: SignUpDto) {
     try {
-      const { username, id, network } = await this.mediator.signup(signUpDto);
+      const { username, id, network } =
+        await this.authMediator.signup(signUpDto);
 
       return { username, id, network };
     } catch (error: any) {
@@ -48,7 +49,7 @@ export class AuthController {
   @UseGuards(ApiKeyGuard)
   @Get('user')
   async getAuthUser(@Req() req: Request): Promise<UserResponse> {
-    return this.mediator.getAuthUser(req.user.id);
+    return this.authMediator.getAuthUser(req.user.id);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -57,7 +58,7 @@ export class AuthController {
     @Body() signInDto: SignInDto,
   ): Promise<{ access_token: string }> {
     try {
-      return await this.service.signIn(
+      return await this.authService.signIn(
         signInDto.username,
         signInDto.hashedPassword,
       );
@@ -71,7 +72,7 @@ export class AuthController {
   @UseGuards(JwtGuard)
   @Post('/api-key')
   async createApiKey(@Req() req: Request): Promise<{ apiKey: string }> {
-    return this.service.generateApiKey(req.payload.sub);
+    return this.authService.generateApiKey(req.payload.sub);
   }
 
   @UseGuards(JwtGuard)
