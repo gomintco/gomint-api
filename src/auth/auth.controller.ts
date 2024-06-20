@@ -19,7 +19,6 @@ import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 import { UserDuplicationError, UserNotFoundError } from 'src/core/error';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
-import { UserService } from 'src/user/user.service';
 import { UserResponse } from 'src/user/response/user.response';
 import { AuthMediator } from './auth.mediator';
 
@@ -28,10 +27,9 @@ export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(
-    private readonly authService: AuthService,
-    private readonly userService: UserService,
+    private readonly service: AuthService,
     private readonly mediator: AuthMediator,
-  ) {}
+  ) { }
 
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')
@@ -59,7 +57,7 @@ export class AuthController {
     @Body() signInDto: SignInDto,
   ): Promise<{ access_token: string }> {
     try {
-      return await this.authService.signIn(
+      return await this.service.signIn(
         signInDto.username,
         signInDto.hashedPassword,
       );
@@ -73,7 +71,7 @@ export class AuthController {
   @UseGuards(JwtGuard)
   @Post('/api-key')
   async createApiKey(@Req() req: Request): Promise<{ apiKey: string }> {
-    return this.authService.generateApiKey(req.payload.sub);
+    return this.service.generateApiKey(req.payload.sub);
   }
 
   @UseGuards(JwtGuard)
