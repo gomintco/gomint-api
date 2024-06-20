@@ -5,10 +5,7 @@ import { User } from './user.entity';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import * as crypto from 'crypto';
 import { KeyService } from 'src/key/key.service';
-import { AccountService } from '../account/account.service';
-import { Account } from 'src/account/account.entity';
-import { Key } from 'src/key/key.entity';
-import { FailedUserSaveError, UserDuplicationError } from 'src/core/error';
+import { UserDuplicationError } from 'src/core/error';
 
 @Injectable()
 export class UserService {
@@ -16,9 +13,8 @@ export class UserService {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly repository: Repository<User>,
     private readonly keyService: KeyService,
-    private readonly accountService: AccountService,
   ) {}
 
   /**
@@ -27,39 +23,18 @@ export class UserService {
    * @returns A promise that resolves to an array of all the users in the database.
    */
   findAll(): Promise<User[]> {
-    return this.userRepository.find();
+    return this.repository.find();
   }
 
   async getUser(userId: string): Promise<User> {
-    return this.userRepository.findOne({
+    return this.repository.findOne({
       where: { id: userId },
       relations: { accounts: { keys: true }, keys: true },
     });
   }
 
-  async getUserAccounts(
-    id: string,
-  ): Promise<{ id: string; accounts: Account[] }> {
-    const accounts = await this.accountService.findAccountsByUserId(id);
-    return { id, accounts };
-  }
-
-  async getUserKeys(id: string): Promise<{ id: string; keys: Key[] }> {
-    const keys = await this.keyService.findKeysByUserId(id);
-
-    return { id, keys };
-  }
-
   findOneByUsername(username: string): Promise<User> {
-    return this.userRepository.findOneByOrFail({ username });
-  }
-
-  private handleDecryptEscrowKey(user: User, encryptionKey: string) {
-    let escrowKey = user.escrowKey;
-    if (user.hasEncryptionKey) {
-      escrowKey = this.keyService.decryptString(user.escrowKey, encryptionKey);
-    }
-    return escrowKey;
+    return this.repository.findOneByOrFail({ username });
   }
 
   /**
@@ -71,7 +46,7 @@ export class UserService {
    */
   async create(signUpDto: SignUpDto): Promise<User> {
     try {
-      const user = this.userRepository.create({
+      const user = this.repository.create({
         network: signUpDto.network,
         username: signUpDto.username,
         hashedPassword: signUpDto.hashedPassword,
@@ -81,7 +56,7 @@ export class UserService {
       });
       this.encryptEscrowKey(user, signUpDto.encryptionKey);
 
-      return await this.save(user);
+      return await this.repository.save(user);
     } catch (error: any) {
       if (error.message === 'ER_DUP_ENTRY') {
         throw new UserDuplicationError();
@@ -104,25 +79,6 @@ export class UserService {
         user.escrowKey,
         encryptionKey,
       );
-    }
-  }
-
-  /**
-   * This function saves the user entity to the database.
-   * If an error occurs during the save operation, it is caught and logged,
-   * and an FailedUserSaveError is thrown with the error message.
-   *
-   * @param user - The user entity to be saved.
-   * @returns A promise that resolves to the saved user entity.
-   * @throws {FailedUserSaveError} If an error occurs during the save operation.
-   */
-  async save(user: User): Promise<User> {
-    try {
-      // await is needed to catch errors here
-      return await this.userRepository.save(user);
-    } catch (err: any) {
-      this.logger.error(err);
-      throw new FailedUserSaveError(err.code || err.message);
     }
   }
 }

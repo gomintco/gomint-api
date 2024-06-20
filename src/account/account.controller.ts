@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Headers,
   InternalServerErrorException,
   Logger,
@@ -26,24 +27,39 @@ import {
   InvalidKeyTypeError,
 } from 'src/core/error';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { AccountResponse } from 'src/user/response/account.response';
 
 @Controller('account')
 @UseGuards(ApiKeyGuard)
 export class AccountController {
   private readonly logger = new Logger(AccountController.name);
 
-  constructor(private readonly accountService: AccountService) {}
+  constructor(private readonly service: AccountService) {}
+
+  @Get()
+  async getUserAccounts(
+    @Req() req: Request,
+  ): Promise<{ id: string; accounts: AccountResponse[] }> {
+    const userId = req.user.id;
+
+    const accounts = await this.service.findUserAccounts(userId);
+
+    return {
+      id: userId,
+      accounts: accounts.map((account) => new AccountResponse(account)),
+    };
+  }
 
   @Post()
-  async create(
+  async createAccount(
     @Req() req: Request,
     @Body() accountCreateDto: AccountCreateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
     const { user } = req;
-
+    console.log(user);
     try {
-      const accountId = await this.accountService.createAccount(
+      const accountId = await this.service.createAccount(
         user,
         accountCreateDto,
         encryptionKey,
@@ -78,7 +94,7 @@ export class AccountController {
     const { user } = req;
 
     try {
-      const status = await this.accountService.associate(
+      const status = await this.service.associate(
         user,
         associateDto,
         encryptionKey,
