@@ -11,9 +11,11 @@ import { Key } from './key.entity';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import * as crypto from 'crypto';
-import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
-import { DecryptionFailedError } from './error/decryption-failed.error';
-import { InvalidKeyTypeError } from 'src/deal/error/invalid-key-type.error';
+import {
+  DecryptionFailedError,
+  EncryptionKeyNotProvidedError,
+  InvalidKeyTypeError,
+} from 'src/core/error';
 
 @Injectable()
 export class KeyService {
