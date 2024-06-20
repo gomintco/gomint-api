@@ -309,7 +309,7 @@ export class AccountService {
       .getOneOrFail();
   }
 
-  async findAccountsByUserId(id: string): Promise<Account[]> {
+  async findUserAccounts(id: string): Promise<Account[]> {
     return this.accountRepository.find({
       where: { user: { id } },
       relations: { keys: true },
