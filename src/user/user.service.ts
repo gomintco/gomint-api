@@ -2,13 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
+import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import * as crypto from 'crypto';
 import { KeyService } from 'src/key/key.service';
 import { AccountService } from '../account/account.service';
 import { Account } from 'src/account/account.entity';
 import { Key } from 'src/key/key.entity';
-import { FailedUserSaveError } from 'src/core/error';
+import { FailedUserSaveError, UserDuplicationError } from 'src/core/error';
 
 @Injectable()
 export class UserService {
@@ -16,21 +16,22 @@ export class UserService {
 
   constructor(
     @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    private readonly userRepository: Repository<User>,
     private readonly keyService: KeyService,
     private readonly accountService: AccountService,
-  ) { }
+  ) {}
+
   /**
    * This function returns all the users in the database.
    *
    * @returns A promise that resolves to an array of all the users in the database.
    */
   findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+    return this.userRepository.find();
   }
 
   async getUser(userId: string): Promise<User> {
-    return this.usersRepository.findOne({
+    return this.userRepository.findOne({
       where: { id: userId },
       relations: { accounts: { keys: true }, keys: true },
     });
@@ -50,7 +51,7 @@ export class UserService {
   }
 
   findOneByUsername(username: string): Promise<User> {
-    return this.usersRepository.findOneByOrFail({ username });
+    return this.userRepository.findOneByOrFail({ username });
   }
 
   private handleDecryptEscrowKey(user: User, encryptionKey: string) {
@@ -63,58 +64,31 @@ export class UserService {
 
   /**
    * This function creates a new user entity with the provided details.
-   * It generates a random escrow key for the user and sets the hasPassword field based on whether a password was provided.
+   * It generates a random escrow key for the user and sets the `hasEncryptionKey` field based on whether an `encryptionKey` was provided.
    *
-   * @param createUserDto - The data transfer object containing the user's details.
+   * @param signUpDto - The data transfer object containing the user's details.
    * @returns The created user entity.
    */
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const user = this.usersRepository.create({
-      network: createUserDto.network,
-      username: createUserDto.username,
-      hashedPassword: createUserDto.hashedPassword,
-      escrowKey: crypto.randomBytes(16).toString('hex'),
-      hasEncryptionKey: Boolean(createUserDto.encryptionKey),
-      email: createUserDto.email,
-    });
-    this.encryptEscrowKey(user, createUserDto.encryptionKey);
+  async create(signUpDto: SignUpDto): Promise<User> {
+    try {
+      const user = this.userRepository.create({
+        network: signUpDto.network,
+        username: signUpDto.username,
+        hashedPassword: signUpDto.hashedPassword,
+        escrowKey: crypto.randomBytes(16).toString('hex'),
+        hasEncryptionKey: Boolean(signUpDto.encryptionKey),
+        email: signUpDto.email,
+      });
+      this.encryptEscrowKey(user, signUpDto.encryptionKey);
 
-    return await this.save(user);
+      return await this.save(user);
+    } catch (error: any) {
+      if (error.message === 'ER_DUP_ENTRY') {
+        throw new UserDuplicationError();
+      }
+      throw error;
+    }
   }
-
-  /**
-   * This function handles the creation of a key or account for a user.
-   * If the createUserDto.withAccount flag is set, it creates a Hedera account and assigns it to the user.
-   * If the createUserDto.withKey flag is set, it creates a new key using the user's escrow key and assigns it to the user.
-   * If neither flag is set, it logs that only a user is being created.
-   *
-   * @param user - The user for whom the key or account is to be created.
-   * @param createUserDto - The data transfer object containing the user's details.
-   */
-  // async handleKeyOrAccountCreation(user: User, createUserDto: CreateUserDto) {
-  //   if (!createUserDto.withAccount && !createUserDto.withKey) {
-  //     // logging for data tracking in future
-  //     return this.logger.log('Only creating user');
-  //   }
-
-  //   const key = await this.keyService.create(user.escrowKey).save();
-  //   user.keys = [key];
-  //   // user.keys = Promise.resolve([key]);
-
-  //   if (createUserDto.withAccount) {
-  //     const accountTransaction =
-  //       await this.accountService.createTransactionAndExecute(
-  //         {
-  //           key,
-  //           initialBalance: createUserDto.network === Network.MAINNET ? 0 : 100,
-  //         },
-  //         createUserDto.network,
-  //       );
-  //     const account = await accountTransaction.save();
-  //     user.accounts = [account];
-  //     // user.accounts = Promise.resolve([account]);
-  //   }
-  // }
 
   /**
    * This function encrypts the escrow key with the user's password.
@@ -145,7 +119,7 @@ export class UserService {
   async save(user: User): Promise<User> {
     try {
       // await is needed to catch errors here
-      return await this.usersRepository.save(user);
+      return await this.userRepository.save(user);
     } catch (err: any) {
       this.logger.error(err);
       throw new FailedUserSaveError(err.code || err.message);

@@ -11,3 +11,4 @@ export * from './setting-nft-serial.error';
 export * from './user-not-found.error';
 export * from './wrong-password.error';
 export * from './no-payer-id.error';
+export * from './user-duplication.error';

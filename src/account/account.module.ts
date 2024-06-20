@@ -4,7 +4,6 @@ import { ClientModule } from 'src/client/client.module';
 import { Account } from './account.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountController } from './account.controller';
-import { AuthModule } from 'src/auth/auth.module';
 import { KeyModule } from 'src/key/key.module';
 import { HederaModule } from 'src/hedera-api/hedera-api.module';
 
@@ -12,7 +11,6 @@ import { HederaModule } from 'src/hedera-api/hedera-api.module';
   imports: [
     TypeOrmModule.forFeature([Account]),
     ClientModule,
-    AuthModule,
     KeyModule,
     HederaModule,
   ],
