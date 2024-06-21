@@ -25,6 +25,7 @@ import {
   AccountNotFoundError,
   DecryptionFailedError,
   EncryptionKeyNotProvidedError,
+  InvalidHederaIdError,
   InvalidNetworkError,
 } from 'src/core/error';
 
@@ -65,7 +66,11 @@ export class TokenController {
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         {
-          errorTypes: [DecryptionFailedError, EncryptionKeyNotProvidedError],
+          errorTypes: [
+            DecryptionFailedError,
+            EncryptionKeyNotProvidedError,
+            InvalidHederaIdError,
+          ],
           toThrow: BadRequestException,
         },
         { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
@@ -142,11 +147,10 @@ export class TokenController {
         encryptionKey,
       );
       return { status };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error associating account', {
-        cause: err,
-        description: err.message,
-      });
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
+      ]);
     }
   }
 }
