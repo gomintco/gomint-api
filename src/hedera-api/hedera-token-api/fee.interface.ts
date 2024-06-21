@@ -1,5 +1,3 @@
-export type FeeDto = FixedFeeDto | FractionalFeeDto | RoyaltyFeeDto;
-
 export interface FixedFeeDto {
   feeCollectorAccountId: string;
   hbarAmount?: number;

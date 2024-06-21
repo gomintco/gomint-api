@@ -6,7 +6,7 @@ import { KeyService } from './key.service';
 
 @Controller('key')
 export class KeyController {
-  constructor(private readonly service: KeyService) {}
+  constructor(private readonly keyService: KeyService) {}
 
   @UseGuards(ApiKeyGuard)
   @Get()
@@ -14,7 +14,7 @@ export class KeyController {
     @Req() req: Request,
   ): Promise<{ id: string; keys: KeyResponse[] }> {
     const userId = req.user.id;
-    const keys = await this.service.findKeysByUserId(userId);
+    const keys = await this.keyService.findKeysByUserId(userId);
     return { id: userId, keys: keys.map((key) => new KeyResponse(key)) };
   }
 }
