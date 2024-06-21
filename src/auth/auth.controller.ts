@@ -9,20 +9,49 @@ import {
   NotFoundException,
   Req,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
-import { JwtGuard } from './auth.guard';
+import { ApiKeyGuard, JwtGuard } from './auth.guard';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { UserNotFoundError } from 'src/core/error';
+import { UserDuplicationError, UserNotFoundError } from 'src/core/error';
+import { SignUpDto } from 'src/auth/dto/sign-up.dto';
+import { UserService } from 'src/user/user.service';
+import { UserResponse } from 'src/user/response/user.response';
+import { AuthMediator } from './auth.mediator';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+    private readonly mediator: AuthMediator,
+  ) {}
+
+  @HttpCode(HttpStatus.CREATED)
+  @Post('signup')
+  async signup(@Body() signUpDto: SignUpDto) {
+    try {
+      const { username, id, network } = await this.mediator.signup(signUpDto);
+
+      return { username, id, network };
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        { errorTypes: [UserDuplicationError], toThrow: BadRequestException },
+      ]);
+    }
+  }
+
+  @UseGuards(ApiKeyGuard)
+  @Get('user')
+  async getAuthUser(@Req() req: Request): Promise<UserResponse> {
+    return this.mediator.getAuthUser(req.user.id);
+  }
 
   @HttpCode(HttpStatus.OK)
   @Post('signin')
