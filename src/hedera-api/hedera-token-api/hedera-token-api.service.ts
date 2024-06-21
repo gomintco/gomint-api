@@ -158,7 +158,7 @@ export class HederaTokenApiService {
   }
 
   private parsePublicKeys(
-    createTokenInput: TokenCreateKeysDto,
+    createTokenInput: TokenCreateDto,
     defaultKey?: string,
   ) {
     const keys = {
