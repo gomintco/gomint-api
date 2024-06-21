@@ -20,7 +20,6 @@ export class NftService {
     private tokenService: HederaTokenApiService,
     private transactionService: HederaTransactionApiService,
     private mirrornodeService: HederaMirrornodeApiService,
-    private readonly configService: AppConfigService,
   ) {}
 
   async tokenCreateHandler(
