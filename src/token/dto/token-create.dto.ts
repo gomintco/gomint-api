@@ -8,6 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { FixedFee, FractionalFee, RoyaltyFee } from './custom-fees.dto';
+import { TokenCollectionMetadata } from './hip766-metadata.dto';
 
 export class TokenCreateDto {
   @IsString()
@@ -91,4 +92,11 @@ export class TokenCreateDto {
   @ValidateNested({ each: true })
   @Type(() => RoyaltyFee)
   royaltyFees: RoyaltyFee[];
+
+  @IsOptional()
+  @IsString()
+  metadataKey?: string;
+
+  @IsOptional()
+  metadata?: TokenCollectionMetadata;
 }

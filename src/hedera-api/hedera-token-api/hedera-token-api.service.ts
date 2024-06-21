@@ -39,28 +39,30 @@ export class HederaTokenApiService {
     );
     const transaction = new TokenCreateTransaction()
       .setTokenName(createTokenTransaction.tokenName)
+      .setTokenType(createTokenTransaction.tokenType)
       .setTokenSymbol(createTokenTransaction.tokenSymbol)
       .setDecimals(createTokenTransaction.decimals)
       .setInitialSupply(createTokenTransaction.initialSupply)
       .setTreasuryAccountId(createTokenTransaction.treasuryAccountId)
-      .setTokenType(createTokenTransaction.tokenType)
       .setAdminKey(createTokenTransaction.adminKey)
       .setKycKey(createTokenTransaction.kycKey)
       .setFreezeKey(createTokenTransaction.freezeKey)
       .setWipeKey(createTokenTransaction.wipeKey)
       .setSupplyKey(createTokenTransaction.supplyKey)
+      .setFeeScheduleKey(createTokenTransaction.feeScheduleKey)
       .setPauseKey(createTokenTransaction.pauseKey)
+      .setCustomFees(createTokenTransaction.customFees)
+      .setMaxSupply(createTokenTransaction.maxSupply)
+      .setSupplyType(createTokenTransaction.supplyType)
       .setFreezeDefault(createTokenTransaction.freezeDefault)
       .setExpirationTime(createTokenTransaction.expirationTime)
-      .setFeeScheduleKey(createTokenTransaction.feeScheduleKey)
-      .setCustomFees(createTokenTransaction.customFees)
-      .setSupplyType(createTokenTransaction.supplyType)
-      .setMaxSupply(createTokenTransaction.maxSupply)
-      .setTokenMemo(createTokenTransaction.tokenMemo)
       .setAutoRenewAccountId(createTokenTransaction.autoRenewAccountId)
       .setAutoRenewPeriod(
         createTokenTransaction.autoRenewPeriod ?? this.nDays * 24 * 60 * 60, // 90 days in seconds
-      );
+      )
+      .setTokenMemo(createTokenTransaction.tokenMemo)
+      .setMetadataKey(createTokenTransaction.metadataKey)
+      .setMetadata(createTokenTransaction.metadata)
 
     return transaction;
   }
