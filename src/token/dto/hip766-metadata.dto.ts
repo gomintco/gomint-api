@@ -24,15 +24,13 @@ export class TokenCollectionMetadata {
   @IsOptional()
   description?: string;
 
+  @IsString()
+  @IsOptional()
+  smallestUnitName?: string;
 
   @IsString()
   @IsOptional()
-  smallestUnitName?: string
-
-
-  @IsString()
-  @IsOptional()
-  smallestUnitSymbol?: string
+  smallestUnitSymbol?: string;
 
   @IsString()
   @IsOptional()
