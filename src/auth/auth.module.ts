@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
@@ -7,7 +7,10 @@ import { ApiKey } from './api-key.entity';
 import { User } from 'src/user/user.entity';
 import { ApiKeyGuard } from './auth.guard';
 import { AppConfigService } from 'src/config/app-config.service';
+import { UserModule } from 'src/user/user.module';
+import { AuthMediator } from './auth.mediator';
 
+@Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([ApiKey, User]),
@@ -19,8 +22,9 @@ import { AppConfigService } from 'src/config/app-config.service';
       }),
       inject: [AppConfigService],
     }),
+    UserModule,
   ],
-  providers: [AuthService, ApiKeyGuard],
+  providers: [AuthMediator, AuthService, ApiKeyGuard],
   controllers: [AuthController],
   exports: [AuthService, ApiKeyGuard],
 })

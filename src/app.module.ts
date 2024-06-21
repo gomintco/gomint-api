@@ -9,6 +9,7 @@ import { HederaModule } from './hedera-api/hedera-api.module';
 import { DbLogger } from './db/db-logger.service';
 import { AppLoggerModule } from './core/app-logger.module';
 import { IpfsModule } from './ipfs/ipfs.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { IpfsModule } from './ipfs/ipfs.module';
       extraProviders: [DbLogger],
       inject: [AppConfigService, DbLogger],
     }),
+    AuthModule,
     TokenModule,
     UserModule,
     DealModule,

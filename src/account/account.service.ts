@@ -1,17 +1,8 @@
 import {
-  AccountCreateTransaction,
-  Client,
-  PublicKey,
-  TransactionReceipt,
-} from '@hashgraph/sdk';
-import {
   Injectable,
   InternalServerErrorException,
   Logger,
-  ServiceUnavailableException,
 } from '@nestjs/common';
-import { AccountCreateInput } from './account.interface';
-import { Network } from 'src/hedera-api/network.enum';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
@@ -25,13 +16,11 @@ import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-a
 import { AccountCreateDto } from './dto/account-create.dto';
 import { HederaAccountApiService } from 'src/hedera-api/hedera-account-api/hedera-account-api.service';
 import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-api.service';
-
 import {
   AccountAliasAlreadyExistsError,
   AccountNotFoundError,
-  NoPayerIdError
+  NoPayerIdError,
 } from 'src/core/error';
-
 
 @Injectable()
 export class AccountService {
@@ -46,7 +35,7 @@ export class AccountService {
     private readonly tokenService: HederaTokenApiService,
     private readonly transactionService: HederaTransactionApiService,
     private readonly hederaKeyService: HederaKeyApiService,
-  ) { }
+  ) {}
 
   async createAccount(
     user: User,
@@ -62,7 +51,9 @@ export class AccountService {
       },
     });
 
-    if (accountCount && !accountCreateDto.payerId) throw new NoPayerIdError();
+    if (accountCount && !accountCreateDto.payerId) {
+      throw new NoPayerIdError();
+    }
 
     // check if alias already exists
     const accountAliasExists = await this.accountAliasExists(
@@ -77,22 +68,23 @@ export class AccountService {
     const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
 
     let payerAccount: Account;
-    if (accountCount)
+    if (accountCount) {
       payerAccount = await this.getUserAccountByAlias(
         user.id,
         accountCreateDto.payerId,
       );
+    }
 
     // this can potentially be made into its own method here
     const client = accountCount
       ? // if has account, user payerAccount to execute
-      this.clientService.buildClientAndSigningKeys(
-        user.network,
-        escrowKey,
-        payerAccount,
-      ).client
+        this.clientService.buildClientAndSigningKeys(
+          user.network,
+          escrowKey,
+          payerAccount,
+        ).client
       : // if no accounts, GoMint will pay
-      this.clientService.getGoMintClient(user.network);
+        this.clientService.getGoMintClient(user.network);
 
     // create the threshold key with GoMint account for management if anything goes wrong
     const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
@@ -317,7 +309,7 @@ export class AccountService {
       .getOneOrFail();
   }
 
-  async findAccountsByUserId(id: string): Promise<Account[]> {
+  async findUserAccounts(id: string): Promise<Account[]> {
     return this.accountRepository.find({
       where: { user: { id } },
       relations: { keys: true },
@@ -342,5 +334,4 @@ export class AccountService {
       });
     });
   }
-
 }
