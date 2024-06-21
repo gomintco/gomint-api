@@ -25,6 +25,7 @@ import { TokenMintDto } from 'src/token/dto/token-mint.dto';
 import { IpfsService } from 'src/ipfs/ipfs.service';
 import { TokenMetadata } from 'src/token/dto/hip412-metadata.dto';
 import { TokenCollectionMetadata } from 'src/token/dto/hip766-metadata.dto';
+import { InvalidHederaIdError } from 'src/core/error';
 
 @Injectable()
 export class HederaTokenApiService {
@@ -227,7 +228,7 @@ export class HederaTokenApiService {
     if (fixedFees) {
       fixedFees.forEach((fee) => {
         if (!fee.feeCollectorAccountId.startsWith('0.0.')) {
-          throw new Error(
+          throw new InvalidHederaIdError(
             "Fixed fee collector account id must start with '0.0.'",
           );
         }
@@ -236,7 +237,7 @@ export class HederaTokenApiService {
     if (fractionalFees) {
       fractionalFees.forEach((fee) => {
         if (!fee.feeCollectorAccountId.startsWith('0.0.')) {
-          throw new Error(
+          throw new InvalidHederaIdError(
             "Fractional fee collector account id must start with '0.0.'",
           );
         }
@@ -245,7 +246,7 @@ export class HederaTokenApiService {
     if (royaltyFees) {
       royaltyFees.forEach((fee) => {
         if (!fee.feeCollectorAccountId.startsWith('0.0.')) {
-          throw new Error(
+          throw new InvalidHederaIdError(
             "Royalty fee collector account id must start with '0.0.'",
           );
         }
