@@ -77,17 +77,6 @@ export class AuthService {
     }
   }
 
-  // private generateCryptoSecureKey(length = 32) {
-  //   // Ensure the length is an integer and at least 1
-  //   length = Math.max(1, Math.floor(length));
-  //   // Generate a buffer with cryptographically strong random bytes
-  //   const buffer = crypto.randomBytes(length);
-  //   // Convert the buffer to a hexadecimal string
-  //   return Array.from(buffer, (byte) =>
-  //     byte.toString(16).padStart(2, '0'),
-  //   ).join('');
-  // }
-
   private generateCryptoSecureKey(length = 32) {
     // Ensure the length is an integer and at least 1
     length = Math.max(1, Math.floor(length));
