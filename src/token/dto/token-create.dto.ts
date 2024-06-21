@@ -11,22 +11,19 @@ import { FixedFee, FractionalFee, RoyaltyFee } from './custom-fees.dto';
 import { TokenCollectionMetadata } from './hip766-metadata.dto';
 
 export class TokenCreateDto {
+  @IsOptional()
   @IsString()
-  tokenName: string;
+  payerId: string;
 
   @IsString()
-  tokenSymbol: string;
+  tokenName: string;
 
   @IsIn(['ft', 'nft'])
   tokenType: string;
 
   @IsString()
-  treasuryAccountId: string;
-
-  @IsOptional()
-  @IsString()
-  payerId: string;
-
+  tokenSymbol: string;
+  
   @IsOptional()
   @IsNumber()
   decimals: number = 0;
@@ -35,24 +32,10 @@ export class TokenCreateDto {
   @IsNumber()
   initialSupply: number;
 
-  @IsOptional()
-  @IsNumber()
-  maxSupply: number;
-
-  @IsOptional()
-  @IsBoolean()
-  finite: boolean = false;
-
-  @IsOptional()
-  @IsNumber()
-  expirationTime: number;
-
-  @IsOptional()
-  @IsString()
-  autoRenewAccountId: string;
 
   @IsString()
-  supplyKey: string = 'default';
+  treasuryAccountId: string;
+
 
   @IsOptional()
   @IsString()
@@ -60,23 +43,26 @@ export class TokenCreateDto {
 
   @IsOptional()
   @IsString()
-  freezeKey: string;
-
-  @IsOptional()
-  @IsString()
   kycKey: string;
 
   @IsOptional()
   @IsString()
-  pauseKey: string;
+  freezeKey: string;
 
   @IsOptional()
   @IsString()
   wipeKey: string;
 
+  @IsString()
+  supplyKey: string = 'default';
+
   @IsOptional()
   @IsString()
   feeScheduleKey: string;
+
+  @IsOptional()
+  @IsString()
+  pauseKey: string;
 
   @IsOptional()
   @ValidateNested({ each: true })
@@ -92,7 +78,23 @@ export class TokenCreateDto {
   @ValidateNested({ each: true })
   @Type(() => RoyaltyFee)
   royaltyFees: RoyaltyFee[];
+  
+  @IsOptional()
+  @IsNumber()
+  maxSupply: number;
 
+  @IsOptional()
+  @IsBoolean()
+  finite: boolean = false;
+
+  @IsOptional()
+  @IsNumber()
+  expirationTime: number;
+
+  @IsOptional()
+  @IsString()
+  autoRenewAccountId: string;
+ 
   @IsOptional()
   @IsString()
   metadataKey?: string;
