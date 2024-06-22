@@ -1,112 +1,79 @@
-import { CreateFtDto } from './ft/dto/create-ft.dto';
-import { FtCreateInput } from './ft/ft.interface';
-import { CreateNftDto } from './nft/dto/create-nft.dto';
-import { NftCreateInput } from './nft/nft.interface';
-import {
-  CustomFee,
-  CustomFixedFee,
-  Hbar,
-  Key,
-  PublicKey,
-} from '@hashgraph/sdk';
-import {
-  FixedFee,
-  TokenMirrornodeInfo,
-  TokenPublicKeys,
-} from './token.interface';
-import { BadRequestException } from '@nestjs/common';
-import { Network } from 'src/app.interface';
-import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
-import fetch from 'node-fetch';
+import { Injectable } from '@nestjs/common';
+import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
+import { User } from 'src/user/user.entity';
+import { TokenAssociateDto } from './dto/token-associate.dto';
+import { AccountService } from 'src/account/account.service';
+import { KeyService } from 'src/key/key.service';
+import { ClientService } from 'src/client/client.service';
+import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
+import { Account } from 'src/account/account.entity';
+import { AccountNotFoundError } from 'src/core/error';
 
-
+@Injectable()
 export class TokenService {
-  constructor() {}
+  constructor(
+    private readonly hederaTokenApiService: HederaTokenApiService,
+    private readonly accountService: AccountService,
+    private readonly keyService: KeyService,
+    private readonly clientService: ClientService,
+    private readonly hederaTransactionApiService: HederaTransactionApiService,
+  ) {}
 
-  protected async getTokenMirronodeInfo(
-    network: Network,
-    tokenId: string,
-  ): Promise<TokenMirrornodeInfo> {
-    let mirrornodeUrl = '';
-    switch (network) {
-      case Network.TESTNET:
-        mirrornodeUrl = TESTNET_MIRRONODE_URL;
-        break;
-      case Network.MAINNET:
-        mirrornodeUrl = MAINNET_MIRRONODE_URL;
-        break;
-    }
-    const res = await fetch(`${mirrornodeUrl}/tokens/${tokenId}`);
-    const data = await res.json();
-    return data as TokenMirrornodeInfo;
-  }
-
-  // used in ft and nft services for creating custom fees
-  protected parseFixedFee = (
-    fee: FixedFee,
-    feeCollectorAccountId: string,
-  ): CustomFixedFee => {
-    const customFee = new CustomFixedFee().setFeeCollectorAccountId(
-      feeCollectorAccountId,
-    );
-    if (fee.hbarAmount) customFee.setHbarAmount(new Hbar(fee.hbarAmount));
-    if (fee.ftId) {
-      if (!fee.ftAmount)
-        throw new BadRequestException(
-          'ftAmount is required when ftId is provided',
+  async tokenAssociateHandler(
+    user: User,
+    tokenAssociateDto: TokenAssociateDto,
+    encryptionKey?: string,
+  ) {
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
+    let associatingAccount: Account;
+    try {
+      associatingAccount = await this.accountService.getUserAccountByAlias(
+        user.id,
+        tokenAssociateDto.associatingId,
+      );
+    } catch (error) {
+      if (error instanceof AccountNotFoundError) {
+        throw new AccountNotFoundError(
+          'Unable to find account with associatingId',
         );
-      customFee.setAmount(fee.ftAmount).setDenominatingTokenId(fee.ftId);
-    }
-    customFee.setAllCollectorsAreExempt(fee.allCollectorsAreExempt);
-    return customFee;
-  };
-
-  // removed because account id is fetched using alias implementation now
-  // // used in ft and nft services for creating custom fees
-  // protected getFeeCollectorAccountId = (
-  //   accountId: string,
-  //   defaultId: string,
-  // ) => {
-  //   accountId === 'default' ? defaultId : accountId;
-  // };
-
-  protected parsePublicKeys = (
-    createTokenDto: CreateFtDto | CreateNftDto,
-    defaultKey: string, // will replace with aliases in future - currently default = treasury account key
-  ): TokenPublicKeys => {
-    const keys = {
-      adminKey: createTokenDto.adminKey,
-      freezeKey: createTokenDto.freezeKey,
-      kycKey: createTokenDto.kycKey,
-      pauseKey: createTokenDto.pauseKey,
-      supplyKey: createTokenDto.supplyKey,
-      wipeKey: createTokenDto.wipeKey,
-    };
-    const tokenPublicKeys: TokenPublicKeys = {};
-    Object.entries(keys).forEach(([keyType, keyValue]) => {
-      if (keyValue) {
-        tokenPublicKeys[keyType as keyof TokenPublicKeys] =
-          keyValue === 'default'
-            ? PublicKey.fromString(defaultKey)
-            : PublicKey.fromString(keyValue);
       }
-    });
-    return tokenPublicKeys;
-  };
+      throw error;
+    }
+    tokenAssociateDto.associatingId = associatingAccount.id;
 
-  protected uniqueKeys(tCreateInput: FtCreateInput | NftCreateInput) {
-    const keys = [
-      tCreateInput.adminKey,
-      tCreateInput.freezeKey,
-      tCreateInput.kycKey,
-      tCreateInput.pauseKey,
-      tCreateInput.supplyKey,
-      tCreateInput.wipeKey,
-    ].filter((key) => key != undefined);
-    return new Set<Key>(keys);
-  }
-
-  protected todayPlus90Days() {
-    return new Date(new Date().setDate(new Date().getDate() + 90));
+    // handle case if payerId is separate
+    let payerAccount: Account;
+    if (tokenAssociateDto.payerId) {
+      try {
+        payerAccount = await this.accountService.getUserAccountByAlias(
+          user.id,
+          tokenAssociateDto.payerId,
+        );
+      } catch (error) {
+        if (error instanceof AccountNotFoundError) {
+          throw new AccountNotFoundError(
+            'Unable to find account with payerId: ' + tokenAssociateDto.payerId,
+          );
+        }
+        throw error;
+      }
+    }
+    // build client and signers
+    const { client, signers } = this.clientService.buildClientAndSigningKeys(
+      user.network,
+      escrowKey,
+      associatingAccount,
+      payerAccount,
+    );
+    // handle token associate transaction
+    const transaction =
+      this.hederaTokenApiService.associateTransaction(tokenAssociateDto);
+    const receipt =
+      await this.hederaTransactionApiService.freezeSignExecuteAndGetReceipt(
+        transaction,
+        client,
+        signers,
+      );
+    return receipt.status.toString();
   }
 }

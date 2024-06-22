@@ -1,24 +1,163 @@
-import { AccountCreateTransaction, PublicKey } from '@hashgraph/sdk';
 import {
   Injectable,
   InternalServerErrorException,
-  ServiceUnavailableException,
+  Logger,
 } from '@nestjs/common';
-import { AccountCreateInput } from './account.interface';
-import { Network } from '../app.interface';
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
 import { In, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
+import { AssociateDto } from './dto/associate.dto';
+import { TokenCreateDto } from 'src/token/dto/token-create.dto';
+import { KeyService } from 'src/key/key.service';
+import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
+import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
+import { AccountCreateDto } from './dto/account-create.dto';
+import { HederaAccountApiService } from 'src/hedera-api/hedera-account-api/hedera-account-api.service';
+import { HederaKeyApiService } from 'src/hedera-api/hedera-key-api/hedera-key-api.service';
+import {
+  AccountAliasAlreadyExistsError,
+  AccountNotFoundError,
+  NoPayerIdError,
+} from 'src/core/error';
 
 @Injectable()
 export class AccountService {
+  private readonly logger = new Logger(AccountService.name);
+
   constructor(
     @InjectRepository(Account)
-    private accountRepository: Repository<Account>,
-    private clientService: ClientService,
+    private readonly accountRepository: Repository<Account>,
+    private readonly clientService: ClientService,
+    private readonly keyService: KeyService,
+    private readonly hederaAccountService: HederaAccountApiService,
+    private readonly tokenService: HederaTokenApiService,
+    private readonly transactionService: HederaTransactionApiService,
+    private readonly hederaKeyService: HederaKeyApiService,
   ) {}
+
+  async createAccount(
+    user: User,
+    accountCreateDto: AccountCreateDto,
+    encryptionKey?: string,
+  ) {
+    // check if user has any accounts to handle if free or not
+    const accountCount = await this.accountRepository.count({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+    });
+
+    if (accountCount && !accountCreateDto.payerId) {
+      throw new NoPayerIdError();
+    }
+
+    // check if alias already exists
+    const accountAliasExists = await this.accountAliasExists(
+      user.id,
+      accountCreateDto.alias,
+    );
+    if (accountAliasExists) {
+      throw new AccountAliasAlreadyExistsError();
+    }
+
+    // decrypt user escrow key
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
+
+    let payerAccount: Account;
+    if (accountCount) {
+      payerAccount = await this.getUserAccountByAlias(
+        user.id,
+        accountCreateDto.payerId,
+      );
+    }
+
+    // this can potentially be made into its own method here
+    const client = accountCount
+      ? // if has account, user payerAccount to execute
+        this.clientService.buildClientAndSigningKeys(
+          user.network,
+          escrowKey,
+          payerAccount,
+        ).client
+      : // if no accounts, GoMint will pay
+        this.clientService.getGoMintClient(user.network);
+
+    // create the threshold key with GoMint account for management if anything goes wrong
+    const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
+      accountCreateDto.type,
+      user.network,
+    );
+    // encrypt and attach user to key
+    const key = await this.keyService.attachUserToKey(
+      accountCreateDto.type,
+      privateKey,
+      escrowKey,
+      user,
+    );
+    // create account transaction
+    const accountCreateTransaction =
+      this.hederaAccountService.createTransaction(accountCreateDto, keyList);
+    // execute tx
+    const receipt =
+      await this.transactionService.freezeSignExecuteAndGetReceipt(
+        accountCreateTransaction,
+        client,
+      );
+    // .getClient method uses the GoMint account as payer
+    const accountId = receipt.accountId.toString();
+    // save account and attach user and key
+    const account = this.accountRepository.create({
+      id: accountId,
+      keys: [key],
+      alias: accountCreateDto.alias ?? accountId,
+      user: user,
+    });
+    await this.accountRepository.save(account);
+    return accountId;
+  }
+
+  /**
+   * Associates tokens to a user
+   */
+  async associate(
+    user: User,
+    associateDto: AssociateDto,
+    encryptionKey?: string,
+  ) {
+    const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
+    const associatingAccount = await this.getUserAccountByAlias(
+      user.id,
+      associateDto.associatingId,
+    );
+    // handle case if payerId is separate
+    let payerAccount: Account;
+    if (associateDto.payerId) {
+      payerAccount = await this.getUserAccountByAlias(
+        user.id,
+        associateDto.payerId,
+      );
+    }
+    // build client and signers
+    const { client, signers } = this.clientService.buildClientAndSigningKeys(
+      user.network,
+      escrowKey,
+      associatingAccount,
+      payerAccount,
+    );
+    // handle token associate transaction
+    const transaction = this.tokenService.associateTransaction(associateDto);
+    const receipt =
+      await this.transactionService.freezeSignExecuteAndGetReceipt(
+        transaction,
+        client,
+        signers,
+      );
+    return receipt.status.toString();
+  }
 
   /**
    * Checks if an account alias already exists for a given user ID.
@@ -32,11 +171,68 @@ export class AccountService {
         alias: alias,
         user: { id: userId },
       },
-      relations: ['user'], // This ensures the user relationship is joined
+      relations: { user: true }, // This ensures the user relationship is joined
     });
-
     // Return true if an account is found, otherwise false
     return !!account;
+  }
+
+  async parseCustomFeeAliases(userId: string, createTokenDto: TokenCreateDto) {
+    // doesn't feel like this function belongs here...
+    const parseFees = async (fees, feeProcessor) => {
+      return await Promise.all(fees.map(feeProcessor));
+    };
+    const processFee = async (fee) => ({
+      ...fee,
+      feeCollectorAccountId: await this.getUserAccountIdByAlias(
+        userId,
+        fee.feeCollectorAccountId,
+      ),
+    });
+    const processRoyaltyFee = async (fee) => {
+      const processedFee = await processFee(fee);
+      if (fee.fallbackFee) {
+        processedFee.fallbackFee = await processFee(fee.fallbackFee);
+      }
+      return processedFee;
+    };
+    // Collect all fee processing promises
+    const feeProcessingPromises = [];
+    // parse fixed fees
+    if (createTokenDto.fixedFees) {
+      const fixedFeesPromise = parseFees(createTokenDto.fixedFees, processFee);
+      feeProcessingPromises.push(fixedFeesPromise);
+    } else {
+      feeProcessingPromises.push([]);
+    }
+    // parse fractional fees
+    if (createTokenDto.fractionalFees) {
+      const fractionalFeesPromise = parseFees(
+        createTokenDto.fractionalFees,
+        processFee,
+      );
+      feeProcessingPromises.push(fractionalFeesPromise);
+    } else {
+      feeProcessingPromises.push([]);
+    }
+    // parse royalty fees
+    if (createTokenDto.royaltyFees) {
+      const royaltyFeesPromise = parseFees(
+        createTokenDto.royaltyFees,
+        processRoyaltyFee,
+      );
+      feeProcessingPromises.push(royaltyFeesPromise);
+    } else {
+      feeProcessingPromises.push([]);
+    }
+    // Wait for all processing to complete
+    const [fixedFees = [], fractionalFees = [], royaltyFees = []] =
+      await Promise.all(feeProcessingPromises);
+    // Assign processed fees
+    createTokenDto.fixedFees = fixedFees;
+    createTokenDto.fractionalFees = fractionalFees;
+    createTokenDto.royaltyFees = royaltyFees;
+    return createTokenDto;
   }
 
   /**
@@ -52,9 +248,18 @@ export class AccountService {
     userId: string,
     alias: string,
   ): Promise<string> {
+    // if alias is already in account ID format, just return alias
+    if (alias.startsWith('0.0.')) {
+      return alias;
+    }
     const account = await this.accountRepository.findOne({
       where: { user: { id: userId }, alias },
     });
+
+    if (!account) {
+      throw new Error(`Account not found for alias: ${alias}`);
+    }
+
     return account.id;
   }
 
@@ -68,17 +273,25 @@ export class AccountService {
    * @returns {Promise<Account>} A Promise that resolves to the Account object with its relevant keys.
    */
   async getUserAccountByAlias(userId: string, alias: string): Promise<Account> {
+    let account: Account;
     if (alias.startsWith('0.0.')) {
-      // this is very hacky... handles edge case where royalty fee is a non-user account
-      // current issues: if tx payer is 0.0. alias, this doesn't return a key to sign
-      // also, currently if a non 0.0. alias exists, the 0.0. cannot be used as signer
-      return { id: alias } as Account;
+      account = await this.accountRepository.findOne({
+        where: { id: alias },
+        relations: { keys: true },
+      });
+    } else {
+      // can search by alias because if no alias, account ID is used as alias
+      account = await this.accountRepository.findOne({
+        where: { user: { id: userId }, alias },
+        relations: { keys: true },
+      });
     }
-    // can search by alias because if no alias, account ID is used as alias
-    return this.accountRepository.findOneOrFail({
-      where: { user: { id: userId }, alias },
-      relations: ['keys'],
-    });
+    if (!account) {
+      throw new AccountNotFoundError(
+        `Account associated with ${alias} is not found`,
+      );
+    }
+    return account;
   }
 
   async getUserAccountByPublicKey(
@@ -93,13 +306,13 @@ export class AccountService {
       .andWhere('key.publicKey LIKE :publicKey', {
         publicKey: `%${publicKey}%`,
       })
-      .getOne();
+      .getOneOrFail();
   }
 
-  async findAccountsByUserId(id: string): Promise<Account[]> {
+  async findUserAccounts(id: string): Promise<Account[]> {
     return this.accountRepository.find({
       where: { user: { id } },
-      relations: ['keys'],
+      relations: { keys: true },
     });
   }
 
@@ -108,100 +321,17 @@ export class AccountService {
       where: {
         id: In(accountIds),
       },
-      relations: ['keys', 'user'],
+      relations: { keys: true, user: true },
     });
   }
 
   async save(account: Account): Promise<Account> {
     return this.accountRepository.save(account).catch((err) => {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error saving account', {
         cause: err,
         description: err.code || err.message,
       });
     });
-  }
-
-  /**
-   * This method creates and executes a transaction.
-   * It accepts an account creation input and a network as parameters.
-   * It returns an AccountBuilder instance with the created account.
-   *
-   * @param {AccountCreateInput} accountCreateInput - The input data for account creation.
-   * @param {Network} network - The network on which the transaction will be executed.
-   * @returns {Promise<AccountBuilder>} An AccountBuilder instance with the created account.
-   */
-  async createTransactionAndExecute(
-    accountCreateInput: AccountCreateInput,
-    network: Network,
-  ): Promise<AccountBuilder> {
-    const transaction = this.createTransaction(accountCreateInput);
-    // ONLY FIRST ACCOUNT CREATION IS 'FREE'
-    const client = this.clientService.getClient(network);
-    // WHEN USER HAS ONE ACCOUNT THEY SHOULD USE THEIR ACCOUNT TO PAY FOR THE NEXT ACCOUNT
-
-    try {
-      const transactionResponse = await transaction.execute(client);
-      const receipt = await transactionResponse.getReceipt(client);
-      const accountId = receipt.accountId.toString();
-      const account = this.accountRepository.create({
-        id: accountId,
-        keys: [accountCreateInput.key],
-        alias: accountCreateInput.alias ?? accountId,
-        // userId: accountCreateInput.key.user.id, // set user ID - this is used for ensuring unique account alias's per user
-      });
-      return new AccountBuilder(this, account);
-    } catch (err) {
-      console.error(err);
-      throw new ServiceUnavailableException("Couldn't create Hedera account", {
-        cause: err,
-        description: err.message,
-      });
-    }
-  }
-
-  /**
-   * This function creates a transaction.
-   * It takes an account creation input as a parameter.
-   * It returns a new AccountCreateTransaction object.
-   *
-   * @param {AccountCreateInput} accountCreateInput - The input for account creation.
-   * @returns {AccountCreateTransaction} A new AccountCreateTransaction object.
-   */
-  private createTransaction(accountCreateInput: AccountCreateInput) {
-    return (
-      new AccountCreateTransaction()
-        .setKey(PublicKey.fromString(accountCreateInput.key.publicKey))
-        // .setAlias(accountCreateInput.alias) // removed because this clashes with the account alias
-        .setInitialBalance(accountCreateInput.initialBalance)
-        .setReceiverSignatureRequired(
-          accountCreateInput.receiverSignatureRequired,
-        )
-        .setMaxAutomaticTokenAssociations(
-          accountCreateInput.maxAutomaticTokenAssociations,
-        )
-        .setStakedAccountId(accountCreateInput.stakedAccountId)
-        //   .setStakedNodeId(accountCreateInput.stakedNodeId)
-        .setDeclineStakingReward(accountCreateInput.declineStakingReward)
-        .setAccountMemo(accountCreateInput.accountMemo)
-    );
-    // .setAutoRenewPeriod() (disabled atm)
-  }
-}
-
-class AccountBuilder {
-  constructor(
-    private accountService: AccountService,
-    private account: Account,
-  ) {}
-
-  async addUser(user: User) {
-    // TODO: check if user already exists
-    this.account.user = user;
-    return this;
-  }
-
-  async save(): Promise<Account> {
-    return this.accountService.save(this.account);
   }
 }

@@ -1,24 +1,55 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Logger,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { EncryptedKeyPair } from './key.interface';
 import { PrivateKey } from '@hashgraph/sdk';
-import { KeyType } from '../app.interface';
+import { KeyType } from 'src/key/key-type.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Key } from './key.entity';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import * as crypto from 'crypto';
+import {
+  DecryptionFailedError,
+  EncryptionKeyNotProvidedError,
+  InvalidKeyTypeError,
+} from 'src/core/error';
 
 @Injectable()
 export class KeyService {
+  private readonly logger = new Logger(KeyService.name);
+
   constructor(
     @InjectRepository(Key)
-    private keysRepository: Repository<Key>,
+    private readonly keysRepository: Repository<Key>,
   ) {}
 
   async findKeysByUserId(id: string): Promise<Key[]> {
     return this.keysRepository.find({
       where: { user: { id } },
     });
+  }
+
+  async attachUserToKey(
+    type: KeyType,
+    privateKey: PrivateKey,
+    escrowKey: string,
+    user: User,
+  ) {
+    const key = new Key();
+    key.type = type;
+    key.publicKey = privateKey.publicKey.toString();
+
+    const encryptedPrivateKey = this.encryptString(
+      privateKey.toString(),
+      escrowKey,
+    );
+    key.encryptedPrivateKey = encryptedPrivateKey;
+    key.user = user;
+    await this.keysRepository.save(key);
+    return key;
   }
 
   /**
@@ -61,7 +92,7 @@ export class KeyService {
    */
   async save(key: Key): Promise<Key> {
     return this.keysRepository.save(key).catch((err) => {
-      console.error(err);
+      this.logger.error(err);
       throw new InternalServerErrorException('Error saving key', {
         cause: err,
         description: err.code || err.message,
@@ -127,7 +158,7 @@ export class KeyService {
       .createHash('sha256')
       .update(encryptionKey)
       .digest('base64')
-      .substr(0, 32);
+      .substring(0, 32);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(
       'aes-256-cbc',
@@ -139,6 +170,35 @@ export class KeyService {
     return iv.toString('hex') + ':' + encrypted.toString('hex'); // Combine IV and encrypted data
   }
 
+  decryptUserEscrowKey(user: User, encryptionKey?: string): string {
+    let escrowKey = user.escrowKey;
+    if (user.hasEncryptionKey) {
+      escrowKey = this.decryptString(user.escrowKey, encryptionKey);
+    }
+    return escrowKey;
+  }
+
+  decryptAccountKeys(
+    encryptedPrivateKey: Key[],
+    escrowKey: string,
+  ): PrivateKey[] {
+    return encryptedPrivateKey.map((key) => {
+      const decryptedKey = this.decryptString(
+        key.encryptedPrivateKey,
+        escrowKey,
+      );
+
+      switch (key.type) {
+        case KeyType.ED25519:
+          return PrivateKey.fromStringED25519(decryptedKey);
+        case KeyType.ECDSA:
+          return PrivateKey.fromStringECDSA(decryptedKey);
+        default:
+          throw new InvalidKeyTypeError();
+      }
+    });
+  }
+
   /**
    * This function decrypts a string with the provided encryption key.
    * It splits the encrypted string into the initialization vector and the encrypted data,
@@ -148,8 +208,11 @@ export class KeyService {
    * @param encryptionKey - The key to be used for decryption.
    * @returns The decrypted string.
    */
-  decryptString(encryptedValue: string, encryptionKey: string): string {
-    if (!encryptionKey) throw new Error('No encryption key provided');
+  decryptString(encryptedValue: string, encryptionKey?: string): string {
+    if (!encryptionKey) {
+      // user will need to use proxy server if they want to use their escrow key
+      throw new EncryptionKeyNotProvidedError();
+    }
     try {
       const components = encryptedValue.split(':');
       const iv = Buffer.from(components.shift(), 'hex');
@@ -158,7 +221,7 @@ export class KeyService {
         .createHash('sha256')
         .update(encryptionKey)
         .digest('base64')
-        .substr(0, 32);
+        .substring(0, 32);
       const decipher = crypto.createDecipheriv(
         'aes-256-cbc',
         Buffer.from(keyHash),
@@ -167,20 +230,19 @@ export class KeyService {
       let decrypted = decipher.update(encryptedText);
       decrypted = Buffer.concat([decrypted, decipher.final()]);
       return decrypted.toString();
-    } catch (err) {
-      console.log('Error decrypting string', err);
-      throw new InternalServerErrorException('Unable to decrypt private key', {
-        cause: err,
-        description: err.code || err.message,
-      });
+    } catch (err: any) {
+      this.logger.error('Error decrypting string', err);
+      throw new DecryptionFailedError(
+        'Decryption failed, check encryption key',
+      );
     }
   }
 }
 
 class KeyBuilder {
   constructor(
-    private keyService: KeyService,
-    private key: Key,
+    private readonly keyService: KeyService,
+    private readonly key: Key,
   ) {}
 
   addUser(user: User) {

@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { createHash } from 'crypto';
 import { User } from 'src/user/user.entity';
@@ -17,17 +13,28 @@ import {
   TransferTransaction,
 } from '@hashgraph/sdk';
 import { KeyService } from 'src/key/key.service';
-import { DealAlias, Network } from 'src/app.interface';
-import fetch from 'node-fetch'
-import { MAINNET_MIRRONODE_URL, TESTNET_MIRRONODE_URL } from 'src/app.config';
+import { DealAlias } from 'src/deal/deal-alias.enum';
+import { KeyType } from 'src/key/key-type.enum';
+import { Network } from 'src/hedera-api/network.enum';
+import { AppConfigService } from 'src/config/app-config.service';
+import {
+  DealNotFoundError,
+  InvalidKeyTypeError,
+  InvalidNetworkError,
+  NotNftOwnerError,
+  SettingNftSerialError,
+} from 'src/core/error';
 
 @Injectable()
 export class DealService {
+  private readonly logger = new Logger(DealService.name);
+
   constructor(
     @InjectRepository(Deal)
-    private dealRepository: Repository<Deal>,
-    private accountService: AccountService,
-    private keyService: KeyService,
+    private readonly dealRepository: Repository<Deal>,
+    private readonly accountService: AccountService,
+    private readonly keyService: KeyService,
+    private readonly configService: AppConfigService,
   ) {}
 
   async createDeal(user: User, createDealDto: CreateDealDto) {
@@ -44,7 +51,9 @@ export class DealService {
       createDealDto,
       user.id,
     ).catch((err) => {
-      console.error('Error swapping aliases for account ids: ' + err.message);
+      this.logger.error(
+        'Error swapping aliases for account ids: ' + err.message,
+      );
       throw new Error(
         'Error swapping aliases for account ids. Ensure all aliases are valid',
       );
@@ -60,8 +69,8 @@ export class DealService {
 
     try {
       await this.dealRepository.save(deal);
-    } catch (err) {
-      console.log('Error saving deal: ' + err.code);
+    } catch (err: any) {
+      this.logger.log('Error saving deal: ' + err.code);
     }
 
     return dealId;
@@ -71,21 +80,16 @@ export class DealService {
     network: Network,
     dealId: string,
     receiverId: string,
-    payerId: string | undefined = undefined,
-    serialNumber: number | undefined = undefined,
-    encryptionKey: string | undefined = undefined,
+    payerId?: string,
+    serialNumber?: number,
+    encryptionKey?: string,
   ) {
-    const deal = await this.dealRepository
-      .findOneOrFail({
-        where: { dealId },
-      })
-      .catch((err) => {
-        console.error('Error fetching deal: ' + err.message);
-        throw new BadRequestException('Unable to find deal', {
-          description: "The dealId doesn't exist or is invalid",
-        });
-      });
-
+    const deal = await this.dealRepository.findOneOrFail({
+      where: { dealId },
+    });
+    if (!deal) {
+      throw new DealNotFoundError();
+    }
     let dealData = JSON.parse(deal.dealJson) as CreateDealDto;
 
     // swap the receiver's account id
@@ -113,39 +117,29 @@ export class DealService {
       await this.accountService.findAccountsByIds(requiredSigners);
     // decrypt the keys
     const decryptedKeys = signerAccounts.flatMap((account) => {
-      let escrowKey = account.user.escrowKey;
+      let { escrowKey } = account.user;
       if (account.user.hasEncryptionKey) {
-        if (!encryptionKey)
-          // user will need to use proxy server if they want to use their escrow key
-          throw new BadRequestException(
-            'You must provide your encryption key using the POST method',
-            {
-              description: 'No encryption key provided',
-            },
-          );
         escrowKey = this.keyService.decryptString(escrowKey, encryptionKey);
       }
-      return account.keys.map((key) => {
-        return {
-          type: key.type,
-          publicKey: key.publicKey,
-          privateKey: this.keyService.decryptString(
-            key.encryptedPrivateKey,
-            escrowKey,
-          ),
-        };
-      });
+      return account.keys.map((key) => ({
+        type: key.type,
+        publicKey: key.publicKey,
+        privateKey: this.keyService.decryptString(
+          key.encryptedPrivateKey,
+          escrowKey,
+        ),
+      }));
     });
     // sign the transaction
     await Promise.all(
       decryptedKeys.map(({ type, privateKey }) => {
         switch (type) {
-          case 'ed25519':
+          case KeyType.ED25519:
             return transaction.sign(PrivateKey.fromStringED25519(privateKey));
-          case 'ecdsa':
+          case KeyType.ECDSA:
             return transaction.sign(PrivateKey.fromStringECDSA(privateKey));
           default:
-            throw new Error('Invalid key type');
+            throw new InvalidKeyTypeError();
         }
       }),
     );
@@ -300,9 +294,11 @@ export class DealService {
   private async injectNftSerialNumber(
     network: Network,
     dto: CreateDealDto,
-    serialNumber: number | undefined = undefined,
+    serialNumber?: number,
   ) {
-    if (!dto.nftTransfers.length) return dto;
+    if (!dto.nftTransfers.length) {
+      return dto;
+    }
 
     // ONLY HANDLE ONE NFT TRANSFER FOR NOW
     if (!dto.nftTransfers[0].serialNumber && !serialNumber) {
@@ -323,40 +319,39 @@ export class DealService {
     network: Network,
     tokenId: string,
     sellerId: string,
-  ) {
-    let mirrornodeUrl = '';
+  ): Promise<number> {
+    let mirrorNodeUrl = '';
     switch (network) {
       case Network.MAINNET:
-        mirrornodeUrl = MAINNET_MIRRONODE_URL;
+        mirrorNodeUrl = this.configService.hedera.mainnet.mirrornodeUrl;
         break;
       case Network.TESTNET:
-        mirrornodeUrl = TESTNET_MIRRONODE_URL;
+        mirrorNodeUrl = this.configService.hedera.testnet.mirrornodeUrl;
         break;
       default:
-        throw new BadRequestException('Invalid network');
+        throw new InvalidNetworkError();
     }
+    let res: Response, nfts: { serial_number: number }[];
     try {
       // fetch the nft
-      const res = await fetch(
-        `${mirrornodeUrl}/accounts/${sellerId}/nfts?token.id=${tokenId}`,
+      res = await fetch(
+        `${mirrorNodeUrl}/accounts/${sellerId}/nfts?token.id=${tokenId}`,
       );
-      const { nfts } = await res.json();
-      // randomly pick a serial number
-      if (nfts.length === 0) {
-        throw new BadRequestException(
-          `The seller ${sellerId} does not own the NFT: ${tokenId}`,
-        );
-      }
-      const randomIndex = Math.floor(Math.random() * nfts.length);
-      const randomSerialNumber = nfts[randomIndex].serial_number;
-      return randomSerialNumber;
-    } catch (err) {
-      console.error(err)
-      throw new ServiceUnavailableException('Error setting NFT serial', {
-        description: err.message,
-        cause: err,
-      });
+      nfts = (await res.json()).nfts;
+    } catch (err: any) {
+      this.logger.error(err);
+      throw new SettingNftSerialError();
     }
+    // randomly pick a serial number
+    if (nfts.length === 0) {
+      this.logger.error(
+        `The seller ${sellerId} does not own the NFT: ${tokenId}`,
+      );
+      throw new NotNftOwnerError();
+    }
+    const randomIndex = Math.floor(Math.random() * nfts.length);
+    const randomSerialNumber = nfts[randomIndex].serial_number;
+    return randomSerialNumber;
   }
 
   private validateAmounts(
