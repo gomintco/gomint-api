@@ -4,11 +4,13 @@ import { KeyResponse } from './key.response';
 export class AccountResponse {
   id: string;
   alias: string;
-  keys: KeyResponse[];
+  createdAt: Date;
+  //keys: KeyResponse[];
 
-  constructor({ id, alias, keys }: Account) {
+  constructor({ id, alias, keys, createdAt }: Account) {
     this.id = id;
     this.alias = alias;
-    this.keys = keys.map((key) => new KeyResponse(key));
+    this.createdAt = createdAt;
+    //this.keys = keys.map((key) => new KeyResponse(key));
   }
 }

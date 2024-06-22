@@ -18,50 +18,53 @@ import {
   AssociateTokenDto,
   TokenCreateTransactionInput,
 } from './token.interface';
-import { TokenCreateKeys, TokenCreateKeysDto } from './pubKey.interface';
+import { TokenCreateKeys } from './pubKey.interface';
 import { FixedFeeDto, FractionalFeeDto, RoyaltyFeeDto } from './fee.interface';
 import { TokenCreateDto } from 'src/token/dto/token-create.dto';
 import { TokenMintDto } from 'src/token/dto/token-mint.dto';
 import { IpfsService } from 'src/ipfs/ipfs.service';
 import { TokenMetadata } from 'src/token/dto/hip412-metadata.dto';
+import { TokenCollectionMetadata } from 'src/token/dto/hip766-metadata.dto';
 import { InvalidHederaIdError } from 'src/core/error';
 
 @Injectable()
 export class HederaTokenApiService {
   nDays = 90;
 
-  constructor(private readonly ipfsService: IpfsService) {}
+  constructor(private readonly ipfsService: IpfsService) { }
 
-  createTransaction(tokenCreateDto: TokenCreateDto, defaultKey?: string) {
+  async createTransaction(tokenCreateDto: TokenCreateDto, defaultKey?: string) {
     // parses input data into correct format
-    const createTokenTransaction = this.parseCreateTransactionDto(
+    const createTokenTransaction = await this.parseCreateTransactionDto(
       tokenCreateDto,
       defaultKey,
     );
     const transaction = new TokenCreateTransaction()
       .setTokenName(createTokenTransaction.tokenName)
+      .setTokenType(createTokenTransaction.tokenType)
       .setTokenSymbol(createTokenTransaction.tokenSymbol)
       .setDecimals(createTokenTransaction.decimals)
       .setInitialSupply(createTokenTransaction.initialSupply)
       .setTreasuryAccountId(createTokenTransaction.treasuryAccountId)
-      .setTokenType(createTokenTransaction.tokenType)
       .setAdminKey(createTokenTransaction.adminKey)
       .setKycKey(createTokenTransaction.kycKey)
       .setFreezeKey(createTokenTransaction.freezeKey)
       .setWipeKey(createTokenTransaction.wipeKey)
       .setSupplyKey(createTokenTransaction.supplyKey)
+      .setFeeScheduleKey(createTokenTransaction.feeScheduleKey)
       .setPauseKey(createTokenTransaction.pauseKey)
+      .setCustomFees(createTokenTransaction.customFees)
+      .setMaxSupply(createTokenTransaction.maxSupply)
+      .setSupplyType(createTokenTransaction.supplyType)
       .setFreezeDefault(createTokenTransaction.freezeDefault)
       .setExpirationTime(createTokenTransaction.expirationTime)
-      .setFeeScheduleKey(createTokenTransaction.feeScheduleKey)
-      .setCustomFees(createTokenTransaction.customFees)
-      .setSupplyType(createTokenTransaction.supplyType)
-      .setMaxSupply(createTokenTransaction.maxSupply)
-      .setTokenMemo(createTokenTransaction.tokenMemo)
       .setAutoRenewAccountId(createTokenTransaction.autoRenewAccountId)
       .setAutoRenewPeriod(
         createTokenTransaction.autoRenewPeriod ?? this.nDays * 24 * 60 * 60, // 90 days in seconds
-      );
+      )
+      .setTokenMemo(createTokenTransaction.tokenMemo)
+      .setMetadataKey(createTokenTransaction.metadataKey)
+      .setMetadata(createTokenTransaction.metadata);
 
     return transaction;
   }
@@ -78,24 +81,15 @@ export class HederaTokenApiService {
     // if HIP-412 we need to upload to ipfs and use CID for
 
     let metadatas: Uint8Array[];
-    const createBuffersFromMetadata = async (
-      metadata: string | TokenMetadata,
-    ): Promise<Uint8Array> => {
-      if (typeof metadata === 'string') {
-        return Buffer.from(metadata);
-      } else {
-        const cid = await this.ipfsService.uploadHip412Metadata(metadata);
-        return Buffer.from(cid);
-      }
-    };
+
     await this.ipfsService.initClient();
     if (tokenMintDto.amount) {
       const metadata = tokenMintDto.metadata;
-      const buffer = await createBuffersFromMetadata(metadata);
+      const buffer = await this.createBuffersFromMetadata(metadata);
       metadatas = Array(tokenMintDto.amount).fill(buffer);
     } else {
       const metadatasPromises = tokenMintDto.metadatas.map(
-        createBuffersFromMetadata,
+        this.createBuffersFromMetadata,
       );
       metadatas = await Promise.all(metadatasPromises);
     }
@@ -111,10 +105,10 @@ export class HederaTokenApiService {
       .setTokenIds(tokenAssociateInput.tokenIds);
   }
 
-  private parseCreateTransactionDto(
+  private async parseCreateTransactionDto(
     tokenCreateDto: TokenCreateDto,
     defaultKey?: string,
-  ): TokenCreateTransactionInput {
+  ): Promise<TokenCreateTransactionInput> {
     const tokenPubKeys = this.parsePublicKeys(tokenCreateDto, defaultKey);
     // MAY STILL BE BITS TO FILL OUT
     let tokenType: TokenType;
@@ -127,6 +121,12 @@ export class HederaTokenApiService {
         break;
       default:
         throw new Error("Token type must be 'ft' or 'nft'");
+    }
+
+    // handle metadata upload to ipfs
+    let metadata: Uint8Array;
+    if (tokenCreateDto.metadata) {
+      metadata = await this.createBuffersFromMetadata(tokenCreateDto.metadata);
     }
 
     const createTokenTransactionInput: TokenCreateTransactionInput = {
@@ -151,13 +151,14 @@ export class HederaTokenApiService {
           ? TokenSupplyType.Finite
           : TokenSupplyType.Infinite,
       customFees: this.parseCustomFees(tokenCreateDto),
+      metadata,
       ...tokenPubKeys,
     };
     return createTokenTransactionInput;
   }
 
   private parsePublicKeys(
-    createTokenInput: TokenCreateKeysDto,
+    createTokenInput: TokenCreateDto,
     defaultKey?: string,
   ) {
     const keys = {
@@ -168,6 +169,7 @@ export class HederaTokenApiService {
       supplyKey: createTokenInput.supplyKey,
       wipeKey: createTokenInput.wipeKey,
       feeScheduleKey: createTokenInput.feeScheduleKey,
+      metadataKey: createTokenInput.metadataKey,
     };
     const tokenPublicKeys: TokenCreateKeys = {};
     Object.entries(keys).forEach(([keyType, keyValue]) => {
@@ -179,6 +181,17 @@ export class HederaTokenApiService {
       }
     });
     return tokenPublicKeys;
+  }
+
+  private async createBuffersFromMetadata(
+    metadata: string | TokenMetadata | TokenCollectionMetadata,
+  ): Promise<Uint8Array> {
+    if (typeof metadata === 'string') {
+      return Buffer.from(metadata);
+    } else {
+      const cid = await this.ipfsService.uploadMetadata(metadata);
+      return Buffer.from(cid);
+    }
   }
 
   private parseCustomFees(tokenCreateDto: TokenCreateDto): CustomFee[] {

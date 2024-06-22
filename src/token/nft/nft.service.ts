@@ -56,7 +56,7 @@ export class NftService {
     createNftDto.fixedFees = fixedFees;
     createNftDto.royaltyFees = royaltyFees;
     // create token transaction
-    const createTokenTransaction = this.tokenService.createTransaction(
+    const createTokenTransaction = await this.tokenService.createTransaction(
       createNftDto,
       treasuryAccount.keys[0].publicKey, // treasury account is the default key
     );
