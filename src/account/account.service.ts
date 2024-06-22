@@ -50,7 +50,7 @@ export class AccountService {
         },
       },
     });
-
+    // throw error if user has accounts and doesn't pass payer id
     if (accountCount && !accountCreateDto.payerId) {
       throw new NoPayerIdError();
     }
@@ -98,6 +98,13 @@ export class AccountService {
       escrowKey,
       user,
     );
+
+    // if free account, ensure the initial balance is set to 0
+    // we don't want to be transferring any balance to users
+    if (!accountCount) {
+      accountCreateDto.initialBalance = 0
+    }
+
     // create account transaction
     const accountCreateTransaction =
       this.hederaAccountService.createTransaction(accountCreateDto, keyList);
