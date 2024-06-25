@@ -12,7 +12,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
-import { AuthService } from './auth.service';
 import { ApiKeyGuard, JwtGuard } from './auth.guard';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
@@ -21,15 +20,13 @@ import { UserDuplicationError, UserNotFoundError } from 'src/core/error';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { UserResponse } from 'src/user/response/user.response';
 import { AuthMediator } from './auth.mediator';
+import { ApiKeyResponse } from './response/api-key.response';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(
-    private readonly authService: AuthService,
-    private readonly authMediator: AuthMediator,
-  ) {}
+  constructor(private readonly authMediator: AuthMediator) {}
 
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')
@@ -58,7 +55,7 @@ export class AuthController {
     @Body() signInDto: SignInDto,
   ): Promise<{ access_token: string }> {
     try {
-      return await this.authService.signIn(
+      return await this.authMediator.signIn(
         signInDto.username,
         signInDto.hashedPassword,
       );
@@ -70,9 +67,22 @@ export class AuthController {
   }
 
   @UseGuards(JwtGuard)
-  @Post('/api-key')
+  @Post('api-key')
   async createApiKey(@Req() req: Request): Promise<{ apiKey: string }> {
-    return this.authService.generateApiKey(req.payload.sub);
+    return this.authMediator.generateApiKey(req.payload.sub);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('api-key')
+  async getApiKeys(
+    @Req() req: Request,
+  ): Promise<{ apiKeys: ApiKeyResponse[] }> {
+    try {
+      const apiKeys = await this.authMediator.getApiKeys(req.payload.sub);
+      return { apiKeys: apiKeys.map((apiKey) => new ApiKeyResponse(apiKey)) };
+    } catch (error) {
+      handleEndpointErrors(this.logger, error, []);
+    }
   }
 
   @UseGuards(JwtGuard)

@@ -15,6 +15,7 @@ export interface AppConfiguration {
   env: NodeEnv;
   port: number;
   jwtSecret: string;
+  jwtExpiresIn: string;
 }
 
 export interface HederaConfiguration {
