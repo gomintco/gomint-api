@@ -8,7 +8,6 @@ import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-a
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { Account } from 'src/account/account.entity';
 import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
-import { AppConfigService } from 'src/config/app-config.service';
 import { TokenMintDto } from '../dto/token-mint.dto';
 
 @Injectable()

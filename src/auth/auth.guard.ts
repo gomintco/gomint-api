@@ -5,12 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthService } from './auth.service';
 import { Request } from 'express';
 import { JwtPayload } from './jwt-payload.type';
 import { AppConfigService } from 'src/config/app-config.service';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { API_KEY_HEADER, AUTHORIZATION_HEADER } from 'src/core/headers.const';
+import { ApiKeyService } from './api-key.service';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -44,14 +44,14 @@ export class JwtGuard implements CanActivate {
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly apiKeyService: ApiKeyService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const apiKey = req.headers[API_KEY_HEADER];
     if (!apiKey) {
       throw new UnauthorizedException('API Key is required');
     }
-    req.user = await this.authService.validateApiKey(apiKey);
+    req.user = await this.apiKeyService.validateApiKey(apiKey);
     return true;
   }
 }

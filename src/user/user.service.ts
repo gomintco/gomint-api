@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
 import { User } from './user.entity';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import * as crypto from 'crypto';
 import { KeyService } from 'src/key/key.service';
-import { UserDuplicationError } from 'src/core/error';
+import { UserDuplicationError, UserNotFoundError } from 'src/core/error';
 
 @Injectable()
 export class UserService {
@@ -13,7 +13,7 @@ export class UserService {
 
   constructor(
     @InjectRepository(User)
-    private readonly repository: Repository<User>,
+    private readonly userRepository: Repository<User>,
     private readonly keyService: KeyService,
   ) {}
 
@@ -23,18 +23,18 @@ export class UserService {
    * @returns A promise that resolves to an array of all the users in the database.
    */
   findAll(): Promise<User[]> {
-    return this.repository.find();
+    return this.userRepository.find();
   }
 
   async getUser(userId: string): Promise<User> {
-    return this.repository.findOne({
+    return this.userRepository.findOne({
       where: { id: userId },
       relations: { accounts: { keys: true }, keys: true },
     });
   }
 
   findOneByUsername(username: string): Promise<User> {
-    return this.repository.findOneByOrFail({ username });
+    return this.userRepository.findOneByOrFail({ username });
   }
 
   /**
@@ -46,7 +46,7 @@ export class UserService {
    */
   async create(signUpDto: SignUpDto): Promise<User> {
     try {
-      const user = this.repository.create({
+      const user = this.userRepository.create({
         network: signUpDto.network,
         username: signUpDto.username,
         hashedPassword: signUpDto.hashedPassword,
@@ -56,7 +56,7 @@ export class UserService {
       });
       this.encryptEscrowKey(user, signUpDto.encryptionKey);
 
-      return await this.repository.save(user);
+      return await this.userRepository.save(user);
     } catch (error: any) {
       if (error.message === 'ER_DUP_ENTRY') {
         throw new UserDuplicationError();
@@ -80,5 +80,17 @@ export class UserService {
         encryptionKey,
       );
     }
+  }
+
+  async findOneByOrFail(
+    where: FindOptionsWhere<User> | FindOptionsWhere<User>[],
+  ): Promise<User> {
+    const user = await this.userRepository.findOneBy(where);
+
+    if (!user) {
+      throw new UserNotFoundError();
+    }
+
+    return user;
   }
 }
