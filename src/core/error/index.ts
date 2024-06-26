@@ -12,3 +12,4 @@ export * from './wrong-password.error';
 export * from './no-payer-id.error';
 export * from './user-duplication.error';
 export * from './invalid-hedera-id.error';
+export * from './api-key-not-found.error';

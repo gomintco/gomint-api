@@ -61,4 +61,8 @@ export class AuthMediator {
     const user = await this.userService.findOneByOrFail({ id: userId });
     return await this.apiKeyService.generateApiKey(user);
   }
+
+  async deleteApiKey(apiKeyId: number, userId: string): Promise<void> {
+    return await this.apiKeyService.deleteApiKey(apiKeyId, userId);
+  }
 }

@@ -4,6 +4,7 @@ import { ApiKey } from './api-key.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/user/user.entity';
 import { getRandomValues } from 'crypto';
+import { ApiKeyNotFound } from 'src/core/error';
 
 @Injectable()
 export class ApiKeyService {
@@ -42,6 +43,16 @@ export class ApiKeyService {
 
   async getUserApiKeys(userId: string): Promise<ApiKey[]> {
     return this.apiKeyRepository.findBy({ user: { id: userId } });
+  }
+
+  async deleteApiKey(id: number, userId: string): Promise<void> {
+    const result = await this.apiKeyRepository.delete({
+      id,
+      user: { id: userId },
+    });
+    if (!result.affected) {
+      throw new ApiKeyNotFound();
+    }
   }
 
   async validateApiKey(key: string): Promise<User> {
