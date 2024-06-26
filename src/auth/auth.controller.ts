@@ -10,13 +10,19 @@ import {
   Req,
   Logger,
   BadRequestException,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { ApiKeyGuard, JwtGuard } from './auth.guard';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { UserDuplicationError, UserNotFoundError } from 'src/core/error';
+import {
+  ApiKeyNotFound,
+  UserDuplicationError,
+  UserNotFoundError,
+} from 'src/core/error';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { UserResponse } from 'src/user/response/user.response';
 import { AuthMediator } from './auth.mediator';
@@ -82,6 +88,24 @@ export class AuthController {
       return { apiKeys: apiKeys.map((apiKey) => new ApiKeyResponse(apiKey)) };
     } catch (error) {
       handleEndpointErrors(this.logger, error, []);
+    }
+  }
+
+  @UseGuards(JwtGuard)
+  @Delete('api-key/:apiKeyId')
+  async deleteApiKey(
+    @Req() req: Request,
+    @Param('apiKeyId') apiKeyId: string,
+  ): Promise<void> {
+    try {
+      return await this.authMediator.deleteApiKey(
+        Number(apiKeyId),
+        req.payload.sub,
+      );
+    } catch (error) {
+      handleEndpointErrors(this.logger, error, [
+        { errorTypes: [ApiKeyNotFound], toThrow: NotFoundException },
+      ]);
     }
   }
 
