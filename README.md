@@ -17,7 +17,7 @@ First create `.env` file that contains all the necessary environment variables. 
 Run MySQL docker container
 
 ```bash
-$ docker compose -f compose.dev.yaml up -d
+$  compose -f compose.dev.yaml up -d
 ```
 
 Run migrations and seeds
