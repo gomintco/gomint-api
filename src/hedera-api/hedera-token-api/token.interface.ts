@@ -1,5 +1,6 @@
 import { CustomFee, TokenSupplyType, TokenType } from '@hashgraph/sdk';
 import { TokenCreateKeys } from './pubKey.interface';
+import { TokenCollectionMetadata } from 'src/token/dto/hip766-metadata.dto';
 
 export interface AssociateTokenDto {
   associatingId: string;
@@ -38,6 +39,7 @@ export interface TokenCreateTransactionInput extends TokenCreateKeys {
   tokenMemo?: string;
   autoRenewAccountId?: string;
   autoRenewPeriod?: number;
+  metadata?: Uint8Array;
 }
 
 export interface MintFtDto {

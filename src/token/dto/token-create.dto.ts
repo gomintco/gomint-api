@@ -5,26 +5,91 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Validate,
   ValidateNested,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import { FixedFee, FractionalFee, RoyaltyFee } from './custom-fees.dto';
+import { TokenCollectionMetadata } from './hip766-metadata.dto';
+
+@ValidatorConstraint({
+  name: 'isStringOrTokenCollectionMetadata',
+  async: false,
+})
+class IsStringOrTokenCollectionMetadata
+  implements ValidatorConstraintInterface {
+  validate(value: any, _args: ValidationArguments) {
+    // Valid if string
+    if (typeof value === 'string') {
+      return true;
+    }
+
+    // Validation if value is object
+    if (typeof value === 'object' && value !== null) {
+      const validKeys = [
+        'description',
+        'smallestUnitName',
+        'smallestUnitSymbol',
+        'creator',
+        'creatorDID',
+        'admin',
+        'website',
+        'discussion',
+        'whitepaper',
+        'properties',
+        'socials',
+        'lightLogo',
+        'lightLogoType',
+        'lightBanner',
+        'lightBannerType',
+        'lightFeaturedImage',
+        'lightFeaturedImageType',
+        'darkLogo',
+        'darkLogoType',
+        'darkBanner',
+        'darkBannerType',
+        'darkFeaturedImage',
+        'darkFeaturedImageType',
+      ];
+
+      for (const key in value) {
+        if (!validKeys.includes(key)) {
+          return false;
+        }
+        if (
+          value[key] !== undefined &&
+          typeof value[key] !== 'string' &&
+          typeof value[key] !== 'object' &&
+          !Array.isArray(value[key])
+        ) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  defaultMessage(_args: ValidationArguments) {
+    return 'Value must be either a string or a valid TokenCollectionMetadata object';
+  }
+}
 
 export class TokenCreateDto {
+  @IsOptional()
   @IsString()
-  tokenName: string;
+  payerId: string;
 
   @IsString()
-  tokenSymbol: string;
+  tokenName: string;
 
   @IsIn(['ft', 'nft'])
   tokenType: string;
 
   @IsString()
-  treasuryAccountId: string;
-
-  @IsOptional()
-  @IsString()
-  payerId: string;
+  tokenSymbol: string;
 
   @IsOptional()
   @IsNumber()
@@ -33,6 +98,51 @@ export class TokenCreateDto {
   @IsOptional()
   @IsNumber()
   initialSupply: number;
+
+  @IsString()
+  treasuryAccountId: string;
+
+  @IsOptional()
+  @IsString()
+  adminKey: string;
+
+  @IsOptional()
+  @IsString()
+  kycKey: string;
+
+  @IsOptional()
+  @IsString()
+  freezeKey: string;
+
+  @IsOptional()
+  @IsString()
+  wipeKey: string;
+
+  @IsString()
+  supplyKey: string = 'default';
+
+  @IsOptional()
+  @IsString()
+  feeScheduleKey: string;
+
+  @IsOptional()
+  @IsString()
+  pauseKey: string;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => FixedFee)
+  fixedFees: FixedFee[];
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => FractionalFee)
+  fractionalFees: FractionalFee[];
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => RoyaltyFee)
+  royaltyFees: RoyaltyFee[];
 
   @IsOptional()
   @IsNumber()
@@ -50,45 +160,11 @@ export class TokenCreateDto {
   @IsString()
   autoRenewAccountId: string;
 
-  @IsString()
-  supplyKey: string = 'default';
-
   @IsOptional()
   @IsString()
-  adminKey: string;
+  metadataKey?: string;
 
   @IsOptional()
-  @IsString()
-  freezeKey: string;
-
-  @IsOptional()
-  @IsString()
-  kycKey: string;
-
-  @IsOptional()
-  @IsString()
-  pauseKey: string;
-
-  @IsOptional()
-  @IsString()
-  wipeKey: string;
-
-  @IsOptional()
-  @IsString()
-  feeScheduleKey: string;
-
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => FixedFee)
-  fixedFees: FixedFee[];
-
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => FractionalFee)
-  fractionalFees: FractionalFee[];
-
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => RoyaltyFee)
-  royaltyFees: RoyaltyFee[];
+  @Validate(IsStringOrTokenCollectionMetadata)
+  metadata?: string | TokenCollectionMetadata;
 }
