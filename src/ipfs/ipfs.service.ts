@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common/index.js';
 import { TokenMetadata } from 'src/token/dto/hip412-metadata.dto';
 import { AppConfigService } from 'src/config/app-config.service';
 import type { Client } from '@web3-storage/w3up-client';
+import { TokenCollectionMetadata } from 'src/token/dto/hip766-metadata.dto';
 
 @Injectable()
 export class IpfsService {
@@ -29,7 +30,7 @@ export class IpfsService {
     await this.client.setCurrentSpace(space.did());
   }
 
-  async uploadHip412Metadata(metadata: TokenMetadata): Promise<string> {
+  async uploadMetadata(metadata: TokenMetadata | TokenCollectionMetadata): Promise<string> {
     await this.initClient();
     const blob = new Blob([JSON.stringify(metadata)]);
     const res = await this.client.uploadFile(blob);

@@ -21,7 +21,7 @@ export class FtService {
     private readonly tokenService: HederaTokenApiService,
     private readonly hederaTransactionApiService: HederaTransactionApiService,
     private readonly hederaMirrornodeApiService: HederaMirrornodeApiService,
-  ) {}
+  ) { }
 
   async tokenCreateHandler(
     user: User,
@@ -60,7 +60,7 @@ export class FtService {
     tokenCreateDto.fixedFees = fixedFees;
     tokenCreateDto.fractionalFees = fractionalFees;
     // create token transaction
-    const createTokenTransaction = this.tokenService.createTransaction(
+    const createTokenTransaction = await this.tokenService.createTransaction(
       tokenCreateDto,
       treasuryAccount.keys[0].publicKey, // treasury account is the default key
     );
