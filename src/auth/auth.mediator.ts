@@ -17,7 +17,7 @@ export class AuthMediator {
     private readonly userService: UserService,
     private readonly apiKeyService: ApiKeyService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async signIn(
     username: string,
@@ -62,7 +62,7 @@ export class AuthMediator {
     return await this.apiKeyService.generateApiKey(user);
   }
 
-  async deleteApiKey(apiKeyId: number, userId: string): Promise<void> {
-    return await this.apiKeyService.deleteApiKey(apiKeyId, userId);
+  async deleteApiKey(userId: string, apiKeyId: number): Promise<void> {
+    return await this.apiKeyService.deleteApiKey(userId, apiKeyId);
   }
 }
