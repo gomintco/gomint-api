@@ -10,6 +10,7 @@ export function configure(): Configuration {
       env: env.NODE_ENV,
       port: env.PORT,
       jwtSecret: env.JWT_SECRET,
+      jwtExpiresIn: env.JWT_EXPIRES_IN,
     },
     db: getDBConfig(env),
     hedera: {
