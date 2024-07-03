@@ -32,7 +32,7 @@ import { ApiKeyResponse } from './response/api-key.response';
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly authMediator: AuthMediator) {}
+  constructor(private readonly authMediator: AuthMediator) { }
 
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')
@@ -99,8 +99,8 @@ export class AuthController {
   ): Promise<void> {
     try {
       return await this.authMediator.deleteApiKey(
-        Number(apiKeyId),
         req.payload.sub,
+        Number(apiKeyId),
       );
     } catch (error) {
       handleEndpointErrors(this.logger, error, [

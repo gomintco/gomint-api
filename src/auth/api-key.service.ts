@@ -11,7 +11,7 @@ export class ApiKeyService {
   constructor(
     @InjectRepository(ApiKey)
     private readonly apiKeyRepository: Repository<ApiKey>,
-  ) {}
+  ) { }
 
   async generateApiKey(user: User): Promise<{ apiKey: string }> {
     try {
@@ -45,7 +45,7 @@ export class ApiKeyService {
     return this.apiKeyRepository.findBy({ user: { id: userId } });
   }
 
-  async deleteApiKey(id: number, userId: string): Promise<void> {
+  async deleteApiKey(userId: string, id: number): Promise<void> {
     const result = await this.apiKeyRepository.delete({
       id,
       user: { id: userId },
