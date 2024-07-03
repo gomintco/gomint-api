@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { Network } from 'src/hedera-api/network.enum';
 import { UserService } from 'src/user/user.service';
 import { SignUpDto } from './dto/sign-up.dto';
@@ -8,6 +12,7 @@ import { ApiKey } from './api-key.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UserNotFoundError, WrongPasswordError } from 'src/core/error';
 import type { JwtPayload } from './jwt-payload.type';
+import { User } from 'src/user/user.entity';
 
 @Injectable()
 export class AuthMediator {
@@ -23,20 +28,25 @@ export class AuthMediator {
     username: string,
     pass: string,
   ): Promise<{ access_token: string }> {
+    let user: User;
     try {
-      const user = await this.userService.findOneByOrFail({ username });
+      user = await this.userService.findOneByOrFail({ username });
       if (user?.hashedPassword !== pass) {
         throw new WrongPasswordError();
       }
-
-      const payload: JwtPayload = { username: user.username, sub: user.id };
-
-      return {
-        access_token: await this.jwtService.signAsync(payload),
-      };
     } catch (err: any) {
       this.logger.error(err);
       throw new UserNotFoundError('User with such credentials is not found');
+    }
+
+    const payload: JwtPayload = { username: user.username, sub: user.id };
+    try {
+      return {
+        access_token: await this.jwtService.signAsync(payload),
+      };
+    } catch (err) {
+      this.logger.error(err);
+      throw new InternalServerErrorException();
     }
   }
 

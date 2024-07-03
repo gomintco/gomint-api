@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountController } from './account.controller';
 import { KeyModule } from 'src/key/key.module';
 import { HederaModule } from 'src/hedera-api/hedera-api.module';
+import { AccountMediator } from './account.mediator';
 
 @Module({
   imports: [
@@ -14,8 +15,8 @@ import { HederaModule } from 'src/hedera-api/hedera-api.module';
     KeyModule,
     HederaModule,
   ],
-  providers: [AccountService],
+  providers: [AccountService, AccountMediator],
   exports: [AccountService],
   controllers: [AccountController],
 })
-export class AccountModule {}
+export class AccountModule { }

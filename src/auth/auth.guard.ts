@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -14,10 +15,12 @@ import { ApiKeyService } from './api-key.service';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
+  private readonly logger = new Logger(JwtGuard.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: AppConfigService,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -30,7 +33,11 @@ export class JwtGuard implements CanActivate {
       req.payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.configService.app.jwtSecret,
       });
-    } catch {
+    } catch (error: any) {
+      this.logger.error(error);
+      if (error.message === 'jwt expired') {
+        throw new UnauthorizedException('Session is expired');
+      }
       throw new UnauthorizedException();
     }
     return true;
@@ -44,7 +51,7 @@ export class JwtGuard implements CanActivate {
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private readonly apiKeyService: ApiKeyService) {}
+  constructor(private readonly apiKeyService: ApiKeyService) { }
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const apiKey = req.headers[API_KEY_HEADER];
@@ -58,7 +65,7 @@ export class ApiKeyGuard implements CanActivate {
 
 @Injectable()
 export class EncryptionKeyGuard implements CanActivate {
-  constructor() {}
+  constructor() { }
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const headers = ctx.switchToHttp().getRequest().headers;

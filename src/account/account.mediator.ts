@@ -6,7 +6,7 @@ import { Account } from './account.entity';
 export class AccountMediator {
   private readonly logger = new Logger(AccountMediator.name);
 
-  constructor(private readonly accountService: AccountService) {}
+  constructor(private readonly accountService: AccountService) { }
 
   /**
    * Updates user account and returns old account
@@ -17,7 +17,7 @@ export class AccountMediator {
     updates: { alias: string },
   ): Promise<Account> {
     const oldAccount = await this.accountService.getUserAccountById(userId, id);
-    await this.accountService.update(id, userId, updates);
+    await this.accountService.update(userId, id, updates);
     return oldAccount;
   }
 
