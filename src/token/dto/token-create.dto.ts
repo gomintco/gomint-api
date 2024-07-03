@@ -19,7 +19,8 @@ import { TokenCollectionMetadata } from './hip766-metadata.dto';
   async: false,
 })
 class IsStringOrTokenCollectionMetadata
-  implements ValidatorConstraintInterface {
+  implements ValidatorConstraintInterface
+{
   validate(value: any, _args: ValidationArguments) {
     // Valid if string
     if (typeof value === 'string') {
