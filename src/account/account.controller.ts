@@ -40,7 +40,7 @@ export class AccountController {
   constructor(
     private readonly accountService: AccountService,
     private readonly accountMediator: AccountMediator,
-  ) {}
+  ) { }
 
   @Get()
   async getUserAccounts(
@@ -91,15 +91,14 @@ export class AccountController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtGuard)
   async updateAccount(
     @Body() dto: AccountUpdateDto,
     @Param('id') id: string,
     @Req() req: Request,
   ): Promise<AccountUpdateResponse> {
     try {
-      const userId = req.payload.sub;
-      const oldAccount = await this.accountMediator.update(id, userId, {
+      const userId = req.user.id;
+      const oldAccount = await this.accountMediator.update(userId, id, {
         alias: dto.alias,
       });
 
