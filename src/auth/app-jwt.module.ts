@@ -9,7 +9,6 @@ import { AppConfigService } from 'src/config/app-config.service';
     ConfigModule,
     JwtModule.registerAsync({
       useFactory: async (configService: AppConfigService) => {
-        console.log(configService.app.jwtSecret);
         return {
           global: true,
           secret: configService.app.jwtSecret,
@@ -21,4 +20,4 @@ import { AppConfigService } from 'src/config/app-config.service';
   ],
   exports: [JwtModule],
 })
-export class AppJwtModule { }
+export class AppJwtModule {}

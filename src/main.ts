@@ -32,7 +32,6 @@ async function bootstrap() {
           ' and transaction handling.',
       )
       .setVersion('1.0')
-      .addTag('gomint')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

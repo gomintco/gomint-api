@@ -19,4 +19,4 @@ import { AccountMediator } from './account.mediator';
   exports: [AccountService],
   controllers: [AccountController],
 })
-export class AccountModule { }
+export class AccountModule {}

@@ -22,7 +22,7 @@ export class AuthMediator {
     private readonly userService: UserService,
     private readonly apiKeyService: ApiKeyService,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   async signIn(
     username: string,
