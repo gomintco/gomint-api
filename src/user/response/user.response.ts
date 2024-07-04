@@ -1,12 +1,18 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../user.entity';
-import { AccountResponse } from './account.response';
+import { AccountResponse } from './AccountResponse';
 import { KeyResponse } from './key.response';
 
 export class UserResponse {
+  @ApiProperty()
   id: string;
+  @ApiProperty()
   username: string;
+  @ApiProperty()
   network: string;
+  @ApiProperty({ type: KeyResponse, isArray: true })
   keys: KeyResponse[];
+  @ApiProperty({ type: AccountResponse, isArray: true })
   accounts: AccountResponse[];
 
   constructor({ id, username, network, accounts, keys }: User) {

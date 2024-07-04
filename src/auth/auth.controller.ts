@@ -27,12 +27,14 @@ import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { UserResponse } from 'src/user/response/user.response';
 import { AuthMediator } from './auth.mediator';
 import { ApiKeyResponse } from './response/api-key.response';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly authMediator: AuthMediator) { }
+  constructor(private readonly authMediator: AuthMediator) {}
 
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')

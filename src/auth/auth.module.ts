@@ -13,4 +13,4 @@ import { ApiKeyService } from './api-key.service';
   controllers: [AuthController],
   exports: [ApiKeyService],
 })
-export class AuthModule { }
+export class AuthModule {}

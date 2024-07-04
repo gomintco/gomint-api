@@ -14,7 +14,7 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiKeyGuard, JwtGuard } from 'src/auth/auth.guard';
+import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { AssociateDto, AccountCreateDto, AccountUpdateDto } from './dto';
 import { AccountService } from './account.service';
 import { Request } from 'express';
@@ -28,10 +28,12 @@ import {
   InvalidKeyTypeError,
 } from 'src/core/error';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { AccountResponse } from 'src/user/response/account.response';
+import { AccountResponse } from 'src/user/response/AccountResponse';
 import { AccountMediator } from './account.mediator';
 import { AccountUpdateResponse } from './response';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('account')
 @Controller('account')
 @UseGuards(ApiKeyGuard)
 export class AccountController {
@@ -40,7 +42,7 @@ export class AccountController {
   constructor(
     private readonly accountService: AccountService,
     private readonly accountMediator: AccountMediator,
-  ) { }
+  ) {}
 
   @Get()
   async getUserAccounts(
@@ -90,15 +92,15 @@ export class AccountController {
     }
   }
 
-  @Patch(':id')
+  @Patch(':accountId')
   async updateAccount(
     @Body() dto: AccountUpdateDto,
-    @Param('id') id: string,
+    @Param('accountId') accountId: string,
     @Req() req: Request,
   ): Promise<AccountUpdateResponse> {
     try {
       const userId = req.user.id;
-      const oldAccount = await this.accountMediator.update(userId, id, {
+      const oldAccount = await this.accountMediator.update(userId, accountId, {
         alias: dto.alias,
       });
 

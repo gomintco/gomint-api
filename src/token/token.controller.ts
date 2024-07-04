@@ -28,7 +28,9 @@ import {
   InvalidHederaIdError,
   InvalidNetworkError,
 } from 'src/core/error';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('token')
 @Controller('token')
 @UseGuards(ApiKeyGuard)
 export class TokenController {
