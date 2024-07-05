@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../user.entity';
-import { AccountResponse } from './AccountResponse';
+import { AccountResponse } from './account.response';
 import { KeyResponse } from './key.response';
 
 export class UserResponse {
