@@ -28,10 +28,10 @@ import {
   InvalidKeyTypeError,
 } from 'src/core/error';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { AccountResponse } from 'src/user/response/AccountResponse';
 import { AccountMediator } from './account.mediator';
 import { AccountUpdateResponse } from './response';
 import { ApiTags } from '@nestjs/swagger';
+import { AccountResponse } from 'src/user/response';
 
 @ApiTags('account')
 @Controller('account')
