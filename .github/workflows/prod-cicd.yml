@@ -27,5 +27,5 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_IP }} >> ~/.ssh/known_hosts
       - name: copy builds to server
         run: |
-          rsync -vrm  dist ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }}:/var/www/test-api.gomint.me/
+          rsync -vrm  dist node_modules package.json package-lock.json ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }}:/var/www/test-api.gomint.me/
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }} "pm2 restart 0"
