@@ -28,7 +28,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_IP }} >> ~/.ssh/known_hosts
       - name: Copy builds to server
         run: |
-          rsync -vrm dist package.json package-lock.json ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }}:/var/www/test-api.gomint.me/
+          rsync -vrm --delete dist package.json package-lock.json ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }}:/var/www/test-api.gomint.me/
       - name: Install dependencies on server and reload pm2
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }} << 'EOF'
