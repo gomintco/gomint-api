@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+
 jobs:
   production:
     runs-on: ubuntu-latest
@@ -25,7 +26,13 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa.pub
           ssh-keyscan -H ${{ secrets.SSH_IP }} >> ~/.ssh/known_hosts
-      - name: copy builds to server
+      - name: Copy builds to server
         run: |
-          rsync -vrm  dist node_modules package.json package-lock.json ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }}:/var/www/test-api.gomint.me/
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }} "pm2 restart 0"
+          rsync -vrm dist package.json package-lock.json ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }}:/var/www/test-api.gomint.me/
+      - name: Install dependencies on server and reload pm2
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }} << 'EOF'
+            cd /var/www/test-api.gomint.me/
+            npm ci
+            pm2 reload 0
+          EOF
