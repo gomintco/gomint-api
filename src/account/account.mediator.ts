@@ -4,7 +4,7 @@ import { Account } from './account.entity';
 
 @Injectable()
 export class AccountMediator {
-  private readonly logger = new Logger(AccountMediator.name);
+  private readonly _logger = new Logger(AccountMediator.name);
 
   constructor(private readonly accountService: AccountService) {}
 

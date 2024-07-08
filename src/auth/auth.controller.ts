@@ -14,7 +14,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
-import { ApiKeyGuard, JwtGuard } from './auth.guard';
+import { JwtGuard } from './auth.guard';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
@@ -51,7 +51,7 @@ export class AuthController {
     }
   }
 
-  @UseGuards(ApiKeyGuard)
+  @UseGuards(JwtGuard)
   @Get('user')
   async getAuthUser(@Req() req: Request): Promise<UserResponse> {
     return this.authMediator.getAuthUser(req.user.id);

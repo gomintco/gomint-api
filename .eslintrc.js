@@ -8,9 +8,9 @@ module.exports = {
   plugins: ['@typescript-eslint/eslint-plugin'],
   extends: [
     'plugin:@typescript-eslint/recommended',
-    // `plugin:prettier/recommended` must be the last one
+    // `prettier` must be the last one
     //  to ensure eslint rules do not conflict with prettier
-    'plugin:prettier/recommended',
+    'prettier',
   ],
   root: true,
   env: {
