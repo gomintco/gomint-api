@@ -14,7 +14,7 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiKeyGuard } from 'src/auth/auth.guard';
+import { ApiKeyGuard, JwtOrApiKeyGuard } from 'src/auth/auth.guard';
 import { AssociateDto, AccountCreateDto, AccountUpdateDto } from './dto';
 import { AccountService } from './account.service';
 import { Request } from 'express';
@@ -35,7 +35,6 @@ import { AccountResponse } from 'src/user/response';
 
 @ApiTags('account')
 @Controller('account')
-@UseGuards(ApiKeyGuard)
 export class AccountController {
   private readonly logger = new Logger(AccountController.name);
 
@@ -45,20 +44,25 @@ export class AccountController {
   ) {}
 
   @Get()
+  @UseGuards(JwtOrApiKeyGuard)
   async getUserAccounts(
     @Req() req: Request,
   ): Promise<{ id: string; accounts: AccountResponse[] }> {
-    const userId = req.user.id;
+    const userId = req.user?.id ?? req.payload?.sub;
 
     const accounts = await this.accountMediator.findUserAccounts(userId);
+    const responseAccount = accounts.map(
+      (account) => new AccountResponse(account),
+    );
 
     return {
       id: userId,
-      accounts: accounts.map((account) => new AccountResponse(account)),
+      accounts: responseAccount,
     };
   }
 
   @Post()
+  @UseGuards(ApiKeyGuard)
   async createAccount(
     @Req() req: Request,
     @Body() accountCreateDto: AccountCreateDto,
@@ -93,13 +97,14 @@ export class AccountController {
   }
 
   @Patch(':accountId')
+  @UseGuards(JwtOrApiKeyGuard)
   async updateAccount(
     @Body() dto: AccountUpdateDto,
     @Param('accountId') accountId: string,
     @Req() req: Request,
   ): Promise<AccountUpdateResponse> {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id ?? req.payload?.sub;
       const oldAccount = await this.accountMediator.update(userId, accountId, {
         alias: dto.alias,
       });
@@ -113,6 +118,7 @@ export class AccountController {
   }
 
   @Post('association')
+  @UseGuards(ApiKeyGuard)
   async associate(
     @Req() req: Request,
     @Body() associateDto: AssociateDto,
