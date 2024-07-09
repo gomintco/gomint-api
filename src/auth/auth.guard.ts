@@ -78,3 +78,22 @@ export class EncryptionKeyGuard implements CanActivate {
     return true;
   }
 }
+
+@Injectable()
+export class JwtOrApiKeyGuard implements CanActivate {
+  private readonly guards: CanActivate[];
+
+  constructor(jwtGuard: JwtGuard, apiKeyGuard: ApiKeyGuard) {
+    this.guards = [jwtGuard, apiKeyGuard];
+  }
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    for (const guard of this.guards) {
+      const canActivate = await guard.canActivate(context);
+      if (canActivate) {
+        return true;
+      }
+    }
+    return false;
+  }
+}

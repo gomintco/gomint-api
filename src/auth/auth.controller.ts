@@ -14,7 +14,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
-import { JwtGuard } from './auth.guard';
+import { JwtGuard, JwtOrApiKeyGuard } from './auth.guard';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
@@ -36,8 +36,8 @@ export class AuthController {
 
   constructor(private readonly authMediator: AuthMediator) {}
 
-  @HttpCode(HttpStatus.CREATED)
   @Post('signup')
+  @HttpCode(HttpStatus.CREATED)
   async signup(@Body() signUpDto: SignUpDto) {
     try {
       const { username, id, network } =
@@ -51,14 +51,14 @@ export class AuthController {
     }
   }
 
-  @UseGuards(JwtGuard)
   @Get('user')
+  @UseGuards(JwtGuard)
   async getAuthUser(@Req() req: Request): Promise<UserResponse> {
     return this.authMediator.getAuthUser(req.user.id);
   }
 
-  @HttpCode(HttpStatus.OK)
   @Post('signin')
+  @HttpCode(HttpStatus.OK)
   async signIn(
     @Body() signInDto: SignInDto,
   ): Promise<{ access_token: string }> {
@@ -74,27 +74,31 @@ export class AuthController {
     }
   }
 
-  @UseGuards(JwtGuard)
   @Post('api-key')
+  @UseGuards(JwtGuard)
   async createApiKey(@Req() req: Request): Promise<{ apiKey: string }> {
     return this.authMediator.generateApiKey(req.payload.sub);
   }
 
-  @UseGuards(JwtGuard)
   @Get('api-key')
+  @UseGuards(JwtOrApiKeyGuard)
   async getApiKeys(
     @Req() req: Request,
   ): Promise<{ apiKeys: ApiKeyResponse[] }> {
     try {
-      const apiKeys = await this.authMediator.getApiKeys(req.payload.sub);
-      return { apiKeys: apiKeys.map((apiKey) => new ApiKeyResponse(apiKey)) };
+      const userId = req.payload?.sub ?? req.user?.id;
+      const apiKeys = await this.authMediator.getApiKeys(userId);
+      const responseApiKeys = apiKeys.map(
+        (apiKey) => new ApiKeyResponse(apiKey),
+      );
+      return { apiKeys: responseApiKeys };
     } catch (error) {
       handleEndpointErrors(this.logger, error, []);
     }
   }
 
-  @UseGuards(JwtGuard)
   @Delete('api-key/:apiKeyId')
+  @UseGuards(JwtOrApiKeyGuard)
   async deleteApiKey(
     @Req() req: Request,
     @Param('apiKeyId') apiKeyId: string,
@@ -111,8 +115,8 @@ export class AuthController {
     }
   }
 
-  @UseGuards(JwtGuard)
   @Get('profile')
+  @UseGuards(JwtGuard)
   getProfile(@Req() req: Request): JwtPayload {
     return req.payload;
   }
