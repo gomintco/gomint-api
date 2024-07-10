@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -14,6 +15,8 @@ import { ApiKeyService } from './api-key.service';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
+  private readonly logger = new Logger(JwtGuard.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: AppConfigService,
@@ -21,7 +24,7 @@ export class JwtGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
-    const token = this.extractTokenFromHeader(req);
+    const token = this.extractToken(req);
     if (!token) {
       throw new UnauthorizedException('No token provided');
     }
@@ -30,14 +33,18 @@ export class JwtGuard implements CanActivate {
       req.payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.configService.app.jwtSecret,
       });
-    } catch {
+    } catch (error: any) {
+      this.logger.error(error);
+      if (error.message === 'jwt expired') {
+        throw new UnauthorizedException('Session is expired');
+      }
       throw new UnauthorizedException();
     }
     return true;
   }
 
-  private extractTokenFromHeader(req: Request): string | undefined {
-    const [type, token] = req.headers[AUTHORIZATION_HEADER].split(' ') ?? [];
+  private extractToken(req: Request): string | undefined {
+    const [type, token] = req.headers[AUTHORIZATION_HEADER]?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }
 }
@@ -69,5 +76,29 @@ export class EncryptionKeyGuard implements CanActivate {
     }
 
     return true;
+  }
+}
+
+@Injectable()
+export class JwtOrApiKeyGuard implements CanActivate {
+  private readonly logger = new Logger(JwtOrApiKeyGuard.name);
+  private readonly guards: CanActivate[];
+
+  constructor(jwtGuard: JwtGuard, apiKeyGuard: ApiKeyGuard) {
+    this.guards = [jwtGuard, apiKeyGuard];
+  }
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    for (const guard of this.guards) {
+      try {
+        const canActivate = await guard.canActivate(context);
+        if (canActivate) {
+          return true;
+        }
+      } catch (error) {
+        this.logger.error(error);
+      }
+    }
+    return false;
   }
 }

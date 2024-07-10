@@ -8,7 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export class FixedFee {
+export class FixedFeeDto {
   @IsString()
   feeCollectorAccountId: string;
 
@@ -31,7 +31,7 @@ export class FixedFee {
   allCollectorsAreExempt?: boolean;
 }
 
-export class FractionalFee {
+export class FractionalFeeDto {
   @IsString()
   feeCollectorAccountId: string;
 
@@ -58,7 +58,7 @@ export class FractionalFee {
   allCollectorsAreExempt?: boolean;
 }
 
-export class RoyaltyFee {
+export class RoyaltyFeeDto {
   @IsString()
   feeCollectorAccountId: string;
 
@@ -69,9 +69,9 @@ export class RoyaltyFee {
   denominator: number;
 
   @IsOptional()
-  @Type(() => FixedFee)
+  @Type(() => FixedFeeDto)
   @ValidateNested()
-  fallbackFee?: FixedFee;
+  fallbackFee?: FixedFeeDto;
 
   @IsOptional()
   @IsBoolean()

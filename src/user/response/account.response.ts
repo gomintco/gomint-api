@@ -1,16 +1,17 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Account } from 'src/account/account.entity';
-import { KeyResponse } from './key.response';
 
 export class AccountResponse {
+  @ApiProperty()
   id: string;
+  @ApiProperty()
   alias: string;
+  @ApiProperty()
   createdAt: Date;
-  //keys: KeyResponse[];
 
-  constructor({ id, alias, keys, createdAt }: Account) {
+  constructor({ id, alias, createdAt }: Account) {
     this.id = id;
     this.alias = alias;
     this.createdAt = createdAt;
-    //this.keys = keys.map((key) => new KeyResponse(key));
   }
 }
