@@ -31,7 +31,7 @@ import { InvalidHederaIdError } from 'src/core/error';
 export class HederaTokenApiService {
   nDays = 90;
 
-  constructor(private readonly ipfsService: IpfsService) { }
+  constructor(private readonly ipfsService: IpfsService) {}
 
   async createTransaction(tokenCreateDto: TokenCreateDto, defaultKey?: string) {
     // parses input data into correct format

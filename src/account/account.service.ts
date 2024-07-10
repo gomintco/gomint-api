@@ -102,7 +102,7 @@ export class AccountService {
     // if free account, ensure the initial balance is set to 0
     // we don't want to be transferring any balance to users
     if (!accountCount) {
-      accountCreateDto.initialBalance = 0
+      accountCreateDto.initialBalance = 0;
     }
 
     // create account transaction
@@ -184,6 +184,9 @@ export class AccountService {
     return !!account;
   }
 
+  /**
+   * @todo Move to mediator (at least)
+   */
   async parseCustomFeeAliases(userId: string, createTokenDto: TokenCreateDto) {
     // doesn't feel like this function belongs here...
     const parseFees = async (fees, feeProcessor) => {
@@ -264,7 +267,7 @@ export class AccountService {
     });
 
     if (!account) {
-      throw new Error(`Account not found for alias: ${alias}`);
+      throw new AccountNotFoundError(`Account with ${alias} is not found`);
     }
 
     return account.id;
@@ -316,9 +319,9 @@ export class AccountService {
       .getOneOrFail();
   }
 
-  async findUserAccounts(id: string): Promise<Account[]> {
+  async findUserAccounts(userId: string): Promise<Account[]> {
     return this.accountRepository.find({
-      where: { user: { id } },
+      where: { user: { id: userId } },
       relations: { keys: true },
     });
   }
@@ -340,5 +343,32 @@ export class AccountService {
         description: err.code || err.message,
       });
     });
+  }
+
+  async update(
+    userId: string,
+    id: string,
+    updates: { alias: string },
+  ): Promise<void> {
+    const result = await this.accountRepository.update(
+      { id, user: { id: userId } },
+      updates,
+    );
+    if (!result.affected) {
+      throw new AccountNotFoundError();
+    }
+  }
+
+  async getUserAccountById(userId: string, id: string): Promise<Account> {
+    const account = await this.accountRepository.findOneBy({
+      id,
+      user: { id: userId },
+    });
+
+    if (!account) {
+      throw new AccountNotFoundError();
+    }
+
+    return account;
   }
 }

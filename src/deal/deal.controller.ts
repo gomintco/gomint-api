@@ -26,7 +26,9 @@ import {
 } from 'src/core/error';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('deal')
 @Controller('deal')
 export class DealController {
   private readonly logger = new Logger(DealController.name);

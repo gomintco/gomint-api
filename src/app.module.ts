@@ -10,6 +10,7 @@ import { DbLogger } from './db/db-logger.service';
 import { AppLoggerModule } from './core/app-logger.module';
 import { IpfsModule } from './ipfs/ipfs.module';
 import { AuthModule } from './auth/auth.module';
+import { AppJwtModule } from './auth/app-jwt.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AuthModule } from './auth/auth.module';
       extraProviders: [DbLogger],
       inject: [AppConfigService, DbLogger],
     }),
+    AppJwtModule,
     AuthModule,
     TokenModule,
     UserModule,
