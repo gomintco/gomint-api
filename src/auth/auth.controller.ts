@@ -54,7 +54,8 @@ export class AuthController {
   @Get('user')
   @UseGuards(JwtGuard)
   async getAuthUser(@Req() req: Request): Promise<UserResponse> {
-    return this.authMediator.getAuthUser(req.user.id);
+    const userId = req.payload.sub;
+    return this.authMediator.getAuthUser(userId);
   }
 
   @Post('signin')
@@ -104,10 +105,8 @@ export class AuthController {
     @Param('apiKeyId') apiKeyId: string,
   ): Promise<void> {
     try {
-      return await this.authMediator.deleteApiKey(
-        req.payload.sub,
-        Number(apiKeyId),
-      );
+      const userId = req.payload?.sub ?? req.user?.id;
+      return await this.authMediator.deleteApiKey(userId, Number(apiKeyId));
     } catch (error) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [ApiKeyNotFound], toThrow: NotFoundException },
