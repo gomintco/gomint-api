@@ -81,6 +81,7 @@ export class EncryptionKeyGuard implements CanActivate {
 
 @Injectable()
 export class JwtOrApiKeyGuard implements CanActivate {
+  private readonly logger = new Logger(JwtOrApiKeyGuard.name);
   private readonly guards: CanActivate[];
 
   constructor(jwtGuard: JwtGuard, apiKeyGuard: ApiKeyGuard) {
@@ -89,9 +90,13 @@ export class JwtOrApiKeyGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     for (const guard of this.guards) {
-      const canActivate = await guard.canActivate(context);
-      if (canActivate) {
-        return true;
+      try {
+        const canActivate = await guard.canActivate(context);
+        if (canActivate) {
+          return true;
+        }
+      } catch (error) {
+        this.logger.error(error);
       }
     }
     return false;
