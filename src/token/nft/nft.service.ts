@@ -8,7 +8,6 @@ import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-a
 import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
 import { Account } from 'src/account/account.entity';
 import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
-import { AppConfigService } from 'src/config/app-config.service';
 import { TokenMintDto } from '../dto/token-mint.dto';
 
 @Injectable()
@@ -20,7 +19,6 @@ export class NftService {
     private tokenService: HederaTokenApiService,
     private transactionService: HederaTransactionApiService,
     private mirrornodeService: HederaMirrornodeApiService,
-    private readonly configService: AppConfigService,
   ) {}
 
   async tokenCreateHandler(
@@ -57,7 +55,7 @@ export class NftService {
     createNftDto.fixedFees = fixedFees;
     createNftDto.royaltyFees = royaltyFees;
     // create token transaction
-    const createTokenTransaction = this.tokenService.createTransaction(
+    const createTokenTransaction = await this.tokenService.createTransaction(
       createNftDto,
       treasuryAccount.keys[0].publicKey, // treasury account is the default key
     );

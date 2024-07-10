@@ -21,10 +21,13 @@ import { TokenMintDto } from './dto/token-mint.dto';
 import { TokenAssociateDto } from './dto/token-associate.dto';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
-import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
-import { AccountNotFoundError } from 'src/account/error/account-not-found.error';
-import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
+import {
+  AccountNotFoundError,
+  DecryptionFailedError,
+  EncryptionKeyNotProvidedError,
+  InvalidHederaIdError,
+  InvalidNetworkError,
+} from 'src/core/error';
 
 @Controller('token')
 @UseGuards(ApiKeyGuard)
@@ -63,7 +66,11 @@ export class TokenController {
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         {
-          errorTypes: [DecryptionFailedError, EncryptionKeyNotProvidedError],
+          errorTypes: [
+            DecryptionFailedError,
+            EncryptionKeyNotProvidedError,
+            InvalidHederaIdError,
+          ],
           toThrow: BadRequestException,
         },
         { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
@@ -140,11 +147,10 @@ export class TokenController {
         encryptionKey,
       );
       return { status };
-    } catch (err: any) {
-      throw new ServiceUnavailableException('Error associating account', {
-        cause: err,
-        description: err.message,
-      });
+    } catch (error: any) {
+      handleEndpointErrors(this.logger, error, [
+        { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
+      ]);
     }
   }
 }

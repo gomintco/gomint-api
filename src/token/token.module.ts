@@ -7,7 +7,6 @@ import { HederaModule } from 'src/hedera-api/hedera-api.module';
 import { AccountModule } from 'src/account/account.module';
 import { KeyModule } from 'src/key/key.module';
 import { ClientModule } from 'src/client/client.module';
-import { AuthModule } from 'src/auth/auth.module';
 import { FtService } from './ft/ft.service';
 import { NftService } from './nft/nft.service';
 
@@ -17,7 +16,6 @@ import { NftService } from './nft/nft.service';
     NftModule,
     ClientModule,
     KeyModule,
-    AuthModule,
     AccountModule,
     HederaModule,
   ],

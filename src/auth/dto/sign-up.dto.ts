@@ -1,7 +1,7 @@
 import { IsString, IsOptional, IsEmail, IsEnum } from 'class-validator';
 import { Network } from 'src/hedera-api/network.enum';
 
-export class CreateUserDto {
+export class SignUpDto {
   @IsEnum(Network)
   network: Network = Network.MAINNET;
 

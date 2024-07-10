@@ -15,15 +15,17 @@ import {
 import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { DealService } from './deal.service';
 import { CreateDealDto } from './dto/create-deal.dto';
-import { GetBytesDto } from './dto/get-bytes.dto';
+import { GetBytesDto } from './dto/get-bytes.query';
 import { Request } from 'express';
-import { DealNotFoundError } from './error/deal-not-found.error';
-import { EncryptionKeyNotProvidedError } from './error/encryption-key-not-provided.error';
-import { NotNftOwnerError } from './error/not-nft-owner.error';
-import { InvalidKeyTypeError } from './error/invalid-key-type.error';
+import {
+  DealNotFoundError,
+  DecryptionFailedError,
+  EncryptionKeyNotProvidedError,
+  InvalidKeyTypeError,
+  NotNftOwnerError,
+} from 'src/core/error';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
 
 @Controller('deal')
 export class DealController {

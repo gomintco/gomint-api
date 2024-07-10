@@ -10,7 +10,8 @@ import { DbLogger } from './db/db-logger.service';
 import { AppLoggerModule } from './core/app-logger.module';
 import { IpfsModule } from './ipfs/ipfs.module';
 import { ConsensusModule } from './consensus/consensus.module';
-import { HederaConsensusServiceService } from './hedera/hedera-consensus-service/hedera-consensus-service.service';
+import { AuthModule } from './auth/auth.module';
+import { HederaConsensusApiService } from './hedera-api/hedera-consensus-api/hedera-consensus-api.service';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { HederaConsensusServiceService } from './hedera/hedera-consensus-service
       extraProviders: [DbLogger],
       inject: [AppConfigService, DbLogger],
     }),
+    AuthModule,
     TokenModule,
     UserModule,
     DealModule,
@@ -32,6 +34,6 @@ import { HederaConsensusServiceService } from './hedera/hedera-consensus-service
     ConsensusModule,
   ],
   controllers: [],
-  providers: [HederaConsensusServiceService],
+  providers: [HederaConsensusApiService],
 })
 export class AppModule {}

@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import { NodeEnv } from './node-env.enum';
-import { portSchema } from 'src/util/parse-port';
+import { portSchema } from 'src/core/port.schema';
 
 export const envSchema = z.object({
   // APP
   NODE_ENV: z.nativeEnum(NodeEnv),
   PORT: portSchema,
   JWT_SECRET: z.string().min(1),
+  JWT_EXPIRES_IN: z.string().min(1),
 
   // DB
   DB_HOST: z.string().url().or(z.literal('localhost')),

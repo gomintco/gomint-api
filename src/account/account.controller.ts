@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Headers,
   InternalServerErrorException,
   Logger,
@@ -17,13 +18,16 @@ import { AccountService } from './account.service';
 import { Request } from 'express';
 import { AccountCreateDto } from './dto/account-create.dto';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
-import { AccountAliasAlreadyExistsError } from './error/account-alias-already-exists.error';
+import {
+  AccountAliasAlreadyExistsError,
+  EncryptionKeyNotProvidedError,
+  DecryptionFailedError,
+  InvalidNetworkError,
+  AccountNotFoundError,
+  InvalidKeyTypeError,
+} from 'src/core/error';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { EncryptionKeyNotProvidedError } from 'src/deal/error/encryption-key-not-provided.error';
-import { DecryptionFailedError } from 'src/key/error/decryption-failed.error';
-import { InvalidNetworkError } from 'src/deal/error/invalid-network.error';
-import { AccountNotFoundError } from './error/account-not-found.error';
-import { InvalidKeyTypeError } from 'src/deal/error/invalid-key-type.error';
+import { AccountResponse } from 'src/user/response/account.response';
 
 @Controller('account')
 @UseGuards(ApiKeyGuard)
@@ -32,14 +36,27 @@ export class AccountController {
 
   constructor(private readonly accountService: AccountService) {}
 
+  @Get()
+  async getUserAccounts(
+    @Req() req: Request,
+  ): Promise<{ id: string; accounts: AccountResponse[] }> {
+    const userId = req.user.id;
+
+    const accounts = await this.accountService.findUserAccounts(userId);
+
+    return {
+      id: userId,
+      accounts: accounts.map((account) => new AccountResponse(account)),
+    };
+  }
+
   @Post()
-  async create(
+  async createAccount(
     @Req() req: Request,
     @Body() accountCreateDto: AccountCreateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
   ) {
     const { user } = req;
-
     try {
       const accountId = await this.accountService.createAccount(
         user,
