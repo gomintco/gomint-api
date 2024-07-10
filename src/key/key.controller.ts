@@ -3,7 +3,9 @@ import { ApiKeyGuard } from 'src/auth/auth.guard';
 import { KeyResponse } from 'src/user/response/key.response';
 import type { Request } from 'express';
 import { KeyService } from './key.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('key')
 @Controller('key')
 export class KeyController {
   constructor(private readonly keyService: KeyService) {}

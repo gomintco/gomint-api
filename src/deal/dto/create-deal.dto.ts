@@ -10,28 +10,28 @@ import { Type } from 'class-transformer';
 export class CreateDealDto {
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => HbarTransfer)
-  hbarTransfers: HbarTransfer[] = [];
+  @Type(() => HbarTransferDto)
+  hbarTransfers: HbarTransferDto[] = [];
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => FtTransfer)
-  ftTransfers: FtTransfer[] = [];
+  @Type(() => FtTransferDto)
+  ftTransfers: FtTransferDto[] = [];
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => NftTransfer)
-  nftTransfers: NftTransfer[] = [];
+  @Type(() => NftTransferDto)
+  nftTransfers: NftTransferDto[] = [];
 }
 
-class HbarTransfer {
+class HbarTransferDto {
   @IsString()
   accountId: string;
   @IsNumber()
   amount: number;
 }
 
-class FtTransfer {
+class FtTransferDto {
   @IsString()
   tokenId: string;
   @IsString()
@@ -40,7 +40,7 @@ class FtTransfer {
   amount: number;
 }
 
-class NftTransfer {
+class NftTransferDto {
   @IsString()
   tokenId: string;
   @IsString()
