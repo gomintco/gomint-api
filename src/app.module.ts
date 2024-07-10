@@ -12,6 +12,7 @@ import { IpfsModule } from './ipfs/ipfs.module';
 import { ConsensusModule } from './consensus/consensus.module';
 import { AuthModule } from './auth/auth.module';
 import { HederaConsensusApiService } from './hedera-api/hedera-consensus-api/hedera-consensus-api.service';
+import { AppJwtModule } from './auth/app-jwt.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { HederaConsensusApiService } from './hedera-api/hedera-consensus-api/hed
       extraProviders: [DbLogger],
       inject: [AppConfigService, DbLogger],
     }),
+    AppJwtModule,
     AuthModule,
     TokenModule,
     UserModule,

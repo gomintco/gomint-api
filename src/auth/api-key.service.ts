@@ -11,7 +11,7 @@ export class ApiKeyService {
   constructor(
     @InjectRepository(ApiKey)
     private readonly apiKeyRepository: Repository<ApiKey>,
-  ) { }
+  ) {}
 
   async generateApiKey(user: User): Promise<{ apiKey: string }> {
     try {

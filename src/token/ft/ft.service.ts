@@ -21,7 +21,7 @@ export class FtService {
     private readonly tokenService: HederaTokenApiService,
     private readonly hederaTransactionApiService: HederaTransactionApiService,
     private readonly hederaMirrornodeApiService: HederaMirrornodeApiService,
-  ) { }
+  ) {}
 
   async tokenCreateHandler(
     user: User,
