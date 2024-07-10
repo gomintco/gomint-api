@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConsensusController } from './consensus.controller';
-import { ConsensusService } from './consensus.service';
+import { ConsensusMediator } from './consensus.mediator';
 
 @Module({
   controllers: [ConsensusController],
-  providers: [ConsensusService]
+  providers: [ConsensusMediator]
 })
 export class ConsensusModule {}
