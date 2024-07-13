@@ -30,7 +30,9 @@ export class IpfsService {
     await this.client.setCurrentSpace(space.did());
   }
 
-  async uploadMetadata(metadata: TokenMetadata | TokenCollectionMetadata): Promise<string> {
+  async uploadMetadata(
+    metadata: TokenMetadata | TokenCollectionMetadata,
+  ): Promise<string> {
     await this.initClient();
     const blob = new Blob([JSON.stringify(metadata)]);
     const res = await this.client.uploadFile(blob);
