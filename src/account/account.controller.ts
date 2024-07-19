@@ -31,7 +31,7 @@ import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 import { AccountMediator } from './account.mediator';
 import { AccountUpdateResponse } from './response';
 import { ApiTags } from '@nestjs/swagger';
-import { AccountResponse } from 'src/user/response';
+import { AccountResponse } from './response';
 
 @ApiTags('account')
 @Controller('account')
