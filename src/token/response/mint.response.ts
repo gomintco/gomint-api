@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class AssociateResponse {
+export class MintResponse {
   @ApiProperty()
   status: string;
-
   constructor(status: string) {
     this.status = status;
   }
