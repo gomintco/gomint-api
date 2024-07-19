@@ -33,7 +33,7 @@ import {
   AccountCreateResponse,
   AccountUpdateResponse,
   AccountsResponse,
-  AssociateResponse,
+  AccountAssociateResponse,
 } from './response';
 import { ApiTags } from '@nestjs/swagger';
 import { AccountResponse } from './response';
@@ -119,7 +119,7 @@ export class AccountController {
     @Req() req: Request,
     @Body() associateDto: AssociateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
-  ): Promise<AssociateResponse> {
+  ): Promise<AccountAssociateResponse> {
     const { user } = req;
 
     try {
@@ -128,7 +128,7 @@ export class AccountController {
         associateDto,
         encryptionKey,
       );
-      return new AssociateResponse(status);
+      return new AccountAssociateResponse(status);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         {
