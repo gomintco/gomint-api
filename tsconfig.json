@@ -18,7 +18,7 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "strict": true,
-    "typeRoots": ["types", "node_modules/@types"],
+    "typeRoots": ["types", "node_modules/@types", "node_modules/**/@types"],
   },
   "ts-node": {
     "require": ["tsconfig-paths/register"],
