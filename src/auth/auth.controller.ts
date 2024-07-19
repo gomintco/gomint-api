@@ -28,6 +28,11 @@ import { UserResponse } from 'src/user/response/user.response';
 import { AuthMediator } from './auth.mediator';
 import { ApiKeyResponse } from './response/api-key.response';
 import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiKeyCreateResponse,
+  SignInResponse,
+  SignUpResponse,
+} from './response';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -38,12 +43,11 @@ export class AuthController {
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
-  async signup(@Body() signUpDto: SignUpDto) {
+  async signup(@Body() signUpDto: SignUpDto): Promise<SignUpResponse> {
     try {
-      const { username, id, network } =
-        await this.authMediator.signup(signUpDto);
+      const user = await this.authMediator.signup(signUpDto);
 
-      return { username, id, network };
+      return new SignUpResponse(user);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [UserDuplicationError], toThrow: BadRequestException },
@@ -60,14 +64,14 @@ export class AuthController {
 
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  async signIn(
-    @Body() signInDto: SignInDto,
-  ): Promise<{ access_token: string }> {
+  async signIn(@Body() signInDto: SignInDto): Promise<SignInResponse> {
     try {
-      return await this.authMediator.signIn(
+      const accessToken = await this.authMediator.signIn(
         signInDto.username,
         signInDto.hashedPassword,
       );
+
+      return new SignInResponse(accessToken);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [UserNotFoundError], toThrow: NotFoundException },
@@ -77,8 +81,9 @@ export class AuthController {
 
   @Post('api-key')
   @UseGuards(JwtGuard)
-  async createApiKey(@Req() req: Request): Promise<{ apiKey: string }> {
-    return this.authMediator.generateApiKey(req.payload.sub);
+  async createApiKey(@Req() req: Request): Promise<ApiKeyCreateResponse> {
+    const apiKey = await this.authMediator.generateApiKey(req.payload.sub);
+    return new ApiKeyCreateResponse(apiKey.key);
   }
 
   @Get('api-key')
