@@ -6,8 +6,8 @@ import { ApiKeyService } from './api-key.service';
 import { ApiKey } from './api-key.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UserNotFoundError, WrongPasswordError } from 'src/core/error';
-import type { JwtPayload } from './jwt-payload.type';
 import { User } from 'src/user/user.entity';
+import { JwtPayload } from 'jsonwebtoken';
 
 @Injectable()
 export class AuthMediator {

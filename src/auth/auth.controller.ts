@@ -16,7 +16,6 @@ import {
 import { SignInDto } from './dto/sign-in.dto';
 import { JwtGuard, JwtOrApiKeyGuard } from './auth.guard';
 import { Request } from 'express';
-import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 import {
   ApiKeyNotFound,
@@ -26,13 +25,14 @@ import {
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { UserResponse } from 'src/user/response/user.response';
 import { AuthMediator } from './auth.mediator';
-import { ApiKeyResponse } from './response/api-key.response';
 import { ApiTags } from '@nestjs/swagger';
 import {
   ApiKeyCreateResponse,
+  ApiKeysResponse,
   SignInResponse,
   SignUpResponse,
 } from './response';
+import { ProfileResponse } from './response/profile.response';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -88,16 +88,11 @@ export class AuthController {
 
   @Get('api-key')
   @UseGuards(JwtOrApiKeyGuard)
-  async getApiKeys(
-    @Req() req: Request,
-  ): Promise<{ apiKeys: ApiKeyResponse[] }> {
+  async getApiKeys(@Req() req: Request): Promise<ApiKeysResponse> {
     try {
       const userId = req.payload?.sub ?? req.user?.id;
       const apiKeys = await this.authMediator.getApiKeys(userId);
-      const responseApiKeys = apiKeys.map(
-        (apiKey) => new ApiKeyResponse(apiKey),
-      );
-      return { apiKeys: responseApiKeys };
+      return new ApiKeysResponse(apiKeys);
     } catch (error) {
       handleEndpointErrors(this.logger, error, []);
     }
@@ -121,7 +116,7 @@ export class AuthController {
 
   @Get('profile')
   @UseGuards(JwtGuard)
-  getProfile(@Req() req: Request): JwtPayload {
-    return req.payload;
+  getProfile(@Req() req: Request): ProfileResponse {
+    return new ProfileResponse(req.payload);
   }
 }
