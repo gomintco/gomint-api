@@ -26,9 +26,8 @@ import {
 } from 'src/core/error';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { ApiProperty, ApiTags } from '@nestjs/swagger';
-import { DealCreateResponse } from './response';
-import { DealBytesResponse } from './response/deal-bytes.response';
+import { ApiTags } from '@nestjs/swagger';
+import { DealBytesResponse, DealCreateResponse } from './response';
 
 @ApiTags('deal')
 @Controller('deal')
