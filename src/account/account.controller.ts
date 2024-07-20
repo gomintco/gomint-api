@@ -36,7 +36,6 @@ import {
   AccountAssociateResponse,
 } from './response';
 import { ApiTags } from '@nestjs/swagger';
-import { AccountResponse } from './response';
 
 @ApiTags('account')
 @Controller('account')
