@@ -84,7 +84,7 @@ export class DealService {
     serialNumber?: number,
     encryptionKey?: string,
   ) {
-    const deal = await this.dealRepository.findOneOrFail({
+    const deal = await this.dealRepository.findOne({
       where: { dealId },
     });
     if (!deal) {
@@ -168,11 +168,7 @@ export class DealService {
     const transactionId = TransactionId.generate(feePayerId);
     const transaction = new TransferTransaction()
       .setTransactionId(transactionId)
-      .setNodeAccountIds([
-        new AccountId(3),
-        // new AccountId(4),
-        // new AccountId(8),
-      ]);
+      .setNodeAccountIds([new AccountId(3)]);
 
     // add hbar transfers
     dealData.hbarTransfers.forEach((transfer) => {

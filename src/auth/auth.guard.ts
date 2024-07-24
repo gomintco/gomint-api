@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { JwtPayload } from './jwt-payload.type';
 import { AppConfigService } from 'src/config/app-config.service';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import { API_KEY_HEADER, AUTHORIZATION_HEADER } from 'src/core/headers.const';
@@ -30,7 +29,7 @@ export class JwtGuard implements CanActivate {
     }
 
     try {
-      req.payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+      req.payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.app.jwtSecret,
       });
     } catch (error: any) {

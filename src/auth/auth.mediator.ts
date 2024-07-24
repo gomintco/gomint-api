@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
-import { Network } from 'src/hedera-api/network.enum';
+import { Injectable, Logger } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { UserResponse } from 'src/user/response/user.response';
@@ -11,8 +6,8 @@ import { ApiKeyService } from './api-key.service';
 import { ApiKey } from './api-key.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UserNotFoundError, WrongPasswordError } from 'src/core/error';
-import type { JwtPayload } from './jwt-payload.type';
 import { User } from 'src/user/user.entity';
+import { JwtPayload } from 'jsonwebtoken';
 
 @Injectable()
 export class AuthMediator {
@@ -24,14 +19,14 @@ export class AuthMediator {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signIn(
-    username: string,
-    pass: string,
-  ): Promise<{ access_token: string }> {
+  /**
+   * Verifies user credentials and returns access token
+   */
+  async signIn(username: string, password: string): Promise<string> {
     let user: User;
     try {
       user = await this.userService.findOneByOrFail({ username });
-      if (user?.hashedPassword !== pass) {
+      if (user?.hashedPassword !== password) {
         throw new WrongPasswordError();
       }
     } catch (err: any) {
@@ -40,22 +35,11 @@ export class AuthMediator {
     }
 
     const payload: JwtPayload = { username: user.username, sub: user.id };
-    try {
-      return {
-        access_token: await this.jwtService.signAsync(payload),
-      };
-    } catch (err) {
-      this.logger.error(err);
-      throw new InternalServerErrorException();
-    }
+    return await this.jwtService.signAsync(payload);
   }
 
-  async signup(
-    signUpDto: SignUpDto,
-  ): Promise<{ username: string; id: string; network: Network }> {
-    const { username, id, network } = await this.userService.create(signUpDto);
-
-    return { username, id, network };
+  async signup(signUpDto: SignUpDto): Promise<User> {
+    return await this.userService.create(signUpDto);
   }
 
   async getAuthUser(userId: string): Promise<UserResponse> {
@@ -67,7 +51,7 @@ export class AuthMediator {
     return this.apiKeyService.getUserApiKeys(userId);
   }
 
-  async generateApiKey(userId: string) {
+  async generateApiKey(userId: string): Promise<ApiKey> {
     const user = await this.userService.findOneByOrFail({ id: userId });
     return await this.apiKeyService.generateApiKey(user);
   }
