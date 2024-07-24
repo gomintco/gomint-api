@@ -13,13 +13,16 @@ export class ApiKeyService {
     private readonly apiKeyRepository: Repository<ApiKey>,
   ) {}
 
-  async generateApiKey(user: User): Promise<{ apiKey: string }> {
+  /**
+   * Generates and returns new API key for `user`
+   */
+  async generateApiKey(user: User): Promise<ApiKey> {
     try {
       const apiKey = new ApiKey();
       apiKey.key = this.generateCryptoSecureKey();
       apiKey.user = user;
       await this.apiKeyRepository.save(apiKey);
-      return { apiKey: apiKey.key };
+      return apiKey;
     } catch (e: any) {
       throw new NotFoundException("User doesn't exist", {
         cause: e,

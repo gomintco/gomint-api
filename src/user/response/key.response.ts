@@ -5,6 +5,7 @@ import { Key } from 'src/key/key.entity';
 export class KeyResponse {
   @ApiProperty({ enum: KeyType, enumName: 'KeyType' })
   type: KeyType;
+
   @ApiProperty()
   publicKey: string;
 

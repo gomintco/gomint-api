@@ -29,9 +29,13 @@ import {
 } from 'src/core/error';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 import { AccountMediator } from './account.mediator';
-import { AccountUpdateResponse } from './response';
+import {
+  AccountCreateResponse,
+  AccountUpdateResponse,
+  AccountsResponse,
+  AccountAssociateResponse,
+} from './response';
 import { ApiTags } from '@nestjs/swagger';
-import { AccountResponse } from 'src/user/response';
 
 @ApiTags('account')
 @Controller('account')
@@ -45,20 +49,11 @@ export class AccountController {
 
   @Get()
   @UseGuards(JwtOrApiKeyGuard)
-  async getUserAccounts(
-    @Req() req: Request,
-  ): Promise<{ id: string; accounts: AccountResponse[] }> {
+  async getUserAccounts(@Req() req: Request): Promise<AccountsResponse> {
     const userId = req.user?.id ?? req.payload?.sub;
 
     const accounts = await this.accountMediator.findUserAccounts(userId);
-    const responseAccount = accounts.map(
-      (account) => new AccountResponse(account),
-    );
-
-    return {
-      id: userId,
-      accounts: responseAccount,
-    };
+    return new AccountsResponse(userId, accounts);
   }
 
   @Post()
@@ -67,7 +62,7 @@ export class AccountController {
     @Req() req: Request,
     @Body() accountCreateDto: AccountCreateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
-  ) {
+  ): Promise<AccountCreateResponse> {
     const { user } = req;
     try {
       const accountId = await this.accountService.createAccount(
@@ -75,7 +70,7 @@ export class AccountController {
         accountCreateDto,
         encryptionKey,
       );
-      return { accountId };
+      return new AccountCreateResponse(accountId);
     } catch (error: any) {
       handleEndpointErrors(
         this.logger,
@@ -123,7 +118,7 @@ export class AccountController {
     @Req() req: Request,
     @Body() associateDto: AssociateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
-  ) {
+  ): Promise<AccountAssociateResponse> {
     const { user } = req;
 
     try {
@@ -132,7 +127,7 @@ export class AccountController {
         associateDto,
         encryptionKey,
       );
-      return { status };
+      return new AccountAssociateResponse(status);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         {

@@ -16,7 +16,6 @@ import {
 import { SignInDto } from './dto/sign-in.dto';
 import { JwtGuard, JwtOrApiKeyGuard } from './auth.guard';
 import { Request } from 'express';
-import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
 import {
   ApiKeyNotFound,
@@ -26,8 +25,14 @@ import {
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { UserResponse } from 'src/user/response/user.response';
 import { AuthMediator } from './auth.mediator';
-import { ApiKeyResponse } from './response/api-key.response';
 import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiKeyCreateResponse,
+  ApiKeysResponse,
+  SignInResponse,
+  SignUpResponse,
+} from './response';
+import { ProfileResponse } from './response/profile.response';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -38,12 +43,11 @@ export class AuthController {
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
-  async signup(@Body() signUpDto: SignUpDto) {
+  async signup(@Body() signUpDto: SignUpDto): Promise<SignUpResponse> {
     try {
-      const { username, id, network } =
-        await this.authMediator.signup(signUpDto);
+      const user = await this.authMediator.signup(signUpDto);
 
-      return { username, id, network };
+      return new SignUpResponse(user);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [UserDuplicationError], toThrow: BadRequestException },
@@ -60,14 +64,14 @@ export class AuthController {
 
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  async signIn(
-    @Body() signInDto: SignInDto,
-  ): Promise<{ access_token: string }> {
+  async signIn(@Body() signInDto: SignInDto): Promise<SignInResponse> {
     try {
-      return await this.authMediator.signIn(
+      const accessToken = await this.authMediator.signIn(
         signInDto.username,
         signInDto.hashedPassword,
       );
+
+      return new SignInResponse(accessToken);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [UserNotFoundError], toThrow: NotFoundException },
@@ -77,22 +81,18 @@ export class AuthController {
 
   @Post('api-key')
   @UseGuards(JwtGuard)
-  async createApiKey(@Req() req: Request): Promise<{ apiKey: string }> {
-    return this.authMediator.generateApiKey(req.payload.sub);
+  async createApiKey(@Req() req: Request): Promise<ApiKeyCreateResponse> {
+    const apiKey = await this.authMediator.generateApiKey(req.payload.sub);
+    return new ApiKeyCreateResponse(apiKey.key);
   }
 
   @Get('api-key')
   @UseGuards(JwtOrApiKeyGuard)
-  async getApiKeys(
-    @Req() req: Request,
-  ): Promise<{ apiKeys: ApiKeyResponse[] }> {
+  async getApiKeys(@Req() req: Request): Promise<ApiKeysResponse> {
     try {
       const userId = req.payload?.sub ?? req.user?.id;
       const apiKeys = await this.authMediator.getApiKeys(userId);
-      const responseApiKeys = apiKeys.map(
-        (apiKey) => new ApiKeyResponse(apiKey),
-      );
-      return { apiKeys: responseApiKeys };
+      return new ApiKeysResponse(apiKeys);
     } catch (error) {
       handleEndpointErrors(this.logger, error, []);
     }
@@ -116,7 +116,7 @@ export class AuthController {
 
   @Get('profile')
   @UseGuards(JwtGuard)
-  getProfile(@Req() req: Request): JwtPayload {
-    return req.payload;
+  getProfile(@Req() req: Request): ProfileResponse {
+    return new ProfileResponse(req.payload);
   }
 }

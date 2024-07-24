@@ -4,6 +4,7 @@ import { KeyResponse } from 'src/user/response/key.response';
 import type { Request } from 'express';
 import { KeyService } from './key.service';
 import { ApiTags } from '@nestjs/swagger';
+import { UserKeysResponse } from './response';
 
 @ApiTags('key')
 @Controller('key')
@@ -12,9 +13,7 @@ export class KeyController {
 
   @UseGuards(ApiKeyGuard)
   @Get()
-  async getUserKeys(
-    @Req() req: Request,
-  ): Promise<{ id: string; keys: KeyResponse[] }> {
+  async getUserKeys(@Req() req: Request): Promise<UserKeysResponse> {
     const userId = req.user.id;
     const keys = await this.keyService.findKeysByUserId(userId);
     return { id: userId, keys: keys.map((key) => new KeyResponse(key)) };
