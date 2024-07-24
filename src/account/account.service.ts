@@ -37,6 +37,9 @@ export class AccountService {
     private readonly hederaKeyService: HederaKeyApiService,
   ) {}
 
+  /**
+   * @todo Refactor
+   */
   async createAccount(
     user: User,
     accountCreateDto: AccountCreateDto,
