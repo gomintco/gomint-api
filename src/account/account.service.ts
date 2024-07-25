@@ -6,7 +6,7 @@ import {
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
 import { TokenCreateDto } from 'src/token/dto/token-create.dto';
@@ -289,7 +289,7 @@ export class AccountService {
     let account: Account;
     if (alias.startsWith('0.0.')) {
       account = await this.accountRepository.findOne({
-        where: { id: alias },
+        where: { user: { id: userId }, id: alias },
         relations: { keys: true },
       });
     } else {
@@ -311,15 +311,17 @@ export class AccountService {
     userId: string,
     publicKey: string,
   ): Promise<Account> {
-    return this.accountRepository
-      .createQueryBuilder('account')
-      .leftJoinAndSelect('account.keys', 'key')
-      .leftJoinAndSelect('account.user', 'user')
-      .where('user.id = :userId', { userId })
-      .andWhere('key.publicKey LIKE :publicKey', {
-        publicKey: `%${publicKey}%`,
-      })
-      .getOneOrFail();
+    const account = await this.accountRepository.findOneOrFail({
+      where: {
+        user: { id: userId },
+        keys: { publicKey: Like(`%${publicKey}%`) },
+      },
+      relations: { keys: true, user: true },
+    });
+    if (!account) {
+      throw new AccountNotFoundError();
+    }
+    return account;
   }
 
   async findUserAccounts(userId: string): Promise<Account[]> {

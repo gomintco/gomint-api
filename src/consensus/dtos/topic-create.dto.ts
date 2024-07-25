@@ -1,16 +1,36 @@
-import { Type } from 'class-transformer';
+import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import {
-  IsBoolean,
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
+  TOPIC_MIN_AUTO_RENEW_PERIOD,
+  TOPIS_MAX_AUTO_RENEW_PERIOD,
+} from '../conensus.const';
 
-export class TokenCreateDto {
+export class TopicCreateDto {
+  @IsOptional()
   @IsString()
   payerId: string;
 
-  // all of these params are optional: https://docs.hedera.com/hedera/sdks-and-apis/sdks/consensus-service/create-a-topic
+  @IsOptional()
+  @IsString()
+  adminKey: string;
+
+  /**
+   * Makes topic private
+   */
+  @IsOptional()
+  @IsString()
+  submitKey: string;
+
+  @IsOptional()
+  @IsString()
+  topicMemo: string;
+
+  @IsOptional()
+  @IsString()
+  autoRenewAccount: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(TOPIC_MIN_AUTO_RENEW_PERIOD)
+  @Max(TOPIS_MAX_AUTO_RENEW_PERIOD)
+  autoRenewPeriod: number;
 }

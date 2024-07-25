@@ -23,6 +23,7 @@ import { HederaConsensusApiService } from './hedera-consensus-api/hedera-consens
     HederaTransactionApiService,
     HederaMirrornodeApiService,
     HederaKeyApiService,
+    HederaConsensusApiService,
   ],
   imports: [KeyModule, IpfsModule],
 })

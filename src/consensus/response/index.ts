@@ -1,1 +1,1 @@
-export * from './create-topic.response';
+export * from './topic-create.response';

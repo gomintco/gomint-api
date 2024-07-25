@@ -19,7 +19,7 @@ export class JwtGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: AppConfigService,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -50,7 +50,7 @@ export class JwtGuard implements CanActivate {
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private readonly apiKeyService: ApiKeyService) { }
+  constructor(private readonly apiKeyService: ApiKeyService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const apiKey = req.headers[API_KEY_HEADER];
@@ -64,7 +64,7 @@ export class ApiKeyGuard implements CanActivate {
 
 @Injectable()
 export class EncryptionKeyGuard implements CanActivate {
-  constructor() { }
+  constructor() {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const headers = ctx.switchToHttp().getRequest().headers;
