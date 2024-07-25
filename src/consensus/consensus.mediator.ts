@@ -5,7 +5,7 @@ import { HederaConsensusApiService } from 'src/hedera-api/hedera-consensus-api/h
 import { KeyService } from 'src/key/key.service';
 import { User } from 'src/user/user.entity';
 import { TopicCreateDto } from './dtos';
-import { AccountNotFoundError } from 'src/core/error';
+import { AccountNotFoundError, NoPayerIdError } from 'src/core/error';
 import { Account } from 'src/account/account.entity';
 import NodeClient from '@hashgraph/sdk/lib/client/NodeClient';
 
@@ -18,7 +18,7 @@ export class ConsensusMediator {
     private readonly clientService: ClientService,
     private readonly keyService: KeyService,
     private readonly accountService: AccountService,
-  ) {}
+  ) { }
 
   async createTopic(
     user: User,
@@ -36,27 +36,7 @@ export class ConsensusMediator {
     encryptionKey?: string,
   ): Promise<NodeClient> {
     const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
-    let payerAccount: Account;
-
-    try {
-      if (dto.payerId) {
-        payerAccount = await this.accountService.getUserAccountByAlias(
-          user.id,
-          dto.payerId,
-        );
-      } else {
-        const payerKey = dto.adminKey ?? dto.submitKey;
-        payerAccount = await this.accountService.getUserAccountByPublicKey(
-          user.id,
-          payerKey,
-        );
-      }
-    } catch (error) {
-      if (error instanceof AccountNotFoundError) {
-        throw new AccountNotFoundError('Payer account not found');
-      }
-      throw error;
-    }
+    const payerAccount = await this.getTopicCreatePayerAccount(user, dto);
 
     // check if the payer account is accessible for this user
     const client = this.clientService.buildClientAndSigningKeys(
@@ -66,5 +46,26 @@ export class ConsensusMediator {
     ).client;
 
     return client;
+  }
+
+  private async getTopicCreatePayerAccount(
+    user: User,
+    dto: TopicCreateDto,
+  ): Promise<Account> {
+    if (dto.payerId) {
+      return await this.accountService.getUserAccountByAlias(
+        user.id,
+        dto.payerId,
+      );
+    }
+
+    const payerKey = dto.adminKey ?? dto.submitKey;
+    if (!payerKey) {
+      throw new NoPayerIdError();
+    }
+    return await this.accountService.getUserAccountByPublicKey(
+      user.id,
+      payerKey,
+    );
   }
 }

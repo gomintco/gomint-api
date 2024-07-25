@@ -35,7 +35,7 @@ export class AccountService {
     private readonly tokenService: HederaTokenApiService,
     private readonly transactionService: HederaTransactionApiService,
     private readonly hederaKeyService: HederaKeyApiService,
-  ) {}
+  ) { }
 
   /**
    * @todo Refactor
@@ -55,7 +55,9 @@ export class AccountService {
     });
     // throw error if user has accounts and doesn't pass payer id
     if (accountCount && !accountCreateDto.payerId) {
-      throw new NoPayerIdError();
+      throw new NoPayerIdError(
+        'Only first account is free. Please specify payerId',
+      );
     }
 
     // check if alias already exists
@@ -81,13 +83,13 @@ export class AccountService {
     // this can potentially be made into its own method here
     const client = accountCount
       ? // if has account, user payerAccount to execute
-        this.clientService.buildClientAndSigningKeys(
-          user.network,
-          escrowKey,
-          payerAccount,
-        ).client
+      this.clientService.buildClientAndSigningKeys(
+        user.network,
+        escrowKey,
+        payerAccount,
+      ).client
       : // if no accounts, GoMint will pay
-        this.clientService.getGoMintClient(user.network);
+      this.clientService.getGoMintClient(user.network);
 
     // create the threshold key with GoMint account for management if anything goes wrong
     const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
