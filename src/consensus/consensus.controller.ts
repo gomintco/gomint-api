@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Headers,
@@ -14,9 +15,9 @@ import { ConsensusMediator } from './consensus.mediator';
 import { TopicCreateResponse } from './response';
 import type { Request } from 'express';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
-import { TopicCreateDto } from './dtos';
+import { TopicCreateDto } from './dto';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { AccountNotFoundError } from 'src/core/error';
+import { AccountNotFoundError, NoPayerIdError } from 'src/core/error';
 
 @ApiTags('consensus')
 @Controller('consensus')
@@ -24,7 +25,7 @@ import { AccountNotFoundError } from 'src/core/error';
 export class ConsensusController {
   private readonly logger = new Logger(ConsensusController.name);
 
-  constructor(private readonly consensusMediator: ConsensusMediator) { }
+  constructor(private readonly consensusMediator: ConsensusMediator) {}
 
   @Post('topic')
   @UseGuards(ApiKeyGuard)
@@ -44,6 +45,7 @@ export class ConsensusController {
     } catch (error) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
+        { errorTypes: [NoPayerIdError], toThrow: BadRequestException },
       ]);
     }
   }

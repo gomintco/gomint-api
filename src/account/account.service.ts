@@ -316,6 +316,9 @@ export class AccountService {
     const account = await this.accountRepository.findOneOrFail({
       where: {
         user: { id: userId },
+        /**
+         * @todo check public key to it has enough bytes, (on dto level)
+         */
         keys: { publicKey: Like(`%${publicKey}%`) },
       },
       relations: { keys: true, user: true },

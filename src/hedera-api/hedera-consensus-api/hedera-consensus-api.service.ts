@@ -1,11 +1,16 @@
-import { AccountId, Key, TopicCreateTransaction } from '@hashgraph/sdk';
-import NodeClient from '@hashgraph/sdk/lib/client/NodeClient';
+import {
+  type AccountId,
+  type Key,
+  TopicCreateTransaction,
+  TopicId,
+  Client,
+} from '@hashgraph/sdk';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class HederaConsensusApiService {
   async createTopic(
-    client: NodeClient,
+    client: Client,
     props?: {
       adminKey?: Key;
       submitKey?: Key;
@@ -13,11 +18,10 @@ export class HederaConsensusApiService {
       autoRenewAccountId?: string | AccountId;
       topicMemo?: string;
     },
-  ) {
+  ): Promise<TopicId> {
     const transaction = new TopicCreateTransaction(props);
     const txResponse = await transaction.execute(client);
     const receipt = await txResponse.getReceipt(client);
-    const newTopicId = receipt.topicId;
-    return newTopicId;
+    return receipt.topicId;
   }
 }
