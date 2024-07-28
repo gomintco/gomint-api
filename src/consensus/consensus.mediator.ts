@@ -27,11 +27,17 @@ export class ConsensusMediator {
     encryptionKey?: string,
   ): Promise<string> {
     const client = await this.getTopicCreateClient(user, dto, encryptionKey);
+
+    const adminKey = dto.adminKey
+      ? PublicKey.fromString(dto.adminKey)
+      : undefined;
+    const submitKey = dto.submitKey
+      ? PublicKey.fromString(dto.submitKey)
+      : undefined;
+
     const topicId = await this.hederaConsensusApiService.createTopic(client, {
-      adminKey: dto.adminKey ? PublicKey.fromString(dto.adminKey) : undefined,
-      submitKey: dto.submitKey
-        ? PublicKey.fromString(dto.submitKey)
-        : undefined,
+      adminKey,
+      submitKey,
       autoRenewPeriod: dto.autoRenewPeriod,
       autoRenewAccountId: dto.autoRenewAccount,
       topicMemo: dto.topicMemo,
@@ -46,15 +52,36 @@ export class ConsensusMediator {
   ): Promise<NodeClient> {
     const escrowKey = this.keyService.decryptUserEscrowKey(user, encryptionKey);
     const payerAccount = await this.getTopicCreatePayerAccount(user, dto);
+    const actionAccount = await this.getTopicCreateActionAccount(
+      user,
+      payerAccount,
+      dto.adminKey,
+    );
 
     // check if the payer account is accessible for this user
     const client = this.clientService.buildClientAndSigningKeys(
       user.network,
       escrowKey,
+      actionAccount,
       payerAccount,
     ).client;
 
     return client;
+  }
+
+  private async getTopicCreateActionAccount(
+    user: User,
+    payerAccount: Account,
+    adminKey?: string,
+  ): Promise<Account> {
+    if (!adminKey) {
+      return payerAccount;
+    }
+
+    return await this.accountService.getUserAccountByPublicKey(
+      user.id,
+      adminKey,
+    );
   }
 
   private async getTopicCreatePayerAccount(
