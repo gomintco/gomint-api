@@ -86,3 +86,14 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+
+## Production deployment
+
+```bash
+# build the app
+$ npm run build
+
+# start the app
+$ npm run start:prod
+
+```
