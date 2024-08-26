@@ -2,7 +2,15 @@
 
 # Description
 
-API for interacting with the Hedera Hashgraph network, including custodial key control, token creation, and transaction handling
+The GoMint API is an Open Source solution for interacting with the Hedera Hashgraph network. It integrates with existing user databases and simplifies the process of creating and submitting transactions to the Hedera network.
+
+## Features
+
+- User authentication and authorization
+- Token creation and management
+- Transaction handling
+- Custodial key control
+- Consensus service
 
 ## Installation
 
@@ -10,9 +18,13 @@ API for interacting with the Hedera Hashgraph network, including custodial key c
 $ npm install
 ```
 
-## Running the app
+## Running the app in development mode
 
 First create `.env` file that contains all the necessary environment variables. See `.env.example` for the required environment variables
+
+[web3.storage](https://web3.storage/) is used to store files (e.g. NFT metdata) on IPFS. Follow this [link](https://web3.storage/docs/how-to/upload/#using-the-js-client) to configure the WEB_3_XXX environment variables.
+
+```bash
 
 Run MySQL docker container
 
@@ -73,4 +85,15 @@ $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
+```
+
+## Production deployment
+
+```bash
+# build the app
+$ npm run build
+
+# start the app
+$ npm run start:prod
+
 ```
