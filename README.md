@@ -24,8 +24,6 @@ First create `.env` file that contains all the necessary environment variables. 
 
 [web3.storage](https://web3.storage/) is used to store files (e.g. NFT metdata) on IPFS. Follow this [link](https://web3.storage/docs/how-to/upload/#using-the-js-client) to configure the WEB_3_XXX environment variables.
 
-```bash
-
 Run MySQL docker container
 
 ```bash
