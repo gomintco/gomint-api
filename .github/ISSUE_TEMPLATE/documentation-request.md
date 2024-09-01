@@ -1,3 +1,12 @@
+---
+name: Documentation request
+about: Make changes in the documentation
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 # Documentation Request
 
 **Description**

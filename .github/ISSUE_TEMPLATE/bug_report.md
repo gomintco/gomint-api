@@ -1,3 +1,12 @@
+---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 # Bug Report
 
 **Description**
@@ -25,8 +34,7 @@ If applicable, add screenshots to help explain the problem.
 **Environment**
 
 - **OS**: [e.g., Windows, macOS, Linux]
-- **Browser**: [e.g., Chrome, Firefox]
-- **Version**: [e.g., 1.0.0]
+- **Node Version**: [e.g., 18.2, 20.1]
 
 **Additional Context**
 
