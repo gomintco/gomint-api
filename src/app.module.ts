@@ -9,7 +9,9 @@ import { HederaModule } from './hedera-api/hedera-api.module';
 import { DbLogger } from './db/db-logger.service';
 import { AppLoggerModule } from './core/app-logger.module';
 import { IpfsModule } from './ipfs/ipfs.module';
+import { ConsensusModule } from './consensus/consensus.module';
 import { AuthModule } from './auth/auth.module';
+import { HederaConsensusApiService } from './hedera-api/hedera-consensus-api/hedera-consensus-api.service';
 import { AppJwtModule } from './auth/app-jwt.module';
 
 @Module({
@@ -31,8 +33,9 @@ import { AppJwtModule } from './auth/app-jwt.module';
     DealModule,
     HederaModule,
     IpfsModule,
+    ConsensusModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [HederaConsensusApiService],
 })
 export class AppModule {}

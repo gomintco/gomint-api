@@ -37,7 +37,7 @@ export class JwtGuard implements CanActivate {
       if (error.message === 'jwt expired') {
         throw new UnauthorizedException('Session is expired');
       }
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Session token is corrupted');
     }
     return true;
   }
@@ -98,6 +98,6 @@ export class JwtOrApiKeyGuard implements CanActivate {
         this.logger.error(error);
       }
     }
-    return false;
+    throw new UnauthorizedException('Session token or API key is required');
   }
 }

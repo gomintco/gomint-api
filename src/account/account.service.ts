@@ -6,7 +6,7 @@ import {
 import { ClientService } from 'src/client/client.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from './account.entity';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { AssociateDto } from './dto/associate.dto';
 import { TokenCreateDto } from 'src/token/dto/token-create.dto';
@@ -35,7 +35,7 @@ export class AccountService {
     private readonly tokenService: HederaTokenApiService,
     private readonly transactionService: HederaTransactionApiService,
     private readonly hederaKeyService: HederaKeyApiService,
-  ) {}
+  ) { }
 
   /**
    * @todo Refactor
@@ -55,7 +55,9 @@ export class AccountService {
     });
     // throw error if user has accounts and doesn't pass payer id
     if (accountCount && !accountCreateDto.payerId) {
-      throw new NoPayerIdError();
+      throw new NoPayerIdError(
+        'Only first account is free. Please specify payerId',
+      );
     }
 
     // check if alias already exists
@@ -81,13 +83,13 @@ export class AccountService {
     // this can potentially be made into its own method here
     const client = accountCount
       ? // if has account, user payerAccount to execute
-        this.clientService.buildClientAndSigningKeys(
-          user.network,
-          escrowKey,
-          payerAccount,
-        ).client
+      this.clientService.buildClientAndSigningKeys(
+        user.network,
+        escrowKey,
+        payerAccount,
+      ).client
       : // if no accounts, GoMint will pay
-        this.clientService.getGoMintClient(user.network);
+      this.clientService.getGoMintClient(user.network);
 
     // create the threshold key with GoMint account for management if anything goes wrong
     const { keyList, privateKey } = this.hederaKeyService.generateGoMintKeyList(
@@ -289,7 +291,7 @@ export class AccountService {
     let account: Account;
     if (alias.startsWith('0.0.')) {
       account = await this.accountRepository.findOne({
-        where: { id: alias },
+        where: { user: { id: userId }, id: alias },
         relations: { keys: true },
       });
     } else {
@@ -311,15 +313,20 @@ export class AccountService {
     userId: string,
     publicKey: string,
   ): Promise<Account> {
-    return this.accountRepository
-      .createQueryBuilder('account')
-      .leftJoinAndSelect('account.keys', 'key')
-      .leftJoinAndSelect('account.user', 'user')
-      .where('user.id = :userId', { userId })
-      .andWhere('key.publicKey LIKE :publicKey', {
-        publicKey: `%${publicKey}%`,
-      })
-      .getOneOrFail();
+    const account = await this.accountRepository.findOneOrFail({
+      where: {
+        user: { id: userId },
+        /**
+         * @todo check public key to it has enough bytes, (on dto level)
+         */
+        keys: { publicKey: Like(`%${publicKey}%`) },
+      },
+      relations: { keys: true, user: true },
+    });
+    if (!account) {
+      throw new AccountNotFoundError();
+    }
+    return account;
   }
 
   async findUserAccounts(userId: string): Promise<Account[]> {

@@ -73,7 +73,7 @@ export class ClientService {
     };
   }
 
-  buildClient(
+  private buildClient(
     network: Network,
     accountId: string | AccountId,
     privateKey: string | PrivateKey,

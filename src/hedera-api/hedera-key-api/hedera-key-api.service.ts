@@ -48,6 +48,9 @@ export class HederaKeyApiService {
         ? this.configService.hedera.mainnet.custodialKey
         : this.configService.hedera.testnet.custodialKey;
 
+    /**
+     * threshold must be set to 1 to be able to make transactions with one key
+     */
     const keyList = new KeyList([privateKey, custodialKey], 1);
     return {
       keyList,
