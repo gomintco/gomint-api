@@ -8,26 +8,28 @@ import { TokenCollectionMetadata } from 'src/token/dto/hip766-metadata.dto';
 export class IpfsService {
   private client?: Client;
 
-  constructor(private readonly configService: AppConfigService) {}
+  constructor(private readonly configService: AppConfigService) { }
 
   async initClient(): Promise<void> {
     if (this.client) {
       return;
     }
-    const { create } = await eval(`import('@web3-storage/w3up-client')`);
     const { parse } = await eval(`import('@ucanto/principal/ed25519')`);
+    const { create } = await eval(`import('@web3-storage/w3up-client')`);
+    const { parse: parseProof } = await eval(
+      `import('@web3-storage/w3up-client/proof')`,
+    );
     const { StoreMemory } = await eval(`import(
       '@web3-storage/w3up-client/stores/memory'
     )`);
 
     const principal = parse(this.configService.ipfs.web3StorageKey);
     const store = new StoreMemory();
-    this.client = await create({ principal, store });
-    const proof = await this.parseProof(
-      this.configService.ipfs.web3StorageProof,
-    );
-    const space = await this.client.addSpace(proof);
-    await this.client.setCurrentSpace(space.did());
+    const client = await create({ principal, store });
+    const proof = await parseProof(this.configService.ipfs.web3StorageProof);
+    const space = await client.addSpace(proof);
+    await client.setCurrentSpace(space.did());
+    this.client = client;
   }
 
   async uploadMetadata(
