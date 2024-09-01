@@ -15,11 +15,11 @@ export class IpfsService {
       return;
     }
     const { Signer } = await eval(`import('@ucanto/principal/ed25519')`);
-    const { create } = await eval(`import('@web3-storage/w3up-client')`);
-    const { parse } = await eval(`import('@web3-storage/w3up-client/proof')`);
     const { StoreMemory } = await eval(`import(
       '@web3-storage/w3up-client/stores/memory'
     )`);
+    const { create } = await eval(`import('@web3-storage/w3up-client')`);
+    const { parse } = await eval(`import('@web3-storage/w3up-client/proof')`);
 
     const principal = Signer.parse(this.configService.ipfs.web3StorageKey);
     const store = new StoreMemory();
