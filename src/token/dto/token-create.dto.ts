@@ -85,7 +85,7 @@ class IsStringOrTokenCollectionMetadata
 export class TokenCreateDto {
   @IsOptional()
   @IsString()
-  payerId: string;
+  payerId?: string;
 
   @IsString()
   tokenName: string;
@@ -98,72 +98,73 @@ export class TokenCreateDto {
 
   @IsOptional()
   @IsNumber()
-  decimals: number = 0;
+  decimals?: number = 0;
 
   @IsOptional()
   @IsNumber()
-  initialSupply: number;
+  initialSupply?: number;
 
   @IsString()
   treasuryAccountId: string;
 
   @IsOptional()
   @IsString()
-  adminKey: string;
+  adminKey?: string;
 
   @IsOptional()
   @IsString()
-  kycKey: string;
+  kycKey?: string;
 
   @IsOptional()
   @IsString()
-  freezeKey: string;
+  freezeKey?: string;
 
   @IsOptional()
   @IsString()
-  wipeKey: string;
-
-  @IsString()
-  supplyKey: string = 'default';
+  wipeKey?: string;
 
   @IsOptional()
   @IsString()
-  feeScheduleKey: string;
+  supplyKey?: string = 'default';
 
   @IsOptional()
   @IsString()
-  pauseKey: string;
+  feeScheduleKey?: string;
+
+  @IsOptional()
+  @IsString()
+  pauseKey?: string;
 
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => FixedFeeDto)
-  fixedFees: FixedFeeDto[];
+  fixedFees?: FixedFeeDto[];
 
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => FractionalFeeDto)
-  fractionalFees: FractionalFeeDto[];
+  fractionalFees?: FractionalFeeDto[];
 
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => RoyaltyFeeDto)
-  royaltyFees: RoyaltyFeeDto[];
+  royaltyFees?: RoyaltyFeeDto[];
 
   @IsOptional()
   @IsNumber()
-  maxSupply: number;
+  maxSupply?: number;
 
   @IsOptional()
   @IsBoolean()
-  finite: boolean = false;
+  finite?: boolean = false;
 
   @IsOptional()
   @IsNumber()
-  expirationTime: number;
+  expirationTime?: number;
 
   @IsOptional()
   @IsString()
-  autoRenewAccountId: string;
+  autoRenewAccountId?: string;
 
   @IsOptional()
   @IsString()

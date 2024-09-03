@@ -19,6 +19,8 @@ export class HederaMirrornodeApiService {
       case Network.MAINNET:
         mirrornodeUrl = this.configService.hedera.mainnet.mirrornodeUrl;
         break;
+      default:
+        throw new Error(`Unsupported network: ${network}`);
     }
     const res = await fetch(`${mirrornodeUrl}/tokens/${tokenId}`);
     const data = await res.json();
