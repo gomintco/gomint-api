@@ -28,7 +28,14 @@ import {
   InvalidHederaIdError,
   InvalidNetworkError,
 } from 'src/core/error';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  MintResponse,
+  TokenAssociateResponse,
+  TokenCreateResponse,
+} from './response';
 
+@ApiTags('token')
 @Controller('token')
 @UseGuards(ApiKeyGuard)
 export class TokenController {
@@ -45,7 +52,7 @@ export class TokenController {
     @Req() req: Request,
     @Body() tokenCreateDto: TokenCreateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
-  ) {
+  ): Promise<TokenCreateResponse> {
     const { user } = req;
 
     try {
@@ -62,7 +69,7 @@ export class TokenController {
               encryptionKey,
             );
 
-      return { token };
+      return new TokenCreateResponse(token);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         {
@@ -123,7 +130,8 @@ export class TokenController {
           encryptionKey,
         );
       }
-      return { status };
+
+      return new MintResponse(status);
     } catch (err: any) {
       throw new ServiceUnavailableException('Error creating token', {
         cause: err,
@@ -137,7 +145,7 @@ export class TokenController {
     @Req() req: Request,
     @Body() tokenAssociateDto: TokenAssociateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
-  ) {
+  ): Promise<TokenAssociateResponse> {
     const { user } = req;
 
     try {
@@ -146,7 +154,8 @@ export class TokenController {
         tokenAssociateDto,
         encryptionKey,
       );
-      return { status };
+
+      return new TokenAssociateResponse(status);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },

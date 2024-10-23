@@ -11,7 +11,11 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { FixedFee, FractionalFee, RoyaltyFee } from './custom-fees.dto';
+import {
+  FixedFeeDto,
+  FractionalFeeDto,
+  RoyaltyFeeDto,
+} from './custom-fees.dto';
 import { TokenCollectionMetadata } from './hip766-metadata.dto';
 
 @ValidatorConstraint({
@@ -19,7 +23,8 @@ import { TokenCollectionMetadata } from './hip766-metadata.dto';
   async: false,
 })
 class IsStringOrTokenCollectionMetadata
-  implements ValidatorConstraintInterface {
+  implements ValidatorConstraintInterface
+{
   validate(value: any, _args: ValidationArguments) {
     // Valid if string
     if (typeof value === 'string') {
@@ -131,18 +136,18 @@ export class TokenCreateDto {
 
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => FixedFee)
-  fixedFees: FixedFee[];
+  @Type(() => FixedFeeDto)
+  fixedFees: FixedFeeDto[];
 
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => FractionalFee)
-  fractionalFees: FractionalFee[];
+  @Type(() => FractionalFeeDto)
+  fractionalFees: FractionalFeeDto[];
 
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => RoyaltyFee)
-  royaltyFees: RoyaltyFee[];
+  @Type(() => RoyaltyFeeDto)
+  royaltyFees: RoyaltyFeeDto[];
 
   @IsOptional()
   @IsNumber()

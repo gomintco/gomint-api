@@ -17,5 +17,5 @@ export class SignUpDto {
 
   @IsOptional()
   @IsEmail()
-  email: string = null;
+  email?: string;
 }

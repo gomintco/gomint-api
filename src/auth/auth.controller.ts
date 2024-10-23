@@ -10,35 +10,44 @@ import {
   Req,
   Logger,
   BadRequestException,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
-import { AuthService } from './auth.service';
-import { ApiKeyGuard, JwtGuard } from './auth.guard';
+import { JwtGuard, JwtOrApiKeyGuard } from './auth.guard';
 import { Request } from 'express';
-import { JwtPayload } from 'jsonwebtoken';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { UserDuplicationError, UserNotFoundError } from 'src/core/error';
+import {
+  ApiKeyNotFound,
+  UserDuplicationError,
+  UserNotFoundError,
+} from 'src/core/error';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { UserResponse } from 'src/user/response/user.response';
 import { AuthMediator } from './auth.mediator';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiKeyCreateResponse,
+  ApiKeysResponse,
+  SignInResponse,
+  SignUpResponse,
+} from './response';
+import { ProfileResponse } from './response/profile.response';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(
-    private readonly authService: AuthService,
-    private readonly authMediator: AuthMediator,
-  ) {}
+  constructor(private readonly authMediator: AuthMediator) {}
 
-  @HttpCode(HttpStatus.CREATED)
   @Post('signup')
-  async signup(@Body() signUpDto: SignUpDto) {
+  @HttpCode(HttpStatus.CREATED)
+  async signup(@Body() signUpDto: SignUpDto): Promise<SignUpResponse> {
     try {
-      const { username, id, network } =
-        await this.authMediator.signup(signUpDto);
+      const user = await this.authMediator.signup(signUpDto);
 
-      return { username, id, network };
+      return new SignUpResponse(user);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [UserDuplicationError], toThrow: BadRequestException },
@@ -46,22 +55,23 @@ export class AuthController {
     }
   }
 
-  @UseGuards(ApiKeyGuard)
   @Get('user')
+  @UseGuards(JwtGuard)
   async getAuthUser(@Req() req: Request): Promise<UserResponse> {
-    return this.authMediator.getAuthUser(req.user.id);
+    const userId = req.payload.sub;
+    return this.authMediator.getAuthUser(userId);
   }
 
-  @HttpCode(HttpStatus.OK)
   @Post('signin')
-  async signIn(
-    @Body() signInDto: SignInDto,
-  ): Promise<{ access_token: string }> {
+  @HttpCode(HttpStatus.OK)
+  async signIn(@Body() signInDto: SignInDto): Promise<SignInResponse> {
     try {
-      return await this.authService.signIn(
+      const accessToken = await this.authMediator.signIn(
         signInDto.username,
         signInDto.hashedPassword,
       );
+
+      return new SignInResponse(accessToken);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         { errorTypes: [UserNotFoundError], toThrow: NotFoundException },
@@ -69,15 +79,44 @@ export class AuthController {
     }
   }
 
+  @Post('api-key')
   @UseGuards(JwtGuard)
-  @Post('/api-key')
-  async createApiKey(@Req() req: Request): Promise<{ apiKey: string }> {
-    return this.authService.generateApiKey(req.payload.sub);
+  async createApiKey(@Req() req: Request): Promise<ApiKeyCreateResponse> {
+    const apiKey = await this.authMediator.generateApiKey(req.payload.sub);
+    return new ApiKeyCreateResponse(apiKey.key);
   }
 
-  @UseGuards(JwtGuard)
+  @Get('api-key')
+  @UseGuards(JwtOrApiKeyGuard)
+  async getApiKeys(@Req() req: Request): Promise<ApiKeysResponse> {
+    try {
+      const userId = req.payload?.sub ?? req.user?.id;
+      const apiKeys = await this.authMediator.getApiKeys(userId);
+      return new ApiKeysResponse(apiKeys);
+    } catch (error) {
+      handleEndpointErrors(this.logger, error, []);
+    }
+  }
+
+  @Delete('api-key/:apiKeyId')
+  @UseGuards(JwtOrApiKeyGuard)
+  async deleteApiKey(
+    @Req() req: Request,
+    @Param('apiKeyId') apiKeyId: string,
+  ): Promise<void> {
+    try {
+      const userId = req.payload?.sub ?? req.user?.id;
+      return await this.authMediator.deleteApiKey(userId, Number(apiKeyId));
+    } catch (error) {
+      handleEndpointErrors(this.logger, error, [
+        { errorTypes: [ApiKeyNotFound], toThrow: NotFoundException },
+      ]);
+    }
+  }
+
   @Get('profile')
-  getProfile(@Req() req: Request): JwtPayload {
-    return req.payload;
+  @UseGuards(JwtGuard)
+  getProfile(@Req() req: Request): ProfileResponse {
+    return new ProfileResponse(req.payload);
   }
 }

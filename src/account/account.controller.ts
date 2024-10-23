@@ -7,16 +7,17 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  Param,
+  Patch,
   Post,
   Req,
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiKeyGuard } from 'src/auth/auth.guard';
-import { AssociateDto } from './dto/associate.dto';
+import { ApiKeyGuard, JwtOrApiKeyGuard } from 'src/auth/auth.guard';
+import { AssociateDto, AccountCreateDto, AccountUpdateDto } from './dto';
 import { AccountService } from './account.service';
 import { Request } from 'express';
-import { AccountCreateDto } from './dto/account-create.dto';
 import { ENCRYPTION_KEY_HEADER } from 'src/core/headers.const';
 import {
   AccountAliasAlreadyExistsError,
@@ -27,35 +28,41 @@ import {
   InvalidKeyTypeError,
 } from 'src/core/error';
 import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
-import { AccountResponse } from 'src/user/response/account.response';
+import { AccountMediator } from './account.mediator';
+import {
+  AccountCreateResponse,
+  AccountUpdateResponse,
+  AccountsResponse,
+  AccountAssociateResponse,
+} from './response';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('account')
 @Controller('account')
-@UseGuards(ApiKeyGuard)
 export class AccountController {
   private readonly logger = new Logger(AccountController.name);
 
-  constructor(private readonly accountService: AccountService) {}
+  constructor(
+    private readonly accountService: AccountService,
+    private readonly accountMediator: AccountMediator,
+  ) {}
 
   @Get()
-  async getUserAccounts(
-    @Req() req: Request,
-  ): Promise<{ id: string; accounts: AccountResponse[] }> {
-    const userId = req.user.id;
+  @UseGuards(JwtOrApiKeyGuard)
+  async getUserAccounts(@Req() req: Request): Promise<AccountsResponse> {
+    const userId = req.user?.id ?? req.payload?.sub;
 
-    const accounts = await this.accountService.findUserAccounts(userId);
-
-    return {
-      id: userId,
-      accounts: accounts.map((account) => new AccountResponse(account)),
-    };
+    const accounts = await this.accountMediator.findUserAccounts(userId);
+    return new AccountsResponse(userId, accounts);
   }
 
   @Post()
+  @UseGuards(ApiKeyGuard)
   async createAccount(
     @Req() req: Request,
     @Body() accountCreateDto: AccountCreateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
-  ) {
+  ): Promise<AccountCreateResponse> {
     const { user } = req;
     try {
       const accountId = await this.accountService.createAccount(
@@ -63,7 +70,7 @@ export class AccountController {
         accountCreateDto,
         encryptionKey,
       );
-      return { accountId };
+      return new AccountCreateResponse(accountId);
     } catch (error: any) {
       handleEndpointErrors(
         this.logger,
@@ -84,12 +91,34 @@ export class AccountController {
     }
   }
 
+  @Patch(':accountId')
+  @UseGuards(JwtOrApiKeyGuard)
+  async updateAccount(
+    @Body() dto: AccountUpdateDto,
+    @Param('accountId') accountId: string,
+    @Req() req: Request,
+  ): Promise<AccountUpdateResponse> {
+    try {
+      const userId = req.user?.id ?? req.payload?.sub;
+      const oldAccount = await this.accountMediator.update(userId, accountId, {
+        alias: dto.alias,
+      });
+
+      return new AccountUpdateResponse(oldAccount, dto);
+    } catch (error) {
+      handleEndpointErrors(this.logger, error, [
+        { errorTypes: [AccountNotFoundError], toThrow: NotFoundException },
+      ]);
+    }
+  }
+
   @Post('association')
+  @UseGuards(ApiKeyGuard)
   async associate(
     @Req() req: Request,
     @Body() associateDto: AssociateDto,
     @Headers(ENCRYPTION_KEY_HEADER) encryptionKey?: string,
-  ) {
+  ): Promise<AccountAssociateResponse> {
     const { user } = req;
 
     try {
@@ -98,7 +127,7 @@ export class AccountController {
         associateDto,
         encryptionKey,
       );
-      return { status };
+      return new AccountAssociateResponse(status);
     } catch (error: any) {
       handleEndpointErrors(this.logger, error, [
         {
