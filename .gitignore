@@ -1,5 +1,7 @@
 .env
 
+add_dco.sh
+
 # compiled output
 /dist
 /node_modules
