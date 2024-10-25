@@ -42,7 +42,7 @@
     "@web3-storage/w3up-client": "^16.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
-    "mysql2": "^3.9.7",
+    "mysql2": "^3.11.3",
     "nestjs-pino": "^4.1.0",
     "pino": "^9.1.0",
     "pino-http": "^10.1.0",
