@@ -3,10 +3,11 @@ import { UserService } from './user.service';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { createMock } from '@golevelup/ts-jest';
+import { KeyService } from 'src/key/key.service';
 
 describe('UserService', () => {
   let service: UserService;
-  let userRepository: Repository<User>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -14,17 +15,19 @@ describe('UserService', () => {
         UserService,
         {
           provide: getRepositoryToken(User),
-          useClass: Repository,
+          useValue: createMock<Repository<User>>(),
+        },
+        {
+          provide: KeyService,
+          useValue: createMock<KeyService>(),
         },
       ],
     }).compile();
 
     service = module.get<UserService>(UserService);
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User));
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-    expect(userRepository).toBeDefined();
   });
 });
