@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
-import { SignUpDto } from './dto/sign-up.dto';
+import { SignUpDto } from './dto';
 import { UserResponse } from 'src/user/response/user.response';
 import { ApiKeyService } from './api-key.service';
 import { ApiKey } from './api-key.entity';

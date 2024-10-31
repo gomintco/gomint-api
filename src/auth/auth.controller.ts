@@ -13,7 +13,7 @@ import {
   Delete,
   Param,
 } from '@nestjs/common';
-import { SignInDto } from './dto/sign-in.dto';
+import { SignInDto, SignUpDto } from './dto';
 import { JwtGuard, JwtOrApiKeyGuard } from './auth.guard';
 import { Request } from 'express';
 import { handleEndpointErrors } from '../core/endpoint-error-handler';
@@ -22,7 +22,6 @@ import {
   UserDuplicationError,
   UserNotFoundError,
 } from '../core/error';
-import { SignUpDto } from './dto/sign-up.dto';
 import { UserResponse } from '../user/response/user.response';
 import { AuthMediator } from './auth.mediator';
 import { ApiTags } from '@nestjs/swagger';
