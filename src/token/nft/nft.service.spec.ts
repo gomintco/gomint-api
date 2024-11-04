@@ -99,9 +99,6 @@ describe('NftService', () => {
       const mockTreasuryAccount: Account = {
         keys: [{ publicKey: 'mockPublicKey' }],
       } as Account;
-      const mockPayerAccount: Account = {
-        /* mock account data */
-      } as Account;
       const mockPrivateKey = {
         // mock the methods and properties of the PrivateKey as needed
       } as unknown as PrivateKey;

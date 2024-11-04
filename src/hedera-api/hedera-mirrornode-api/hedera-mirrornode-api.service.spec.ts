@@ -6,7 +6,6 @@ import { TokenMirrornodeInfo } from './hedera-mirrornode-api.interface';
 
 describe('HederaMirrornodeApiService', () => {
   let service: HederaMirrornodeApiService;
-  let configService: AppConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -27,7 +26,6 @@ describe('HederaMirrornodeApiService', () => {
     service = module.get<HederaMirrornodeApiService>(
       HederaMirrornodeApiService,
     );
-    configService = module.get<AppConfigService>(AppConfigService);
   });
 
   it('should be defined', () => {

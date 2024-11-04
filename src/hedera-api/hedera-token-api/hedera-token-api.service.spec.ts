@@ -9,7 +9,6 @@ import {
   TokenMintTransaction,
   TokenAssociateTransaction,
   TokenSupplyType,
-  PublicKey,
 } from '@hashgraph/sdk';
 
 describe('HederaTokenApiService', () => {
