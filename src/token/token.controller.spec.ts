@@ -1,3 +1,5 @@
+import { mockLogger } from 'test/mocks/logger.mock';
+mockLogger();
 import { Test, TestingModule } from '@nestjs/testing';
 import { TokenController } from './token.controller';
 import { FtService } from './ft/ft.service';
@@ -55,7 +57,7 @@ describe('TokenController', () => {
     })
       .overrideGuard(ApiKeyGuard)
       .useValue({
-        canActivate: jest.fn(() => true), // Mock the guard to always return true
+        canActivate: jest.fn(() => true),
       })
       .compile();
 
