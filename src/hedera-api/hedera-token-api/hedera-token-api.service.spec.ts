@@ -48,20 +48,22 @@ describe('HederaTokenApiService', () => {
       };
 
       // Mock the method that handles the input parsing
-      jest.spyOn(service as any, 'parseCreateTransactionDto').mockResolvedValue({
-        tokenName: 'Test Token',
-        tokenSymbol: 'TT',
-        tokenType: TokenSupplyType.Finite,
-        treasuryAccountId: '0.0.1234',
-        decimals: 0,
-        initialSupply: 0,
-        maxSupply: 1000,
-        expirationTime: new Date(),
-        autoRenewAccountId: '0.0.1234',
-        supplyType: TokenSupplyType.Finite,
-        customFees: [],
-        metadata: Buffer.from('metadata'),
-      });
+      jest
+        .spyOn(service as any, 'parseCreateTransactionDto')
+        .mockResolvedValue({
+          tokenName: 'Test Token',
+          tokenSymbol: 'TT',
+          tokenType: TokenSupplyType.Finite,
+          treasuryAccountId: '0.0.1234',
+          decimals: 0,
+          initialSupply: 0,
+          maxSupply: 1000,
+          expirationTime: new Date(),
+          autoRenewAccountId: '0.0.1234',
+          supplyType: TokenSupplyType.Finite,
+          customFees: [],
+          metadata: Buffer.from('metadata'),
+        });
 
       const transaction = await service.createTransaction(tokenCreateDto);
 
@@ -117,7 +119,9 @@ describe('HederaTokenApiService', () => {
 
       expect(transaction).toBeInstanceOf(TokenAssociateTransaction);
       expect(transaction.accountId.toString()).toBe('0.0.1234');
-      expect(transaction.tokenIds.map(tokenId => tokenId.toString())).toEqual(['0.0.5678']);
+      expect(transaction.tokenIds.map((tokenId) => tokenId.toString())).toEqual(
+        ['0.0.5678'],
+      );
     });
   });
 });

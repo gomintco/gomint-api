@@ -8,7 +8,7 @@ import { TokenCollectionMetadata } from 'src/token/dto/hip766-metadata.dto';
 export class IpfsService {
   private client?: Client;
 
-  constructor(private readonly configService: AppConfigService) { }
+  constructor(private readonly configService: AppConfigService) {}
 
   async initClient(): Promise<void> {
     if (this.client) {

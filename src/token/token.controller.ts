@@ -45,7 +45,7 @@ export class TokenController {
     private readonly ftService: FtService,
     private readonly nftService: NftService,
     private readonly tokenService: TokenService,
-  ) { }
+  ) {}
 
   @Post()
   async create(
@@ -59,15 +59,15 @@ export class TokenController {
       const token =
         tokenCreateDto.tokenType === 'ft'
           ? await this.ftService.tokenCreateHandler(
-            user,
-            tokenCreateDto,
-            encryptionKey,
-          )
+              user,
+              tokenCreateDto,
+              encryptionKey,
+            )
           : await this.nftService.tokenCreateHandler(
-            user,
-            tokenCreateDto,
-            encryptionKey,
-          );
+              user,
+              tokenCreateDto,
+              encryptionKey,
+            );
 
       return new TokenCreateResponse(token);
     } catch (error: any) {

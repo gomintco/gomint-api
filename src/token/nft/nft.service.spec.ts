@@ -10,7 +10,13 @@ import { User } from '../../user/user.entity';
 import { TokenCreateDto } from '../dto/token-create.dto';
 import { TokenMintDto } from '../dto/token-mint.dto';
 import { Account } from '../../account/account.entity';
-import { PrivateKey, TokenCreateTransaction, TokenMintTransaction, TransactionReceipt, Client } from '@hashgraph/sdk';
+import {
+  PrivateKey,
+  TokenCreateTransaction,
+  TokenMintTransaction,
+  TransactionReceipt,
+  Client,
+} from '@hashgraph/sdk';
 import { TokenMirrornodeInfo } from '../token.interface';
 
 describe('NftService', () => {
@@ -73,17 +79,29 @@ describe('NftService', () => {
     clientService = module.get<ClientService>(ClientService);
     accountService = module.get<AccountService>(AccountService);
     tokenService = module.get<HederaTokenApiService>(HederaTokenApiService);
-    transactionService = module.get<HederaTransactionApiService>(HederaTransactionApiService);
-    mirrornodeService = module.get<HederaMirrornodeApiService>(HederaMirrornodeApiService);
+    transactionService = module.get<HederaTransactionApiService>(
+      HederaTransactionApiService,
+    );
+    mirrornodeService = module.get<HederaMirrornodeApiService>(
+      HederaMirrornodeApiService,
+    );
   });
 
   describe('tokenCreateHandler', () => {
     it('should successfully create a token and return the token ID', async () => {
-      const user: User = { /* mock user data */ } as User;
-      const createNftDto: TokenCreateDto = { /* mock dto data */ } as TokenCreateDto;
+      const user: User = {
+        /* mock user data */
+      } as User;
+      const createNftDto: TokenCreateDto = {
+        /* mock dto data */
+      } as TokenCreateDto;
       const mockEscrowKey = 'mockEscrowKey';
-      const mockTreasuryAccount: Account = { keys: [{ publicKey: 'mockPublicKey' }] } as Account;
-      const mockPayerAccount: Account = { /* mock account data */ } as Account;
+      const mockTreasuryAccount: Account = {
+        keys: [{ publicKey: 'mockPublicKey' }],
+      } as Account;
+      const mockPayerAccount: Account = {
+        /* mock account data */
+      } as Account;
       const mockPrivateKey = {
         // mock the methods and properties of the PrivateKey as needed
       } as unknown as PrivateKey;
@@ -97,8 +115,12 @@ describe('NftService', () => {
         // add other necessary properties for TransactionReceipt
       } as unknown as TransactionReceipt;
 
-      jest.spyOn(keyService, 'decryptUserEscrowKey').mockReturnValue(mockEscrowKey);
-      jest.spyOn(accountService, 'getUserAccountByAlias').mockResolvedValue(mockTreasuryAccount);
+      jest
+        .spyOn(keyService, 'decryptUserEscrowKey')
+        .mockReturnValue(mockEscrowKey);
+      jest
+        .spyOn(accountService, 'getUserAccountByAlias')
+        .mockResolvedValue(mockTreasuryAccount);
       jest.spyOn(clientService, 'buildClientAndSigningKeys').mockReturnValue({
         client: mockClient,
         signers: mockSigners,
@@ -111,40 +133,57 @@ describe('NftService', () => {
       const mockTransaction = {
         // mock the methods and properties of TokenCreateTransaction as needed
       } as unknown as TokenCreateTransaction;
-      jest.spyOn(tokenService, 'createTransaction').mockResolvedValue(mockTransaction);
-      jest.spyOn(transactionService, 'freezeSignExecuteAndGetReceipt').mockResolvedValue(mockReceipt);
+      jest
+        .spyOn(tokenService, 'createTransaction')
+        .mockResolvedValue(mockTransaction);
+      jest
+        .spyOn(transactionService, 'freezeSignExecuteAndGetReceipt')
+        .mockResolvedValue(mockReceipt);
 
       const result = await nftService.tokenCreateHandler(user, createNftDto);
 
-      expect(keyService.decryptUserEscrowKey).toHaveBeenCalledWith(user, undefined);
-      expect(accountService.getUserAccountByAlias).toHaveBeenCalledWith(user.id, createNftDto.treasuryAccountId);
+      expect(keyService.decryptUserEscrowKey).toHaveBeenCalledWith(
+        user,
+        undefined,
+      );
+      expect(accountService.getUserAccountByAlias).toHaveBeenCalledWith(
+        user.id,
+        createNftDto.treasuryAccountId,
+      );
       expect(clientService.buildClientAndSigningKeys).toHaveBeenCalledWith(
         user.network,
         mockEscrowKey,
         mockTreasuryAccount,
         undefined,
       );
-      expect(accountService.parseCustomFeeAliases).toHaveBeenCalledWith(user.id, createNftDto);
+      expect(accountService.parseCustomFeeAliases).toHaveBeenCalledWith(
+        user.id,
+        createNftDto,
+      );
       expect(tokenService.createTransaction).toHaveBeenCalledWith(
         createNftDto,
         mockTreasuryAccount.keys[0].publicKey,
       );
-      expect(transactionService.freezeSignExecuteAndGetReceipt).toHaveBeenCalledWith(
-        mockTransaction,
-        mockClient,
-        mockSigners,
-      );
+      expect(
+        transactionService.freezeSignExecuteAndGetReceipt,
+      ).toHaveBeenCalledWith(mockTransaction, mockClient, mockSigners);
       expect(result).toBe('0.0.12345');
     });
   });
 
   describe('tokenMintHandler', () => {
     it('should successfully mint a token and return the transaction status', async () => {
-      const user: User = { /* mock user data */ } as User;
-      const tokenMintDto: TokenMintDto = { /* mock dto data */ } as TokenMintDto;
+      const user: User = {
+        /* mock user data */
+      } as User;
+      const tokenMintDto: TokenMintDto = {
+        /* mock dto data */
+      } as TokenMintDto;
       const mockEscrowKey = 'mockEscrowKey';
       const mockSupplyKey = 'mockSupplyKey';
-      const mockSupplyAccount: Account = { /* mock account data */ } as Account;
+      const mockSupplyAccount: Account = {
+        /* mock account data */
+      } as Account;
       const mockPrivateKey = {
         // mock the methods and properties of the PrivateKey as needed
       } as unknown as PrivateKey;
@@ -157,11 +196,17 @@ describe('NftService', () => {
         // add other necessary properties for TransactionReceipt
       } as unknown as TransactionReceipt;
 
-      jest.spyOn(keyService, 'decryptUserEscrowKey').mockReturnValue(mockEscrowKey);
-      jest.spyOn(mirrornodeService, 'getTokenMirrornodeInfo').mockResolvedValue({
-        supply_key: { key: mockSupplyKey, _type: 'ED25519' }
-      } as TokenMirrornodeInfo);
-      jest.spyOn(accountService, 'getUserAccountByPublicKey').mockResolvedValue(mockSupplyAccount);
+      jest
+        .spyOn(keyService, 'decryptUserEscrowKey')
+        .mockReturnValue(mockEscrowKey);
+      jest
+        .spyOn(mirrornodeService, 'getTokenMirrornodeInfo')
+        .mockResolvedValue({
+          supply_key: { key: mockSupplyKey, _type: 'ED25519' },
+        } as TokenMirrornodeInfo);
+      jest
+        .spyOn(accountService, 'getUserAccountByPublicKey')
+        .mockResolvedValue(mockSupplyAccount);
       jest.spyOn(clientService, 'buildClientAndSigningKeys').mockReturnValue({
         client: mockClient,
         signers: mockSigners,
@@ -169,26 +214,39 @@ describe('NftService', () => {
       const mockMintTransaction = {
         // mock the methods and properties of TokenMintTransaction as needed
       } as unknown as TokenMintTransaction;
-      jest.spyOn(tokenService, 'mintNftTransaction').mockResolvedValue(mockMintTransaction);
-      jest.spyOn(transactionService, 'freezeSignExecuteAndGetReceipt').mockResolvedValue(mockReceipt);
+      jest
+        .spyOn(tokenService, 'mintNftTransaction')
+        .mockResolvedValue(mockMintTransaction);
+      jest
+        .spyOn(transactionService, 'freezeSignExecuteAndGetReceipt')
+        .mockResolvedValue(mockReceipt);
 
       const result = await nftService.tokenMintHandler(user, tokenMintDto);
 
-      expect(keyService.decryptUserEscrowKey).toHaveBeenCalledWith(user, undefined);
-      expect(mirrornodeService.getTokenMirrornodeInfo).toHaveBeenCalledWith(user.network, tokenMintDto.tokenId);
-      expect(accountService.getUserAccountByPublicKey).toHaveBeenCalledWith(user.id, mockSupplyKey);
+      expect(keyService.decryptUserEscrowKey).toHaveBeenCalledWith(
+        user,
+        undefined,
+      );
+      expect(mirrornodeService.getTokenMirrornodeInfo).toHaveBeenCalledWith(
+        user.network,
+        tokenMintDto.tokenId,
+      );
+      expect(accountService.getUserAccountByPublicKey).toHaveBeenCalledWith(
+        user.id,
+        mockSupplyKey,
+      );
       expect(clientService.buildClientAndSigningKeys).toHaveBeenCalledWith(
         user.network,
         mockEscrowKey,
         mockSupplyAccount,
         undefined,
       );
-      expect(tokenService.mintNftTransaction).toHaveBeenCalledWith(tokenMintDto);
-      expect(transactionService.freezeSignExecuteAndGetReceipt).toHaveBeenCalledWith(
-        mockMintTransaction,
-        mockClient,
-        mockSigners,
+      expect(tokenService.mintNftTransaction).toHaveBeenCalledWith(
+        tokenMintDto,
       );
+      expect(
+        transactionService.freezeSignExecuteAndGetReceipt,
+      ).toHaveBeenCalledWith(mockMintTransaction, mockClient, mockSigners);
       expect(result).toBe('SUCCESS');
     });
   });

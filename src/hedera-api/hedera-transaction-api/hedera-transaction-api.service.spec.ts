@@ -5,8 +5,6 @@ import {
   Client,
   PrivateKey,
   Transaction,
-  TransactionResponse,
-  TransactionReceipt,
   TransactionId,
 } from '@hashgraph/sdk';
 
@@ -18,7 +16,9 @@ describe('HederaTransactionApiService', () => {
       providers: [HederaTransactionApiService],
     }).compile();
 
-    service = module.get<HederaTransactionApiService>(HederaTransactionApiService);
+    service = module.get<HederaTransactionApiService>(
+      HederaTransactionApiService,
+    );
   });
 
   it('should be defined', () => {
@@ -32,7 +32,10 @@ describe('HederaTransactionApiService', () => {
       } as unknown as Transaction;
       const mockClient = {} as Client;
 
-      const result = await service.executeTransaction(mockTransaction, mockClient);
+      const result = await service.executeTransaction(
+        mockTransaction,
+        mockClient,
+      );
 
       expect(mockTransaction.execute).toHaveBeenCalledWith(mockClient);
       expect(result).toEqual({});
@@ -47,7 +50,11 @@ describe('HederaTransactionApiService', () => {
       const mockClient = {} as Client;
       const mockSigners = [PrivateKey.generate(), PrivateKey.generate()];
 
-      const result = await service.executeTransaction(mockTransaction, mockClient, mockSigners);
+      const result = await service.executeTransaction(
+        mockTransaction,
+        mockClient,
+        mockSigners,
+      );
 
       expect(mockTransaction.sign).toHaveBeenCalledTimes(mockSigners.length);
       expect(mockTransaction.execute).toHaveBeenCalledWith(mockClient);
@@ -80,8 +87,12 @@ describe('HederaTransactionApiService', () => {
 
       const result = service.freezeWithPayer(mockTransaction, payerAccount);
 
-      expect(mockTransaction.setNodeAccountIds).toHaveBeenCalledWith([new AccountId(3)]);
-      expect(mockTransaction.setTransactionId).toHaveBeenCalledWith(expect.any(TransactionId));
+      expect(mockTransaction.setNodeAccountIds).toHaveBeenCalledWith([
+        new AccountId(3),
+      ]);
+      expect(mockTransaction.setTransactionId).toHaveBeenCalledWith(
+        expect.any(TransactionId),
+      );
       expect(mockTransaction.freeze).toHaveBeenCalled();
       expect(result).toBe(mockTransaction);
     });
@@ -100,7 +111,11 @@ describe('HederaTransactionApiService', () => {
       const mockClient = {} as Client;
       const mockSigners = [PrivateKey.generate(), PrivateKey.generate()];
 
-      const result = await service.freezeSignExecuteAndGetReceipt(mockTransaction, mockClient, mockSigners);
+      const result = await service.freezeSignExecuteAndGetReceipt(
+        mockTransaction,
+        mockClient,
+        mockSigners,
+      );
 
       expect(mockTransaction.freezeWith).toHaveBeenCalledWith(mockClient);
       expect(mockTransaction.sign).toHaveBeenCalledTimes(mockSigners.length);
@@ -128,8 +143,10 @@ describe('HederaTransactionApiService', () => {
       } as unknown as Transaction;
       const mockSigners = [PrivateKey.generate(), PrivateKey.generate()];
 
-      await expect(service.addSigners(mockTransaction, mockSigners)).rejects.toThrow(
-        "Transaction is not frozen. You must freeze a transaction before calling 'addSigners'."
+      await expect(
+        service.addSigners(mockTransaction, mockSigners),
+      ).rejects.toThrow(
+        "Transaction is not frozen. You must freeze a transaction before calling 'addSigners'.",
       );
     });
   });

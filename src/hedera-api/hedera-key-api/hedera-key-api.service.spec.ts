@@ -63,7 +63,9 @@ describe('HederaKeyApiService', () => {
     });
 
     it('should throw an error for unsupported key type', () => {
-      expect(() => service.generatePrivateKey('unsupported' as KeyType)).toThrowError('Unsupported key type');
+      expect(() =>
+        service.generatePrivateKey('unsupported' as KeyType),
+      ).toThrow('Unsupported key type');
     });
   });
 
@@ -83,7 +85,10 @@ describe('HederaKeyApiService', () => {
 
   describe('generateGoMintKeyList', () => {
     it('should generate a KeyList with the custodial key from the testnet config', () => {
-      const { keyList, privateKey } = service.generateGoMintKeyList(KeyType.ED25519, Network.TESTNET);
+      const { keyList, privateKey } = service.generateGoMintKeyList(
+        KeyType.ED25519,
+        Network.TESTNET,
+      );
       expect(keyList).toBeInstanceOf(KeyList);
       expect(keyList._keys.length).toBe(2);
       expect(keyList._keys[1]).toBe(configService.hedera.testnet.custodialKey);
@@ -91,7 +96,10 @@ describe('HederaKeyApiService', () => {
     });
 
     it('should generate a KeyList with the custodial key from the mainnet config', () => {
-      const { keyList, privateKey } = service.generateGoMintKeyList(KeyType.ED25519, Network.MAINNET);
+      const { keyList, privateKey } = service.generateGoMintKeyList(
+        KeyType.ED25519,
+        Network.MAINNET,
+      );
       expect(keyList).toBeInstanceOf(KeyList);
       expect(keyList._keys.length).toBe(2);
       expect(keyList._keys[1]).toBe(configService.hedera.mainnet.custodialKey);

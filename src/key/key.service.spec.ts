@@ -1,39 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Repository } from 'typeorm';
+import { KeyType } from './key-type.enum';
 import { KeyService } from './key.service';
+import { Mocked, TestBed } from '@suites/unit';
 import { Key } from './key.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { KeyType } from '../app.interface';
-
-// test for ecsda key creation
-// test for ed25519 key creation
-// test for encyrption of private key and decryption
-
-const mockRepository = {
-  create: jest.fn().mockImplementation((entity) => entity),
-  // Add other necessary mock methods here
-};
 
 describe('KeyService', () => {
   let service: KeyService;
+  let keysRepository: Mocked<Repository<Key>>;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        KeyService,
-        {
-          provide: getRepositoryToken(Key),
-          useValue: mockRepository,
-        },
-      ],
-    }).compile();
-
-    service = module.get<KeyService>(KeyService);
-    // keyRepository = module.get<Repository<Key>>(keyRepositoryToken);
+    const { unit, unitRef } = await TestBed.solitary(KeyService).compile();
+    service = unit;
+    keysRepository = unitRef.get(String(getRepositoryToken(Key)));
+    keysRepository.create.mockImplementationOnce((entity) => entity as Key);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-    // expect(keyRepository).toBeDefined();
   });
 
   it('should create an ED25519 key successfully', async () => {

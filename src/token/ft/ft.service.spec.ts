@@ -10,7 +10,13 @@ import { User } from 'src/user/user.entity';
 import { TokenCreateDto } from '../dto/token-create.dto';
 import { TokenMintDto } from '../dto/token-mint.dto';
 import { Account } from 'src/account/account.entity';
-import { PrivateKey, TokenCreateTransaction, TokenMintTransaction, TransactionReceipt, Client } from '@hashgraph/sdk';
+import {
+  PrivateKey,
+  TokenCreateTransaction,
+  TokenMintTransaction,
+  TransactionReceipt,
+  Client,
+} from '@hashgraph/sdk';
 import { TokenMirrornodeInfo } from '../token.interface';
 
 describe('FtService', () => {
@@ -73,20 +79,30 @@ describe('FtService', () => {
     clientService = module.get<ClientService>(ClientService);
     accountService = module.get<AccountService>(AccountService);
     tokenService = module.get<HederaTokenApiService>(HederaTokenApiService);
-    hederaTransactionApiService = module.get<HederaTransactionApiService>(HederaTransactionApiService);
-    hederaMirrornodeApiService = module.get<HederaMirrornodeApiService>(HederaMirrornodeApiService);
+    hederaTransactionApiService = module.get<HederaTransactionApiService>(
+      HederaTransactionApiService,
+    );
+    hederaMirrornodeApiService = module.get<HederaMirrornodeApiService>(
+      HederaMirrornodeApiService,
+    );
   });
 
   describe('tokenCreateHandler', () => {
     it('should successfully create a token and return the token ID', async () => {
-      const user: User = { /* mock user data */ } as User;
-      const tokenCreateDto: TokenCreateDto = { /* mock dto data */ } as TokenCreateDto;
+      const user: User = {
+        /* mock user data */
+      } as User;
+      const tokenCreateDto: TokenCreateDto = {
+        /* mock dto data */
+      } as TokenCreateDto;
       const mockEscrowKey = 'mockEscrowKey';
       const mockTreasuryAccount: Account = {
         keys: [{ publicKey: 'mockPublicKey' }],
         // other properties as needed
       } as unknown as Account;
-      const mockPayerAccount: Account = { /* mock account data */ } as Account;
+      const mockPayerAccount: Account = {
+        /* mock account data */
+      } as Account;
       const mockPrivateKey = {
         // mock the methods and properties of the PrivateKey as needed
       } as unknown as PrivateKey;
@@ -100,8 +116,12 @@ describe('FtService', () => {
         // add other necessary properties for TransactionReceipt
       } as unknown as TransactionReceipt;
 
-      jest.spyOn(keyService, 'decryptUserEscrowKey').mockReturnValue(mockEscrowKey);
-      jest.spyOn(accountService, 'getUserAccountByAlias').mockResolvedValue(mockTreasuryAccount);
+      jest
+        .spyOn(keyService, 'decryptUserEscrowKey')
+        .mockReturnValue(mockEscrowKey);
+      jest
+        .spyOn(accountService, 'getUserAccountByAlias')
+        .mockResolvedValue(mockTreasuryAccount);
       jest.spyOn(clientService, 'buildClientAndSigningKeys').mockReturnValue({
         client: mockClient,
         signers: mockSigners,
@@ -114,37 +134,52 @@ describe('FtService', () => {
       const mockTransaction = {
         // mock the methods and properties of TokenCreateTransaction as needed
       } as unknown as TokenCreateTransaction;
-      jest.spyOn(tokenService, 'createTransaction').mockResolvedValue(mockTransaction);
-      jest.spyOn(hederaTransactionApiService, 'freezeSignExecuteAndGetReceipt').mockResolvedValue(mockReceipt);
+      jest
+        .spyOn(tokenService, 'createTransaction')
+        .mockResolvedValue(mockTransaction);
+      jest
+        .spyOn(hederaTransactionApiService, 'freezeSignExecuteAndGetReceipt')
+        .mockResolvedValue(mockReceipt);
 
       const result = await ftService.tokenCreateHandler(user, tokenCreateDto);
 
-      expect(keyService.decryptUserEscrowKey).toHaveBeenCalledWith(user, undefined);
-      expect(accountService.getUserAccountByAlias).toHaveBeenCalledWith(user.id, tokenCreateDto.treasuryAccountId);
+      expect(keyService.decryptUserEscrowKey).toHaveBeenCalledWith(
+        user,
+        undefined,
+      );
+      expect(accountService.getUserAccountByAlias).toHaveBeenCalledWith(
+        user.id,
+        tokenCreateDto.treasuryAccountId,
+      );
       expect(clientService.buildClientAndSigningKeys).toHaveBeenCalledWith(
         user.network,
         mockEscrowKey,
         mockTreasuryAccount,
         undefined,
       );
-      expect(accountService.parseCustomFeeAliases).toHaveBeenCalledWith(user.id, tokenCreateDto);
+      expect(accountService.parseCustomFeeAliases).toHaveBeenCalledWith(
+        user.id,
+        tokenCreateDto,
+      );
       expect(tokenService.createTransaction).toHaveBeenCalledWith(
         tokenCreateDto,
         'mockPublicKey',
       );
-      expect(hederaTransactionApiService.freezeSignExecuteAndGetReceipt).toHaveBeenCalledWith(
-        mockTransaction,
-        mockClient,
-        mockSigners,
-      );
+      expect(
+        hederaTransactionApiService.freezeSignExecuteAndGetReceipt,
+      ).toHaveBeenCalledWith(mockTransaction, mockClient, mockSigners);
       expect(result).toBe('0.0.12345');
     });
   });
 
   describe('tokenMintHandler', () => {
     it('should successfully mint a token and return the transaction status', async () => {
-      const user: User = { /* mock user data */ } as User;
-      const tokenMintDto: TokenMintDto = { /* mock dto data */ } as TokenMintDto;
+      const user: User = {
+        /* mock user data */
+      } as User;
+      const tokenMintDto: TokenMintDto = {
+        /* mock dto data */
+      } as TokenMintDto;
       const mockEscrowKey = 'mockEscrowKey';
       const mockSupplyKey = 'mockSupplyKey';
       const mockSupplyAccount: Account = {
@@ -163,11 +198,17 @@ describe('FtService', () => {
         // add other necessary properties for TransactionReceipt
       } as unknown as TransactionReceipt;
 
-      jest.spyOn(keyService, 'decryptUserEscrowKey').mockReturnValue(mockEscrowKey);
-      jest.spyOn(hederaMirrornodeApiService, 'getTokenMirrornodeInfo').mockResolvedValue({
-        supply_key: { key: mockSupplyKey, _type: 'ED25519' }
-      } as TokenMirrornodeInfo);
-      jest.spyOn(accountService, 'getUserAccountByPublicKey').mockResolvedValue(mockSupplyAccount);
+      jest
+        .spyOn(keyService, 'decryptUserEscrowKey')
+        .mockReturnValue(mockEscrowKey);
+      jest
+        .spyOn(hederaMirrornodeApiService, 'getTokenMirrornodeInfo')
+        .mockResolvedValue({
+          supply_key: { key: mockSupplyKey, _type: 'ED25519' },
+        } as TokenMirrornodeInfo);
+      jest
+        .spyOn(accountService, 'getUserAccountByPublicKey')
+        .mockResolvedValue(mockSupplyAccount);
       jest.spyOn(clientService, 'buildClientAndSigningKeys').mockReturnValue({
         client: mockClient,
         signers: mockSigners,
@@ -175,14 +216,26 @@ describe('FtService', () => {
       const mockMintTransaction = {
         // mock the methods and properties of TokenMintTransaction as needed
       } as unknown as TokenMintTransaction;
-      jest.spyOn(tokenService, 'mintFtTransaction').mockReturnValue(mockMintTransaction);
-      jest.spyOn(hederaTransactionApiService, 'freezeSignExecuteAndGetReceipt').mockResolvedValue(mockReceipt);
+      jest
+        .spyOn(tokenService, 'mintFtTransaction')
+        .mockReturnValue(mockMintTransaction);
+      jest
+        .spyOn(hederaTransactionApiService, 'freezeSignExecuteAndGetReceipt')
+        .mockResolvedValue(mockReceipt);
 
       const result = await ftService.tokenMintHandler(user, tokenMintDto);
 
-      expect(keyService.decryptUserEscrowKey).toHaveBeenCalledWith(user, undefined);
-      expect(hederaMirrornodeApiService.getTokenMirrornodeInfo).toHaveBeenCalledWith(user.network, tokenMintDto.tokenId);
-      expect(accountService.getUserAccountByPublicKey).toHaveBeenCalledWith(user.id, mockSupplyKey);
+      expect(keyService.decryptUserEscrowKey).toHaveBeenCalledWith(
+        user,
+        undefined,
+      );
+      expect(
+        hederaMirrornodeApiService.getTokenMirrornodeInfo,
+      ).toHaveBeenCalledWith(user.network, tokenMintDto.tokenId);
+      expect(accountService.getUserAccountByPublicKey).toHaveBeenCalledWith(
+        user.id,
+        mockSupplyKey,
+      );
       expect(clientService.buildClientAndSigningKeys).toHaveBeenCalledWith(
         user.network,
         mockEscrowKey,
@@ -190,11 +243,9 @@ describe('FtService', () => {
         undefined,
       );
       expect(tokenService.mintFtTransaction).toHaveBeenCalledWith(tokenMintDto);
-      expect(hederaTransactionApiService.freezeSignExecuteAndGetReceipt).toHaveBeenCalledWith(
-        mockMintTransaction,
-        mockClient,
-        mockSigners,
-      );
+      expect(
+        hederaTransactionApiService.freezeSignExecuteAndGetReceipt,
+      ).toHaveBeenCalledWith(mockMintTransaction, mockClient, mockSigners);
       expect(result).toBe('SUCCESS');
     });
   });

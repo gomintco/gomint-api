@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HederaAccountApiService } from './hedera-account-api.service';
 import { AccountCreateDto } from '../../account/dto/account-create.dto';
-import { Key, PrivateKey, AccountCreateTransaction } from '@hashgraph/sdk';
+import { PrivateKey, AccountCreateTransaction } from '@hashgraph/sdk';
 import { KeyType } from 'src/key/key-type.enum';
 
 describe('HederaAccountApiService', () => {
@@ -30,10 +30,10 @@ describe('HederaAccountApiService', () => {
         declineStakingReward: true,
         accountMemo: 'Test Memo',
       };
-      
+
       const key = PrivateKey.generateED25519();
       const transaction = service.createTransaction(accountCreateDto, key);
-      
+
       expect(transaction).toBeInstanceOf(AccountCreateTransaction);
       expect(transaction.key.toString()).toBe(key.toString());
       expect(transaction.maxAutomaticTokenAssociations.toNumber()).toBe(3);

@@ -24,7 +24,9 @@ describe('HederaMirrornodeApiService', () => {
       ],
     }).compile();
 
-    service = module.get<HederaMirrornodeApiService>(HederaMirrornodeApiService);
+    service = module.get<HederaMirrornodeApiService>(
+      HederaMirrornodeApiService,
+    );
     configService = module.get<AppConfigService>(AppConfigService);
   });
 
@@ -47,7 +49,9 @@ describe('HederaMirrornodeApiService', () => {
 
       const result = await service.getTokenMirrornodeInfo(network, tokenId);
 
-      expect(fetch).toHaveBeenCalledWith('https://testnet.mirrornode.url/tokens/0.0.12345');
+      expect(fetch).toHaveBeenCalledWith(
+        'https://testnet.mirrornode.url/tokens/0.0.12345',
+      );
       expect(result.token_id).toBe(tokenId);
       expect(result.name).toBe('Test Token');
     });
@@ -66,7 +70,9 @@ describe('HederaMirrornodeApiService', () => {
 
       const result = await service.getTokenMirrornodeInfo(network, tokenId);
 
-      expect(fetch).toHaveBeenCalledWith('https://mainnet.mirrornode.url/tokens/0.0.67890');
+      expect(fetch).toHaveBeenCalledWith(
+        'https://mainnet.mirrornode.url/tokens/0.0.67890',
+      );
       expect(result.token_id).toBe(tokenId);
       expect(result.name).toBe('Mainnet Token');
     });
@@ -75,7 +81,9 @@ describe('HederaMirrornodeApiService', () => {
       const network = 'invalid-network' as Network;
       const tokenId = '0.0.67890';
 
-      await expect(service.getTokenMirrornodeInfo(network, tokenId)).rejects.toThrow();
+      await expect(
+        service.getTokenMirrornodeInfo(network, tokenId),
+      ).rejects.toThrow();
     });
   });
 });
