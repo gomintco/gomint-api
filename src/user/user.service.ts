@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { User } from './user.entity';
-import { SignUpDto } from 'src/auth/dto/sign-up.dto';
+import { SignUpDto } from 'src/auth/dto';
 import * as crypto from 'crypto';
 import { KeyService } from 'src/key/key.service';
 import { UserDuplicationError, UserNotFoundError } from 'src/core/error';

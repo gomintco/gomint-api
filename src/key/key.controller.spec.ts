@@ -1,15 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { KeyController } from './key.controller';
+import { TestBed } from '@suites/unit';
 
 describe('KeyController', () => {
   let controller: KeyController;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [KeyController],
-    }).compile();
-
-    controller = module.get<KeyController>(KeyController);
+    const { unit } = await TestBed.solitary(KeyController).compile();
+    controller = unit;
   });
 
   it('should be defined', () => {

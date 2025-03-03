@@ -13,17 +13,16 @@ import {
   Delete,
   Param,
 } from '@nestjs/common';
-import { SignInDto } from './dto/sign-in.dto';
+import { SignInDto, SignUpDto } from './dto';
 import { JwtGuard, JwtOrApiKeyGuard } from './auth.guard';
 import { Request } from 'express';
-import { handleEndpointErrors } from 'src/core/endpoint-error-handler';
+import { handleEndpointErrors } from '../core/endpoint-error-handler';
 import {
   ApiKeyNotFound,
   UserDuplicationError,
   UserNotFoundError,
-} from 'src/core/error';
-import { SignUpDto } from 'src/auth/dto/sign-up.dto';
-import { UserResponse } from 'src/user/response/user.response';
+} from '../core/error';
+import { UserResponse } from '../user/response/user.response';
 import { AuthMediator } from './auth.mediator';
 import { ApiTags } from '@nestjs/swagger';
 import {

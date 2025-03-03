@@ -133,6 +133,10 @@ export class TokenController {
 
       return new MintResponse(status);
     } catch (err: any) {
+      // TO DO: implement error handling with handleEndpointErrors
+      if (err instanceof BadRequestException) {
+        throw err; // Re-throw BadRequestException directly
+      }
       throw new ServiceUnavailableException('Error creating token', {
         cause: err,
         description: err.message,

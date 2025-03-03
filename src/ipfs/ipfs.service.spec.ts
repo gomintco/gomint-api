@@ -1,15 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { IpfsService } from './ipfs.service';
+import { TestBed } from '@suites/unit';
 
 describe('IpfsService', () => {
   let service: IpfsService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [IpfsService],
-    }).compile();
-
-    service = module.get<IpfsService>(IpfsService);
+    const { unit } = await TestBed.solitary(IpfsService).compile();
+    service = unit;
   });
 
   it('should be defined', () => {

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { User } from 'src/user/user.entity';
+import { User } from '../../user/user.entity';
 import { TokenCreateDto } from '../dto/token-create.dto';
-import { KeyService } from 'src/key/key.service';
-import { ClientService } from 'src/client/client.service';
-import { AccountService } from 'src/account/account.service';
-import { HederaTransactionApiService } from 'src/hedera-api/hedera-transaction-api/hedera-transaction-api.service';
-import { HederaTokenApiService } from 'src/hedera-api/hedera-token-api/hedera-token-api.service';
-import { Account } from 'src/account/account.entity';
-import { HederaMirrornodeApiService } from 'src/hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
+import { KeyService } from '../../key/key.service';
+import { ClientService } from '../../client/client.service';
+import { AccountService } from '../../account/account.service';
+import { HederaTransactionApiService } from '../../hedera-api/hedera-transaction-api/hedera-transaction-api.service';
+import { HederaTokenApiService } from '../../hedera-api/hedera-token-api/hedera-token-api.service';
+import { Account } from '../../account/account.entity';
+import { HederaMirrornodeApiService } from '../../hedera-api/hedera-mirrornode-api/hedera-mirrornode-api.service';
 import { TokenMintDto } from '../dto/token-mint.dto';
 
 @Injectable()
